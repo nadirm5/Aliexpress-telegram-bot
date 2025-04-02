@@ -275,10 +275,9 @@ async def fetch_product_details_v2(product_id):
 
         if not products:
             logger.warning(f"No products found in API response for ID {product_id}")
-            # Consider caching this 'not found' state briefly? For now, return None.
             return None
 
-        product_data = products[0] # Assuming only one product is requested/returned
+        product_data = products[0] 
 
         product_info = {
             'image_url': product_data.get('product_main_image_url'),
