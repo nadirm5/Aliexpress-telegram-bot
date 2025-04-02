@@ -1,0 +1,4 @@
+python-dotenv
+python-telegram-bot[ext]>=20.0  
+aiohttp  
+requests 
