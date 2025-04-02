@@ -57,19 +57,9 @@ A Python-based Telegram bot that automatically detects AliExpress product links 
     ```
 
 3.  **Install dependencies:**
-    *   Make sure you have a `requirements.txt` file that includes `python-telegram-bot`, `python-dotenv`, `aiohttp` (usually installed with `python-telegram-bot`), `requests` (likely needed by `iop`), and `iop-sdk-python`. If not, create one.
-    *   Example `requirements.txt`:
-        ```txt
-        python-telegram-bot[job-queue]>=20.0 # Includes aiohttp, httpx; add [job-queue] if using JobQueue
-        python-dotenv
-        iop-sdk-python # Or the correct package name for the iop SDK
-        # requests might be needed implicitly by iop
-        ```
-    *   Install the requirements:
-        ```bash
-        pip install -r requirements.txt
-        ```
-
+    ```bash
+    pip install -r requirements.txt
+    ```
 ## Configuration
 
 1.  **Create a `.env` file:**
