@@ -478,7 +478,7 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
         ])
 
         response_text = "\n".join(message_lines)
-
+        
         # Send the message (photo with caption if image available, else text)
         if success_count > 0:
             try:
