@@ -2,7 +2,7 @@
 
 A Python-based Telegram bot that automatically detects AliExpress product links in messages, fetches product details using the AliExpress Affiliate API, generates multiple types of affiliate links (Coin, Super Deals, etc.), and posts a formatted message with an image (if available) and links back into the chat.
 
-[![GitHub](https://img.shields.io/badge/GitHub-ReizoZ-blue?style=flat-square&logo=github)](https://github.com/ReizoZ) t.me/Alixpress_discount_bot[![Telegram](https://img.shields.io/badge/Telegram-AliBot-blue?style=flat-square&logo=telegram)](https://t.me/Alixpress_discount_bot)
+[![GitHub](https://img.shields.io/badge/GitHub-ReizoZ-blue?style=flat-square&logo=github)](https://github.com/ReizoZ) [![Telegram](https://img.shields.io/badge/Telegram-AliBot-blue?style=flat-square&logo=telegram)](https://t.me/Alixpress_discount_bot)
 <!-- Optional: Add a Telegram link badge if you have a public bot/channel -->
 <!-- [![Telegram](https://img.shields.io/badge/Telegram-Bot%20Channel-blue?style=flat-square&logo=telegram)](https://t.me/YourBotOrChannelLink) -->
 
