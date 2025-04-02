@@ -87,7 +87,6 @@ A Python-based Telegram bot that automatically detects AliExpress product links 
     ```
     *   Replace the placeholder values with your actual tokens and keys.
     *   Adjust `TARGET_CURRENCY`, `TARGET_LANGUAGE`, and `QUERY_COUNTRY` according to your target audience and API requirements.
-    *   **Important:** Keep your `.env` file secure and **do not** commit it to version control (ensure it's listed in your `.gitignore` file).
 
 ## Running the Bot
 
