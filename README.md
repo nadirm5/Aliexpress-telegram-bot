@@ -18,7 +18,7 @@ A Python-based Telegram bot that automatically detects AliExpress product links 
 *   **Official API Integration:** Uses `aliexpress.affiliate.productdetail.get` and `aliexpress.affiliate.link.generate` API endpoints via the `iop` SDK.
 *   **Telegram Integration:** Built using the `python-telegram-bot` library.
 *   **Formatted Responses:** Sends product information as a photo with caption (if image exists) or a formatted text message using HTML.
-*   **Caching:** Implements an async-safe, time-based cache (default: 7 days) for product details and generated links to minimize API calls and speed up responses.
+*   **Caching:** Implements an async-safe, time-based cache (default: 1 days) for product details and generated links to minimize API calls and speed up responses.
 *   **Asynchronous Processing:** Leverages `asyncio`, `python-telegram-bot`'s async nature, and `ThreadPoolExecutor` for non-blocking API calls.
 *   **Configurable:** Easily configured using a `.env` file for API keys, bot token, and regional settings.
 *   **Periodic Cache Cleanup:** Uses `python-telegram-bot`'s `JobQueue` to automatically clean expired cache items daily.
