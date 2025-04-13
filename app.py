@@ -43,7 +43,7 @@ QUERY_FIELDS = 'product_main_image_url,target_sale_price,product_title,target_sa
 executor = ThreadPoolExecutor(max_workers=10)
 
 # --- Cache Configuration ---
-CACHE_EXPIRY_DAYS = 7
+CACHE_EXPIRY_DAYS = 1
 CACHE_EXPIRY_SECONDS = CACHE_EXPIRY_DAYS * 24 * 60 * 60
 
 # --- Environment Variable Validation ---
@@ -65,8 +65,10 @@ URL_REGEX = re.compile(r'https?://[^\s<>"]+|www\.[^\s<>"]+')
 PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html')
 # Matches standard AliExpress domains
 STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|id\.aliexpress\.com|th\.aliexpress\.com|ar\.aliexpress\.com)(\.([\w-]+))?(/.*)?', re.IGNORECASE)
-# Matches the specific short link domain
-SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://s\.click\.aliexpress\.com/e/[\w-]+', re.IGNORECASE)
+# Matches known short link domains (s.click.aliexpress.com and a.aliexpress.com)
+# Using non-capturing group (?:...) and | for OR
+SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
+
 
 # --- Offer Parameter Mapping ---
 OFFER_PARAMS = {
@@ -532,7 +534,7 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
         else:
             await context.bot.send_message(
                 chat_id=chat_id,
-                text=f"❌ Could not generate any affiliate links for Product ID {product_id}"
+                text="We couldn't find an offer for this product" # Changed message as requested
             )
 
     except Exception as e:
@@ -578,7 +580,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     base_url = clean_aliexpress_url(url, product_id)
                     logger.debug(f"Found standard URL: {url} -> ID: {product_id}, Base: {base_url}")
 
-            # Check if it's a short link
+            # Check if it's a known short link (s.click or a.aliexpress)
             elif SHORT_LINK_DOMAIN_REGEX.match(url):
                 logger.debug(f"Found potential short link: {url}")
                 final_url = await resolve_short_link(url, session)
@@ -601,8 +603,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     if not tasks:
         logger.info(f"No processable AliExpress product links found after filtering/resolution in message from {user.username or user.id}")
-        # Optionally send a message back if no valid links were found after trying
-        # await update.message.reply_text("Couldn't find any valid AliExpress product links to process.")
+        # Send the requested message when no valid links are found
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text=" ❌ We couldn't find an offer for this product ❌"
+        )
         return
 
     logger.info(f"Processing {len(tasks)} unique AliExpress products for chat {chat_id}")
@@ -620,12 +625,12 @@ def main() -> None:
     application.add_handler(CommandHandler("start", start))
 
     # Message handler for text messages that are not commands
-    # Using TEXT filter and checking for 'aliexpress.com' or 's.click.aliexpress.com'
+    # Using TEXT filter and checking for standard or known short link domains
     # The main logic is inside handle_message
-    # This regex is broader to catch both types initially
-    combined_regex = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com', re.IGNORECASE)
+    # This regex is broader to catch all relevant types initially
+    combined_domain_regex = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
     application.add_handler(MessageHandler(
-        filters.TEXT & ~filters.COMMAND & filters.Regex(combined_regex),
+        filters.TEXT & ~filters.COMMAND & filters.Regex(combined_domain_regex),
         handle_message
     ))
     # You might want a separate handler or adjust the above if you need to catch
