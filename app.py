@@ -547,8 +547,19 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     user = update.effective_user
     chat_id = update.effective_chat.id
 
+    # Check if message is forwarded
+    is_forwarded = update.message.forward_origin is not None
+    if is_forwarded:
+        origin_info = f" (originally from {update.message.forward_origin.sender_user.username})" if hasattr(update.message.forward_origin, 'sender_user') else ""
+        logger.info(f"Processing forwarded message from {user.username or user.id} in chat {chat_id}{origin_info}")
+
     potential_urls = extract_potential_aliexpress_urls(message_text)
     if not potential_urls:
+        # Send error message when no links are found
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text="❌ No AliExpress links found in your message. Please send a valid AliExpress product link."
+        )
         return
 
     logger.info(f"Found {len(potential_urls)} potential URLs in message from {user.username or user.id} in chat {chat_id}")
@@ -595,9 +606,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         logger.info(f"No processable AliExpress product links found after filtering/resolution in message from {user.username or user.id}")
         await context.bot.send_message(
             chat_id=chat_id,
-            text=" ❌ We couldn't find an offer for this product ❌"
+            text="❌ We couldn't find any valid AliExpress product links in your message ❌"
         )
         return
+
+    # If multiple links are being processed, notify the user
+    if len(tasks) > 1:
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text=f"⏳ Processing {len(tasks)} AliExpress products from your message. Please wait..."
+        )
 
     logger.info(f"Processing {len(tasks)} unique AliExpress products for chat {chat_id}")
     await asyncio.gather(*tasks)
@@ -614,15 +632,28 @@ def main() -> None:
 
     # Message handler for text messages that are not commands
     # Using TEXT filter and checking for standard or known short link domains
-    # The main logic is inside handle_message
-    # This regex is broader to catch all relevant types initially
     combined_domain_regex = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
+    
+    # Handle regular messages containing AliExpress links
     application.add_handler(MessageHandler(
         filters.TEXT & ~filters.COMMAND & filters.Regex(combined_domain_regex),
         handle_message
     ))
-    # You might want a separate handler or adjust the above if you need to catch
-    # messages *without* aliexpress links too for other purposes.
+    
+    # Handle forwarded messages
+    application.add_handler(MessageHandler(
+        filters.FORWARDED & filters.TEXT & filters.Regex(combined_domain_regex),
+        handle_message
+    ))
+
+    # Add a general message handler that responds to messages without links
+    application.add_handler(MessageHandler(
+        filters.TEXT & ~filters.COMMAND & ~filters.Regex(combined_domain_regex),
+        lambda update, context: context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="Please send an AliExpress product link to generate affiliate links."
+        )
+    ))
 
     # --- Setup Periodic Jobs ---
     job_queue = application.job_queue
