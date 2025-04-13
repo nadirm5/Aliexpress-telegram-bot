@@ -63,7 +63,10 @@ except Exception as e:
 # --- Regex Optimization: Precompile patterns ---
 URL_REGEX = re.compile(r'https?://[^\s<>"]+|www\.[^\s<>"]+')
 PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html')
-ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|id\.aliexpress\.com|th\.aliexpress\.com|ar\.aliexpress\.com)(\.([\w-]+))?(/.*)?', re.IGNORECASE)
+# Matches standard AliExpress domains
+STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|id\.aliexpress\.com|th\.aliexpress\.com|ar\.aliexpress\.com)(\.([\w-]+))?(/.*)?', re.IGNORECASE)
+# Matches the specific short link domain
+SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://s\.click\.aliexpress\.com/e/[\w-]+', re.IGNORECASE)
 
 # --- Offer Parameter Mapping ---
 OFFER_PARAMS = {
@@ -119,51 +122,73 @@ class CacheWithExpiry:
 # Initialize caches
 product_cache = CacheWithExpiry(CACHE_EXPIRY_SECONDS)
 link_cache = CacheWithExpiry(CACHE_EXPIRY_SECONDS)
+resolved_url_cache = CacheWithExpiry(CACHE_EXPIRY_SECONDS) # Cache for short link resolutions
 
-# --- Helper Functions (Mostly Unchanged) ---
+# --- Helper Functions ---
+
+async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> str | None:
+    """Follows redirects for a short URL to find the final destination URL."""
+    cached_final_url = await resolved_url_cache.get(short_url)
+    if cached_final_url:
+        logger.info(f"Cache hit for resolved short link: {short_url} -> {cached_final_url}")
+        return cached_final_url
+
+    logger.info(f"Resolving short link: {short_url}")
+    try:
+        # Use HEAD request to be lighter, but GET might be needed if HEAD isn't supported well by the shortener
+        async with session.get(short_url, allow_redirects=True, timeout=10) as response:
+            # Check if the request was successful and we landed on a final URL
+            if response.status == 200 and response.url:
+                final_url = str(response.url)
+                logger.info(f"Resolved {short_url} to {final_url}")
+                # Basic check if it looks like a valid AliExpress product page URL
+                if STANDARD_ALIEXPRESS_DOMAIN_REGEX.match(final_url) and extract_product_id(final_url):
+                    await resolved_url_cache.set(short_url, final_url)
+                    return final_url
+                else:
+                    logger.warning(f"Resolved URL {final_url} doesn't look like a valid AliExpress product page.")
+                    return None
+            else:
+                logger.error(f"Failed to resolve short link {short_url}. Status: {response.status}")
+                return None
+    except asyncio.TimeoutError:
+        logger.error(f"Timeout resolving short link: {short_url}")
+        return None
+    except aiohttp.ClientError as e:
+        logger.error(f"HTTP ClientError resolving short link {short_url}: {e}")
+        return None
+    except Exception as e:
+        logger.exception(f"Unexpected error resolving short link {short_url}: {e}")
+        return None
+
 
 def extract_product_id(url):
     """Extracts the product ID from an AliExpress URL."""
     match = PRODUCT_ID_REGEX.search(url)
     return match.group(1) if match else None
 
-def extract_valid_aliexpress_urls_with_ids(text):
-    """Finds unique AliExpress URLs containing product IDs - Optimized version."""
-    potential_urls = URL_REGEX.findall(text)
-    valid_urls = {}  # Use dict {product_id: base_url}
+# Renamed from extract_valid_aliexpress_urls_with_ids
+def extract_potential_aliexpress_urls(text):
+    """Finds potential AliExpress URLs (standard and short) in text using regex."""
+    return URL_REGEX.findall(text)
 
-    for url in potential_urls:
-        # Basic sanity check for length and common TLDs before heavier regex
-        if len(url) > 20 and '.aliexpress.' in url:
-            if ALIEXPRESS_DOMAIN_REGEX.match(url):
-                product_id = extract_product_id(url)
-                if product_id and product_id not in valid_urls:
-                    try:
-                        parsed_url = urlparse(url)
-                        # Reconstruct a cleaner base URL
-                        base_url = urlunparse((
-                            parsed_url.scheme or 'https', # Ensure scheme
-                            parsed_url.netloc,
-                            parsed_url.path,
-                            '', '', '' # Remove params, query, fragment
-                         ))
-                        # Ensure path ends correctly
-                        if product_id and f'/item/{product_id}.html' not in base_url:
-                             # If ID was found but path doesn't match, reconstruct carefully
-                             path_segment = f'/item/{product_id}.html'
-                             base_url = urlunparse((
-                                parsed_url.scheme or 'https',
-                                parsed_url.netloc,
-                                path_segment,
-                                '', '', ''
-                             ))
 
-                        valid_urls[product_id] = base_url
-                    except ValueError:
-                        logger.warning(f"Could not parse potentially malformed URL: {url}")
-                        continue # Skip malformed URLs
-
-    return list(valid_urls.items())
+def clean_aliexpress_url(url: str, product_id: str) -> str | None:
+    """Reconstructs a clean base URL (scheme, domain, path) for a given product ID."""
+    try:
+        parsed_url = urlparse(url)
+        # Ensure the path segment is correct for the product ID
+        path_segment = f'/item/{product_id}.html'
+        base_url = urlunparse((
+            parsed_url.scheme or 'https', # Ensure scheme
+            parsed_url.netloc,
+            path_segment,
+            '', '', '' # Remove params, query, fragment
+        ))
+        return base_url
+    except ValueError:
+        logger.warning(f"Could not parse or reconstruct URL: {url}")
+        return None
 
 
 def build_url_with_offer_params(base_url, params_to_add):
@@ -197,8 +222,9 @@ async def periodic_cache_cleanup(context: ContextTypes.DEFAULT_TYPE):
     try:
         product_expired = await product_cache.clear_expired()
         link_expired = await link_cache.clear_expired()
-        logger.info(f"Cache cleanup: Removed {product_expired} product items, {link_expired} link items.")
-        logger.info(f"Cache stats: {len(product_cache.cache)} products, {len(link_cache.cache)} links in cache.")
+        resolved_expired = await resolved_url_cache.clear_expired()
+        logger.info(f"Cache cleanup: Removed {product_expired} product, {link_expired} link, {resolved_expired} resolved URL items.")
+        logger.info(f"Cache stats: {len(product_cache.cache)} products, {len(link_cache.cache)} links, {len(resolved_url_cache.cache)} resolved URLs in cache.")
     except Exception as e:
         logger.error(f"Error in periodic cache cleanup job: {e}")
 
@@ -529,25 +555,57 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     user = update.effective_user
     chat_id = update.effective_chat.id
 
-    # Extract potential AliExpress URLs with Product IDs
-    urls_to_process = extract_valid_aliexpress_urls_with_ids(message_text)
+    potential_urls = extract_potential_aliexpress_urls(message_text)
+    if not potential_urls:
+        return # No URLs found
 
-    if not urls_to_process:
-        # If the message contained 'aliexpress.com' but no valid product ID URL, maybe ignore or reply?
-        # For now, just ignore if no processable URLs found.
-        # logger.debug(f"No valid AliExpress product URLs found in message from {user.username or user.id} in chat {chat_id}")
-        return
-
-    logger.info(f"Found {len(urls_to_process)} AliExpress URLs in message from {user.username or user.id} in chat {chat_id}")
+    logger.info(f"Found {len(potential_urls)} potential URLs in message from {user.username or user.id} in chat {chat_id}")
 
     # Indicate processing
     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
 
-    # Create and run processing tasks concurrently
-    tasks = [
-        process_product_telegram(product_id, base_url, update, context)
-        for product_id, base_url in urls_to_process
-    ]
+    processed_product_ids = set()
+    tasks = []
+    async with aiohttp.ClientSession() as session: # Create a session for resolving links
+        for url in potential_urls:
+            product_id = None
+            base_url = None
+
+            # Check if it's a standard URL with an ID
+            if STANDARD_ALIEXPRESS_DOMAIN_REGEX.match(url):
+                product_id = extract_product_id(url)
+                if product_id:
+                    base_url = clean_aliexpress_url(url, product_id)
+                    logger.debug(f"Found standard URL: {url} -> ID: {product_id}, Base: {base_url}")
+
+            # Check if it's a short link
+            elif SHORT_LINK_DOMAIN_REGEX.match(url):
+                logger.debug(f"Found potential short link: {url}")
+                final_url = await resolve_short_link(url, session)
+                if final_url:
+                    product_id = extract_product_id(final_url)
+                    if product_id:
+                        base_url = clean_aliexpress_url(final_url, product_id)
+                        logger.debug(f"Resolved short link: {url} -> {final_url} -> ID: {product_id}, Base: {base_url}")
+                else:
+                     logger.warning(f"Could not resolve or extract ID from short link: {url}")
+
+
+            # If we got a valid product ID and base URL, and haven't processed this ID yet
+            if product_id and base_url and product_id not in processed_product_ids:
+                processed_product_ids.add(product_id)
+                tasks.append(process_product_telegram(product_id, base_url, update, context))
+            elif product_id and product_id in processed_product_ids:
+                 logger.debug(f"Skipping duplicate product ID: {product_id}")
+
+
+    if not tasks:
+        logger.info(f"No processable AliExpress product links found after filtering/resolution in message from {user.username or user.id}")
+        # Optionally send a message back if no valid links were found after trying
+        # await update.message.reply_text("Couldn't find any valid AliExpress product links to process.")
+        return
+
+    logger.info(f"Processing {len(tasks)} unique AliExpress products for chat {chat_id}")
     await asyncio.gather(*tasks)
 
 
@@ -562,10 +620,12 @@ def main() -> None:
     application.add_handler(CommandHandler("start", start))
 
     # Message handler for text messages that are not commands
-    # Using TEXT filter and ensuring it finds 'aliexpress.' for basic pre-filtering
+    # Using TEXT filter and checking for 'aliexpress.com' or 's.click.aliexpress.com'
     # The main logic is inside handle_message
+    # This regex is broader to catch both types initially
+    combined_regex = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com', re.IGNORECASE)
     application.add_handler(MessageHandler(
-        filters.TEXT & ~filters.COMMAND & filters.Regex(ALIEXPRESS_DOMAIN_REGEX),
+        filters.TEXT & ~filters.COMMAND & filters.Regex(combined_regex),
         handle_message
     ))
     # You might want a separate handler or adjust the above if you need to catch
