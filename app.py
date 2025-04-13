@@ -74,9 +74,9 @@ SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|
 # --- Offer Parameter Mapping ---
 OFFER_PARAMS = {
     "coin": {"name": "🪙 Coin", "params": {"sourceType": "620", "channel": "coin"}},
-    "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562"}},
-    "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561"}},
-    "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680"}},
+    "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562","aff_fcid=": ""}},
+    "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561","aff_fcid=": ""}},
+    "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680","aff_fcid=": ""}},
 }
 OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
 
@@ -451,7 +451,7 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
             offer_info = OFFER_PARAMS[offer_key]
             params_for_offer = offer_info["params"]
             target_url = build_url_with_offer_params(base_url, params_for_offer)
-            # Add task to list
+            target_url=f"https://star.aliexpress.com/share/share.htm?platform=AE&businessType=ProductDetail&redirectUrl={target_url}"
             task = generate_aliexpress_affiliate_link(target_url)
             link_tasks.append((offer_key, task))
 
