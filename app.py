@@ -23,9 +23,9 @@ load_dotenv()
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 ALIEXPRESS_APP_KEY = os.getenv('ALIEXPRESS_APP_KEY')
 ALIEXPRESS_APP_SECRET = os.getenv('ALIEXPRESS_APP_SECRET')
-TARGET_CURRENCY = os.getenv('TARGET_CURRENCY', 'USD') # Default if not set
-TARGET_LANGUAGE = os.getenv('TARGET_LANGUAGE', 'en') # Default if not set
-QUERY_COUNTRY = os.getenv('QUERY_COUNTRY', 'US')     # Default if not set
+TARGET_CURRENCY = os.getenv('TARGET_CURRENCY', 'USD')
+TARGET_LANGUAGE = os.getenv('TARGET_LANGUAGE', 'en')
+QUERY_COUNTRY = os.getenv('QUERY_COUNTRY', 'US')
 ALIEXPRESS_TRACKING_ID = os.getenv('ALIEXPRESS_TRACKING_ID', 'default')
 
 # --- Basic Logging Setup ---
@@ -34,6 +34,7 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 # --- AliExpress API Configuration ---
 ALIEXPRESS_API_URL = 'https://api-sg.aliexpress.com/sync'
@@ -84,7 +85,7 @@ class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
         self.expiry_seconds = expiry_seconds
-        self._lock = asyncio.Lock() # Lock for async access
+        self._lock = asyncio.Lock()
 
     async def get(self, key):
         """Get item from cache if it exists and is not expired (async safe)"""
@@ -118,13 +119,13 @@ class CacheWithExpiry:
                     del self.cache[key]
                     count += 1
                 except KeyError:
-                    pass # Already deleted, potentially by another task
+                    pass
             return count
 
 # Initialize caches
 product_cache = CacheWithExpiry(CACHE_EXPIRY_SECONDS)
 link_cache = CacheWithExpiry(CACHE_EXPIRY_SECONDS)
-resolved_url_cache = CacheWithExpiry(CACHE_EXPIRY_SECONDS) # Cache for short link resolutions
+resolved_url_cache = CacheWithExpiry(CACHE_EXPIRY_SECONDS)
 
 # --- Helper Functions ---
 
@@ -137,13 +138,10 @@ async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> 
 
     logger.info(f"Resolving short link: {short_url}")
     try:
-        # Use HEAD request to be lighter, but GET might be needed if HEAD isn't supported well by the shortener
         async with session.get(short_url, allow_redirects=True, timeout=10) as response:
-            # Check if the request was successful and we landed on a final URL
             if response.status == 200 and response.url:
                 final_url = str(response.url)
                 logger.info(f"Resolved {short_url} to {final_url}")
-                # Basic check if it looks like a valid AliExpress product page URL
                 if STANDARD_ALIEXPRESS_DOMAIN_REGEX.match(final_url) and extract_product_id(final_url):
                     await resolved_url_cache.set(short_url, final_url)
                     return final_url
@@ -182,10 +180,10 @@ def clean_aliexpress_url(url: str, product_id: str) -> str | None:
         # Ensure the path segment is correct for the product ID
         path_segment = f'/item/{product_id}.html'
         base_url = urlunparse((
-            parsed_url.scheme or 'https', # Ensure scheme
+            parsed_url.scheme or 'https',
             parsed_url.netloc,
             path_segment,
-            '', '', '' # Remove params, query, fragment
+            '', '', ''
         ))
         return base_url
     except ValueError:
@@ -200,22 +198,20 @@ def build_url_with_offer_params(base_url, params_to_add):
 
     try:
         parsed_url = urlparse(base_url)
-        # Important: Create a *new* query string, don't modify existing 'params' attribute
         new_query_string = urlencode(params_to_add)
         # Reconstruct URL ensuring path is preserved correctly
-        # Using path, not params, for query string placement
         reconstructed_url = urlunparse((
             parsed_url.scheme,
             parsed_url.netloc,
             parsed_url.path,
-            '', # No path parameters
-            new_query_string, # Query string
-            '' # No fragment
+            '',
+            new_query_string,
+            ''
         ))
         return reconstructed_url
     except ValueError:
         logger.error(f"Error building URL with params for base: {base_url}")
-        return base_url # Return original on error
+        return base_url
 
 
 # --- Maintenance Task ---
@@ -327,7 +323,7 @@ async def fetch_product_details_v2(product_id):
 
 async def generate_aliexpress_affiliate_link(target_url):
     """Generates an affiliate link using aliexpress.affiliate.link.generate with async cache."""
-    cache_key = target_url # Use the full target URL as the key
+    cache_key = target_url
     cached_link = await link_cache.get(cache_key)
     if cached_link:
         logger.info(f"Cache hit for affiliate link: {target_url}")
@@ -339,7 +335,7 @@ async def generate_aliexpress_affiliate_link(target_url):
         """Execute blocking API call in a thread pool."""
         try:
             request = iop.IopRequest('aliexpress.affiliate.link.generate')
-            request.add_api_param('promotion_link_type', '0') # 0 for specific links
+            request.add_api_param('promotion_link_type', '0')
             request.add_api_param('source_values', target_url)
             request.add_api_param('tracking_id', ALIEXPRESS_TRACKING_ID)
 
@@ -361,12 +357,10 @@ async def generate_aliexpress_affiliate_link(target_url):
              try:
                  response_data = json.loads(response_data)
              except json.JSONDecodeError as json_err:
-                 # Attempt regex extraction as a fallback for potentially malformed JSON
-                 # This is fragile and should ideally not be needed if the API/SDK is reliable
                  logger.warning(f"Failed to decode JSON response for link generation ({target_url}): {json_err}. Attempting regex fallback.")
                  match = re.search(r'"promotion_link"\s*:\s*"([^"]+)"', response_data)
                  if match:
-                     link = match.group(1).replace('\\/', '/') # Fix escaped slashes
+                     link = match.group(1).replace('\\/', '/')
                      logger.warning(f"Extracted link via regex fallback: {link}")
                      await link_cache.set(cache_key, link)
                      return link
@@ -389,7 +383,6 @@ async def generate_aliexpress_affiliate_link(target_url):
 
         resp_result = generate_response.get('resp_result', {}).get('result', {})
         if not resp_result:
-             # Check if maybe the structure is different? Log the generate_response
              logger.error(f"Missing 'resp_result' or 'result' key in link response for URL {target_url}. Response: {generate_response}")
              return None
 
@@ -399,7 +392,6 @@ async def generate_aliexpress_affiliate_link(target_url):
              logger.warning(f"No 'promotion_links' found or empty list for URL {target_url}. Response: {resp_result}")
              return None
 
-        # Assuming the first link is the one we want
         if isinstance(links_data[0], dict):
             link = links_data[0].get('promotion_link')
             if link:
@@ -477,12 +469,11 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
                  generated_links[offer_key] = result
                  success_count += 1
              else:
-                 generated_links[offer_key] = None # Explicitly None if generation returned None/empty
+                 generated_links[offer_key] = None
 
         # Build the response message (HTML formatted)
-        # Use HTML for better link handling and formatting robustness
         message_lines = [
-            f"<b>{product_title[:250]}</b>", # Limit title length
+            f"<b>{product_title[:250]}</b>",
             f"\n<b>Sale Price:</b> {price_str}\n",
             "<b>Offers:</b>"
         ]
@@ -498,9 +489,9 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
 
         # Add static links and footer
         message_lines.extend([
-            "\n", # Spacer
+            "\n",
              '<a href="https://s.click.aliexpress.com/e/_oCPK1K1">Choice Day</a> | <a href="https://s.click.aliexpress.com/e/_onx9vR3">Best Deals</a>',
-            "\n", # Spacer
+            "\n",
              '<a href="https://github.com/ReizoZ">GitHub</a> | <a href="https://discord.gg/9QzECYfmw8">Discord</a> | <a href="https://t.me/Aliexpress_Deal_Dz">Telegram</a>',
              "\n<i>By RizoZ</i>"
         ])
@@ -522,11 +513,10 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
                         chat_id=chat_id,
                         text=response_text,
                         parse_mode=ParseMode.HTML,
-                        disable_web_page_preview=True # Often better for these messages
+                        disable_web_page_preview=True
                     )
-            except Exception as send_error: # Catch potential Telegram API errors during send
+            except Exception as send_error:
                  logger.error(f"Failed to send message for product {product_id} to chat {chat_id}: {send_error}")
-                 # Maybe send a fallback plain text error?
                  await context.bot.send_message(
                      chat_id=chat_id,
                      text=f"⚠️ Error formatting or sending message for product {product_id}. Please check logs."
@@ -534,7 +524,7 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
         else:
             await context.bot.send_message(
                 chat_id=chat_id,
-                text="We couldn't find an offer for this product" # Changed message as requested
+                text="We couldn't find an offer for this product"
             )
 
     except Exception as e:
@@ -551,7 +541,7 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handles incoming text messages, extracts URLs, and processes them."""
     if not update.message or not update.message.text:
-        return # Ignore messages without text
+        return
 
     message_text = update.message.text
     user = update.effective_user
@@ -559,7 +549,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     potential_urls = extract_potential_aliexpress_urls(message_text)
     if not potential_urls:
-        return # No URLs found
+        return
 
     logger.info(f"Found {len(potential_urls)} potential URLs in message from {user.username or user.id} in chat {chat_id}")
 
@@ -568,7 +558,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     processed_product_ids = set()
     tasks = []
-    async with aiohttp.ClientSession() as session: # Create a session for resolving links
+    async with aiohttp.ClientSession() as session:
         for url in potential_urls:
             product_id = None
             base_url = None
@@ -603,7 +593,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     if not tasks:
         logger.info(f"No processable AliExpress product links found after filtering/resolution in message from {user.username or user.id}")
-        # Send the requested message when no valid links are found
         await context.bot.send_message(
             chat_id=chat_id,
             text=" ❌ We couldn't find an offer for this product ❌"
@@ -617,7 +606,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 # --- Main Bot Execution ---
 def main() -> None:
     """Start the bot."""
-    # Create the Application and pass it your bot's token.
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
     # --- Add Handlers ---
@@ -639,7 +627,7 @@ def main() -> None:
     # --- Setup Periodic Jobs ---
     job_queue = application.job_queue
     # Run cache cleanup once shortly after start, then every day
-    job_queue.run_once(periodic_cache_cleanup, 60) # Run 1 min after start
+    job_queue.run_once(periodic_cache_cleanup, 60)
     job_queue.run_repeating(periodic_cache_cleanup, interval=timedelta(days=1), first=timedelta(days=1))
 
     # --- Start the Bot ---
@@ -656,7 +644,7 @@ def main() -> None:
     # Run the bot until the user presses Ctrl-C
     application.run_polling()
 
-    # Clean shutdown for thread pool (optional but good practice)
+    # Clean shutdown for thread pool
     logger.info("Shutting down thread pool...")
     executor.shutdown(wait=True)
     logger.info("Bot stopped.")
