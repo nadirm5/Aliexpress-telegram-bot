@@ -14,8 +14,9 @@ from concurrent.futures import ThreadPoolExecutor
 
 # Telegram imports
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, JobQueue
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, JobQueue 
 from telegram.constants import ParseMode, ChatAction
+
 
 # --- Environment Variable Loading ---
 load_dotenv()
@@ -62,9 +63,10 @@ except Exception as e:
     exit()
 
 # --- Regex Optimization: Precompile patterns ---
-URL_REGEX = re.compile(r'https?://[^\s<>"]+|www\.[^\s<>"]+')
+# Updated to find aliexpress.com/..., s.click.aliexpress.com/... etc., even without http/www prefix
+URL_REGEX = re.compile(r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*', re.IGNORECASE)
 PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html')
-# Matches standard AliExpress domains
+# Matches standard AliExpress domains (requires https:// prepended if missing)
 STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|id\.aliexpress\.com|th\.aliexpress\.com|ar\.aliexpress\.com)(\.([\w-]+))?(/.*)?', re.IGNORECASE)
 # Matches known short link domains (s.click.aliexpress.com and a.aliexpress.com)
 # Using non-capturing group (?:...) and | for OR
@@ -487,17 +489,27 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
             else:
                 message_lines.append(f"{offer_name}: ❌ Failed")
 
-        # Add static links and footer
-        message_lines.extend([
-            "\n",
-             '<a href="https://s.click.aliexpress.com/e/_oCPK1K1">Choice Day</a> | <a href="https://s.click.aliexpress.com/e/_onx9vR3">Best Deals</a>',
-            "\n",
-             '<a href="https://github.com/ReizoZ">GitHub</a> | <a href="https://discord.gg/9QzECYfmw8">Discord</a> | <a href="https://t.me/Aliexpress_Deal_Dz">Telegram</a>',
-             "\n<i>By RizoZ</i>"
-        ])
-
+        # Add footer text
+        message_lines.append("\n<i>By RizoZ</i>")
         response_text = "\n".join(message_lines)
-        
+
+        # --- Create Inline Keyboard ---
+        keyboard = [
+            [
+                InlineKeyboardButton("Choice Day", url="https://s.click.aliexpress.com/e/_oCPK1K1"),
+                InlineKeyboardButton("Best Deals", url="https://s.click.aliexpress.com/e/_onx9vR3")
+            ],
+            [
+                InlineKeyboardButton("GitHub", url="https://github.com/ReizoZ"),
+                InlineKeyboardButton("Discord", url="https://discord.gg/9QzECYfmw8"),
+                InlineKeyboardButton("Telegram", url="https://t.me/Aliexpress_Deal_Dz")
+            ],
+            [
+                InlineKeyboardButton("☕ Buy Me Coffee", url="https://ko-fi.com/reizoz")
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
         # Send the message (photo with caption if image available, else text)
         if success_count > 0:
             try:
@@ -506,17 +518,19 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
                         chat_id=chat_id,
                         photo=product_image,
                         caption=response_text,
-                        parse_mode=ParseMode.HTML
+                        parse_mode=ParseMode.HTML,
+                        reply_markup=reply_markup
                     )
                 else:
                     await context.bot.send_message(
                         chat_id=chat_id,
                         text=response_text,
                         parse_mode=ParseMode.HTML,
-                        disable_web_page_preview=True
+                        disable_web_page_preview=True,
+                        reply_markup=reply_markup
                     )
             except Exception as send_error:
-                 logger.error(f"Failed to send message for product {product_id} to chat {chat_id}: {send_error}")
+                 logger.error(f"Failed to send message with keyboard for product {product_id} to chat {chat_id}: {send_error}")
                  await context.bot.send_message(
                      chat_id=chat_id,
                      text=f"⚠️ Error formatting or sending message for product {product_id}. Please check logs."
@@ -542,8 +556,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     """Handles incoming text messages, extracts URLs, and processes them."""
     if not update.message or not update.message.text:
         return
-
     message_text = update.message.text
+    print(f"Received message: {message_text}")
     user = update.effective_user
     chat_id = update.effective_chat.id
 
@@ -571,8 +585,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     tasks = []
     async with aiohttp.ClientSession() as session:
         for url in potential_urls:
+            original_url = url
             product_id = None
             base_url = None
+
+            # Prepend https:// if missing and looks like an AE domain
+            if not url.startswith(('http://', 'https://')):
+                # Use a simple check for known AE domains before prepending
+                if re.match(r'^(?:www\.|s\.click\.|a\.)?[\w-]*aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|id|th|ar)', url, re.IGNORECASE):
+                    logger.debug(f"Prepending https:// to potential URL: {url}")
+                    url = f"https://{url}"
+                else:
+                    # If it doesn't start with http/https and doesn't look like an AE domain, skip it
+                    logger.debug(f"Skipping potential URL without scheme or known AE domain: {original_url}")
+                    continue
 
             # Check if it's a standard URL with an ID
             if STANDARD_ALIEXPRESS_DOMAIN_REGEX.match(url):
@@ -591,7 +617,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                         base_url = clean_aliexpress_url(final_url, product_id)
                         logger.debug(f"Resolved short link: {url} -> {final_url} -> ID: {product_id}, Base: {base_url}")
                 else:
-                     logger.warning(f"Could not resolve or extract ID from short link: {url}")
+                     logger.warning(f"Could not resolve or extract ID from short link: {original_url} (resolved to: {final_url})")
 
 
             # If we got a valid product ID and base URL, and haven't processed this ID yet
@@ -640,9 +666,9 @@ def main() -> None:
         handle_message
     ))
     
-    # Handle forwarded messages
+    
     application.add_handler(MessageHandler(
-        filters.FORWARDED & filters.TEXT & filters.Regex(combined_domain_regex),
+        filters.FORWARDED  & filters.TEXT & filters.Regex(combined_domain_regex),  
         handle_message
     ))
 
