@@ -64,10 +64,10 @@ except Exception as e:
 
 # --- Regex Optimization: Precompile patterns ---
 # Updated to find aliexpress.com/..., s.click.aliexpress.com/... etc., even without http/www prefix
-URL_REGEX = re.compile(r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*', re.IGNORECASE)
+URL_REGEX = re.compile(r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*', re.IGNORECASE)
 PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html')
 # Matches standard AliExpress domains (requires https:// prepended if missing)
-STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|id\.aliexpress\.com|th\.aliexpress\.com|ar\.aliexpress\.com)(\.([\w-]+))?(/.*)?', re.IGNORECASE)
+STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id\.aliexpress\.com|th\.aliexpress\.com|ar\.aliexpress\.com)(\.([\w-]+))?(/.*)?', re.IGNORECASE)
 # Matches known short link domains (s.click.aliexpress.com and a.aliexpress.com)
 # Using non-capturing group (?:...) and | for OR
 SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
