@@ -144,6 +144,12 @@ async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> 
             if response.status == 200 and response.url:
                 final_url = str(response.url)
                 logger.info(f"Resolved {short_url} to {final_url}")
+                
+                if '.aliexpress.us' in final_url:
+                    logger.info(f"Detected US domain in {final_url}, converting to .com domain")
+                    final_url = final_url.replace('.aliexpress.us', '.aliexpress.com')
+                    logger.info(f"Converted URL: {final_url}")
+                
                 if STANDARD_ALIEXPRESS_DOMAIN_REGEX.match(final_url) and extract_product_id(final_url):
                     await resolved_url_cache.set(short_url, final_url)
                     return final_url
@@ -165,9 +171,36 @@ async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> 
 
 
 def extract_product_id(url):
-    """Extracts the product ID from an AliExpress URL."""
+    """Extracts the product ID from an AliExpress URL.
+    Handles different domain formats including .us domain.
+    """
+    # First, ensure we're working with a standardized URL format
+    # Convert .us domain to .com domain if needed
+    if '.aliexpress.us' in url:
+        url = url.replace('.aliexpress.us', '.aliexpress.com')
+        logger.info(f"Converted .us URL to .com format for product ID extraction: {url}")
+    
+    # Try standard product ID extraction
     match = PRODUCT_ID_REGEX.search(url)
-    return match.group(1) if match else None
+    if match:
+        return match.group(1)
+    
+    # If standard extraction fails, try alternative patterns that might be used in different domains
+    # Some domains might use different URL structures
+    alt_patterns = [
+        r'/p/[^/]+/([0-9]+)\.html',  # Alternative pattern sometimes used
+        r'product/([0-9]+)'
+    ]
+    
+    for pattern in alt_patterns:
+        alt_match = re.search(pattern, url)
+        if alt_match:
+            product_id = alt_match.group(1)
+            logger.info(f"Extracted product ID {product_id} using alternative pattern {pattern}")
+            return product_id
+    
+    logger.warning(f"Could not extract product ID from URL: {url}")
+    return None
 
 # Renamed from extract_valid_aliexpress_urls_with_ids
 def extract_potential_aliexpress_urls(text):
