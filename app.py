@@ -75,10 +75,10 @@ SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|
 
 # --- Offer Parameter Mapping ---
 OFFER_PARAMS = {
-    "coin": {"name": "🪙 Coin", "params": {"sourceType": "620", "channel": "coin"}},
-    "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562","aff_fcid=": ""}},
-    "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561","aff_fcid=": ""}},
-    "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680","aff_fcid=": ""}},
+    "coin": {"name": "🪙 Coin", "params": {"sourceType": "620", "channel": "coin" , "afSmartRedirect": "y"}},
+    "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562", "channel": "sd" , "afSmartRedirect": "y"}},
+    "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers" , "afSmartRedirect": "y"}},
+    "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680", "channel": "bigSave" , "afSmartRedirect": "y"}},
 }
 OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
 
@@ -200,11 +200,21 @@ def build_url_with_offer_params(base_url, params_to_add):
 
     try:
         parsed_url = urlparse(base_url)
+        
+        # Remove country subdomain (like 'ar.', 'es.', etc.) from netloc
+        netloc = parsed_url.netloc
+        if '.' in netloc and netloc.count('.') > 1:
+            # Extract domain parts
+            parts = netloc.split('.')
+            # Keep only the main domain (aliexpress.com)
+            if len(parts) >= 2 and 'aliexpress' in parts[-2]:
+                netloc = f"aliexpress.{parts[-1]}"
+        
         new_query_string = urlencode(params_to_add)
         # Reconstruct URL ensuring path is preserved correctly
         reconstructed_url = urlunparse((
             parsed_url.scheme,
-            parsed_url.netloc,
+            netloc,
             parsed_url.path,
             '',
             new_query_string,
@@ -453,7 +463,7 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
             offer_info = OFFER_PARAMS[offer_key]
             params_for_offer = offer_info["params"]
             target_url = build_url_with_offer_params(base_url, params_for_offer)
-            target_url=f"https://star.aliexpress.com/share/share.htm?platform=AE&businessType=ProductDetail&redirectUrl={target_url}"
+            print( "target_url",target_url)
             task = generate_aliexpress_affiliate_link(target_url)
             link_tasks.append((offer_key, task))
 
