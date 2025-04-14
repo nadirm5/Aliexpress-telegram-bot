@@ -17,7 +17,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, JobQueue 
 from telegram.constants import ParseMode, ChatAction
 
-
+os.makedirs('/app/cache', exist_ok=True)
 # --- Environment Variable Loading ---
 load_dotenv()
 

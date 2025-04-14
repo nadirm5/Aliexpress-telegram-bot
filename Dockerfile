@@ -10,7 +10,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 
-VOLUME /app/cache
 
 
 CMD ["python", "app.py"]
