@@ -150,6 +150,22 @@ async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> 
                     final_url = final_url.replace('.aliexpress.us', '.aliexpress.com')
                     logger.info(f"Converted URL: {final_url}")
                 
+                # Replace _randl_shipto=US with _randl_shipto=QUERY_COUNTRY
+                if '_randl_shipto=' in final_url:
+                    logger.info(f"Found _randl_shipto parameter in URL, replacing with QUERY_COUNTRY value")
+                    final_url = re.sub(r'_randl_shipto=[^&]+', f'_randl_shipto={QUERY_COUNTRY}', final_url)
+                    logger.info(f"Updated URL with correct country: {final_url}")
+                    
+                    # Re-fetch the URL with the updated country parameter to get the correct product ID
+                    try:
+                        logger.info(f"Re-fetching URL with updated country parameter: {final_url}")
+                        async with session.get(final_url, allow_redirects=True, timeout=10) as country_response:
+                            if country_response.status == 200 and country_response.url:
+                                final_url = str(country_response.url)
+                                logger.info(f"Re-fetched URL with correct country: {final_url}")
+                    except Exception as e:
+                        logger.warning(f"Error re-fetching URL with updated country parameter: {e}")
+                
                 # Extract product ID after domain conversion to ensure we get the correct ID
                 product_id = extract_product_id(final_url)
                 if STANDARD_ALIEXPRESS_DOMAIN_REGEX.match(final_url) and product_id:
