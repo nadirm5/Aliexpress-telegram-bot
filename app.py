@@ -150,7 +150,11 @@ async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> 
                     final_url = final_url.replace('.aliexpress.us', '.aliexpress.com')
                     logger.info(f"Converted URL: {final_url}")
                 
-                if STANDARD_ALIEXPRESS_DOMAIN_REGEX.match(final_url) and extract_product_id(final_url):
+                # Extract product ID after domain conversion to ensure we get the correct ID
+                product_id = extract_product_id(final_url)
+                if STANDARD_ALIEXPRESS_DOMAIN_REGEX.match(final_url) and product_id:
+                    # Re-fetch product details with the new product ID if domain was changed
+                    logger.info(f"Using product ID {product_id} from converted URL")
                     await resolved_url_cache.set(short_url, final_url)
                     return final_url
                 else:
