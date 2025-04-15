@@ -63,13 +63,10 @@ except Exception as e:
     exit()
 
 # --- Regex Optimization: Precompile patterns ---
-# Updated to find aliexpress.com/..., s.click.aliexpress.com/... etc., even without http/www prefix
+
 URL_REGEX = re.compile(r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*', re.IGNORECASE)
 PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html')
-# Matches standard AliExpress domains (requires https:// prepended if missing)
-STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id\.aliexpress\.com|th\.aliexpress\.com|ar\.aliexpress\.com)(\.([\w-]+))?(/.*)?', re.IGNORECASE)
-# Matches known short link domains (s.click.aliexpress.com and a.aliexpress.com)
-# Using non-capturing group (?:...) and | for OR
+STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id\.aliexpress\.com|th\.aliexpress\.com|ar\.aliexpress\.com)(\.([\w-]+))?(/.*)?', re.IGNORECASE)
 SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
 
 
@@ -683,7 +680,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                      logger.warning(f"Could not resolve or extract ID from short link: {original_url} (resolved to: {final_url})")
 
 
-            # If we got a valid product ID and base URL, and haven't processed this ID yet
             if product_id and base_url and product_id not in processed_product_ids:
                 processed_product_ids.add(product_id)
                 tasks.append(process_product_telegram(product_id, base_url, update, context))
