@@ -270,6 +270,8 @@ def build_url_with_offer_params(base_url, params_to_add):
             new_query_string,
             ''
         ))
+        # Add the star.aliexpress.com prefix to the reconstructed URL
+        reconstructed_url = f"https://star.aliexpress.com/share/share.htm?&redirectUrl={reconstructed_url}"
         return reconstructed_url
     except ValueError:
         logger.error(f"Error building URL with params for base: {base_url}")
@@ -411,7 +413,15 @@ async def generate_affiliate_links_batch(target_urls: list[str]) -> dict[str, st
     logger.info(f"Generating affiliate links for {len(uncached_urls)} uncached URLs: {', '.join(uncached_urls[:3])}...")
 
     # 3. Prepare and execute the batch API call
-    source_values_str = ",".join(uncached_urls)
+    # Check if URLs already have the star.aliexpress.com prefix before adding it
+    prefixed_urls = []
+    for url in uncached_urls:
+        # Only add the prefix if it's not already there
+        if "star.aliexpress.com/share/share.htm" not in url:
+            prefixed_urls.append(f"https://star.aliexpress.com/share/share.htm?&redirectUrl={url}")
+        else:
+            prefixed_urls.append(url)
+    source_values_str = ",".join(prefixed_urls)
 
     def _execute_batch_link_api():
         """Execute blocking batch API call in a thread pool."""
