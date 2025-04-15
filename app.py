@@ -383,94 +383,130 @@ async def fetch_product_details_v2(product_id):
         logger.exception(f"Error parsing product details response for ID {product_id}: {e}")
         return None
 
-async def generate_aliexpress_affiliate_link(target_url):
-    """Generates an affiliate link using aliexpress.affiliate.link.generate with async cache."""
-    cache_key = target_url
-    cached_link = await link_cache.get(cache_key)
-    if cached_link:
-        logger.info(f"Cache hit for affiliate link: {target_url}")
-        return cached_link
+async def generate_affiliate_links_batch(target_urls: list[str]) -> dict[str, str | None]:
+    """
+    Generates affiliate links for a list of target URLs using a single API call for uncached URLs.
+    Checks cache first, then fetches missing links in a batch.
+    Returns a dictionary mapping each original target_url to its affiliate link (or None if failed).
+    """
+    results_dict = {}
+    uncached_urls = []
 
-    logger.info(f"Generating affiliate link for: {target_url}")
+    # 1. Check cache for each URL
+    for url in target_urls:
+        cached_link = await link_cache.get(url)
+        if cached_link:
+            logger.info(f"Cache hit for affiliate link: {url}")
+            results_dict[url] = cached_link
+        else:
+            logger.debug(f"Cache miss for affiliate link: {url}")
+            results_dict[url] = None # Initialize as None
+            uncached_urls.append(url)
 
-    def _execute_link_api():
-        """Execute blocking API call in a thread pool."""
+    # 2. If all URLs were cached, return immediately
+    if not uncached_urls:
+        logger.info("All affiliate links retrieved from cache.")
+        return results_dict
+
+    logger.info(f"Generating affiliate links for {len(uncached_urls)} uncached URLs: {', '.join(uncached_urls[:3])}...")
+
+    # 3. Prepare and execute the batch API call
+    source_values_str = ",".join(uncached_urls)
+
+    def _execute_batch_link_api():
+        """Execute blocking batch API call in a thread pool."""
         try:
             request = iop.IopRequest('aliexpress.affiliate.link.generate')
             request.add_api_param('promotion_link_type', '0')
-            request.add_api_param('source_values', target_url)
+            request.add_api_param('source_values', source_values_str) # Comma-separated URLs
             request.add_api_param('tracking_id', ALIEXPRESS_TRACKING_ID)
-
             return aliexpress_client.execute(request)
         except Exception as e:
-            logger.error(f"Error in link API call thread for URL {target_url}: {e}")
+            logger.error(f"Error in batch link API call thread for URLs: {e}")
             return None
 
     loop = asyncio.get_event_loop()
-    response = await loop.run_in_executor(executor, _execute_link_api)
+    response = await loop.run_in_executor(executor, _execute_batch_link_api)
 
+    # 4. Process the batch response
     if not response or not response.body:
-        logger.error(f"Link generation API call failed or returned empty body for URL: {target_url}")
-        return None
+        logger.error(f"Batch link generation API call failed or returned empty body for {len(uncached_urls)} URLs.")
+        # Return the dictionary with cached values and Nones for failed ones
+        return results_dict
 
     try:
         response_data = response.body
         if isinstance(response_data, str):
-             try:
-                 response_data = json.loads(response_data)
-             except json.JSONDecodeError as json_err:
-                 logger.warning(f"Failed to decode JSON response for link generation ({target_url}): {json_err}. Attempting regex fallback.")
-                 match = re.search(r'"promotion_link"\s*:\s*"([^"]+)"', response_data)
-                 if match:
-                     link = match.group(1).replace('\\/', '/')
-                     logger.warning(f"Extracted link via regex fallback: {link}")
-                     await link_cache.set(cache_key, link)
-                     return link
-                 else:
-                    logger.error(f"JSON decode failed and regex fallback couldn't find link for {target_url}. Response: {response_data[:500]}")
-                    return None
-
+            try:
+                response_data = json.loads(response_data)
+            except json.JSONDecodeError as json_err:
+                logger.error(f"Failed to decode JSON response for batch link generation: {json_err}. Response: {response_data[:500]}")
+                return results_dict # Return partial results
 
         if 'error_response' in response_data:
             error_details = response_data.get('error_response', {})
             error_msg = error_details.get('msg', 'Unknown API error')
             error_code = error_details.get('code', 'N/A')
-            logger.error(f"API Error for Link Generation ({target_url}): Code={error_code}, Msg={error_msg}")
-            return None
+            logger.error(f"API Error for Batch Link Generation: Code={error_code}, Msg={error_msg}")
+            return results_dict # Return partial results
 
         generate_response = response_data.get('aliexpress_affiliate_link_generate_response')
         if not generate_response:
-             logger.error(f"Missing 'aliexpress_affiliate_link_generate_response' key for URL {target_url}. Response: {response_data}")
-             return None
+            logger.error(f"Missing 'aliexpress_affiliate_link_generate_response' key in batch response. Response: {response_data}")
+            return results_dict
 
-        resp_result = generate_response.get('resp_result', {}).get('result', {})
-        if not resp_result:
-             logger.error(f"Missing 'resp_result' or 'result' key in link response for URL {target_url}. Response: {generate_response}")
-             return None
+        resp_result_outer = generate_response.get('resp_result')
+        if not resp_result_outer:
+            logger.error(f"Missing 'resp_result' key in batch response. Response: {generate_response}")
+            return results_dict
 
-        links_data = resp_result.get('promotion_links', {}).get('promotion_link', [])
+        resp_code = resp_result_outer.get('resp_code')
+        if resp_code != 200:
+            resp_msg = resp_result_outer.get('resp_msg', 'Unknown response message')
+            logger.error(f"API response code not 200 for batch link generation. Code: {resp_code}, Msg: {resp_msg}")
+            return results_dict
 
-        if not links_data or not isinstance(links_data, list) or len(links_data) == 0:
-             logger.warning(f"No 'promotion_links' found or empty list for URL {target_url}. Response: {resp_result}")
-             return None
+        result = resp_result_outer.get('result', {})
+        if not result:
+            logger.error(f"Missing 'result' key in batch link response. Response: {resp_result_outer}")
+            return results_dict
 
-        if isinstance(links_data[0], dict):
-            link = links_data[0].get('promotion_link')
-            if link:
-                await link_cache.set(cache_key, link)
-                expiry_date = datetime.now() + timedelta(days=CACHE_EXPIRY_DAYS)
-                logger.info(f"Cached affiliate link for {target_url} until {expiry_date.strftime('%Y-%m-%d %H:%M:%S')}")
-                return link
+        links_data = result.get('promotion_links', {}).get('promotion_link', [])
+        if not links_data or not isinstance(links_data, list):
+            logger.warning(f"No 'promotion_links' found or not a list in batch response. Response: {result}")
+            return results_dict # Return partial results
+
+        # 5. Update results_dict and cache with fetched links
+        expiry_date = datetime.now() + timedelta(days=CACHE_EXPIRY_DAYS)
+        logger.info(f"Processing {len(links_data)} links from batch API response.")
+        for link_info in links_data:
+            if isinstance(link_info, dict):
+                source_url = link_info.get('source_value')
+                promo_link = link_info.get('promotion_link')
+
+                if source_url and promo_link:
+                    if source_url in results_dict: # Ensure we only update URLs we requested
+                        results_dict[source_url] = promo_link
+                        # Cache the result
+                        await link_cache.set(source_url, promo_link)
+                        logger.debug(f"Cached affiliate link for {source_url} until {expiry_date.strftime('%Y-%m-%d %H:%M:%S')}")
+                    else:
+                        logger.warning(f"Received link for unexpected source_value in batch response: {source_url}")
+                else:
+                    logger.warning(f"Missing 'source_value' or 'promotion_link' in batch response item: {link_info}")
             else:
-                 logger.warning(f"Found promotion link structure but 'promotion_link' key is missing or empty for URL {target_url}. Link data: {links_data[0]}")
-                 return None
-        else:
-             logger.warning(f"Promotion link data is not a dictionary as expected for URL {target_url}. Data: {links_data[0]}")
-             return None
+                logger.warning(f"Promotion link data item is not a dictionary in batch response: {link_info}")
+
+        # Log any URLs that were requested but not returned
+        for url in uncached_urls:
+            if results_dict.get(url) is None:
+                logger.warning(f"No affiliate link returned or processed for requested URL: {url}")
+
+        return results_dict
 
     except Exception as e:
-        logger.exception(f"Error parsing link generation response for URL {target_url}: {e}")
-        return None
+        logger.exception(f"Error parsing batch link generation response: {e}")
+        return results_dict # Return potentially partial results
 
 
 # --- Telegram Command Handlers ---
@@ -507,31 +543,33 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
         # Format price string
         price_str = f"{product_price} {product_currency}".strip() if product_price else "Price not available"
 
-        # Generate affiliate links concurrently
-        link_tasks = []
+        # 1. Build all target URLs for the different offers
+        target_urls_map = {} # Map offer_key to target_url
+        urls_to_fetch = []
         for offer_key in OFFER_ORDER:
             offer_info = OFFER_PARAMS[offer_key]
             params_for_offer = offer_info["params"]
             target_url = build_url_with_offer_params(base_url, params_for_offer)
-            print( "target_url",target_url)
-            task = generate_aliexpress_affiliate_link(target_url)
-            link_tasks.append((offer_key, task))
+            if target_url:
+                target_urls_map[offer_key] = target_url
+                urls_to_fetch.append(target_url)
+            else:
+                logger.warning(f"Could not build target URL for offer {offer_key} with base {base_url}")
 
-        # Await all link generation tasks
-        generated_links = {}
-        results = await asyncio.gather(*(task for _, task in link_tasks), return_exceptions=True)
+        # 2. Generate affiliate links in a batch
+        logger.info(f"Requesting batch affiliate links for product {product_id}")
+        all_links_dict = await generate_affiliate_links_batch(urls_to_fetch) # Returns {target_url: promo_link | None}
 
+        # 3. Map results back to offer keys
+        generated_links = {} # Map offer_key to promo_link | None
         success_count = 0
-        for i, (offer_key, _) in enumerate(link_tasks):
-             result = results[i]
-             if isinstance(result, Exception):
-                 logger.error(f"Error generating link for {offer_key} ({product_id}): {result}")
-                 generated_links[offer_key] = None
-             elif result:
-                 generated_links[offer_key] = result
-                 success_count += 1
-             else:
-                 generated_links[offer_key] = None
+        for offer_key, target_url in target_urls_map.items():
+            promo_link = all_links_dict.get(target_url)
+            generated_links[offer_key] = promo_link
+            if promo_link:
+                success_count += 1
+            else:
+                logger.warning(f"Failed to get affiliate link for offer {offer_key} (target: {target_url}) for product {product_id}")
 
         # Build the response message (HTML formatted)
         message_lines = [
