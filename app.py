@@ -9,8 +9,9 @@ from datetime import datetime, timedelta
 import aiohttp  
 from dotenv import load_dotenv
 from urllib.parse import urlparse, urlunparse, urlencode
-import iop  
+import iop
 from concurrent.futures import ThreadPoolExecutor
+from aliexpress_utils import get_product_details_by_id 
 
 # Telegram imports
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -535,24 +536,51 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
     logger.info(f"Processing Product ID: {product_id} for chat {chat_id}")
 
     try:
-        # Fetch product details
+        # --- Fetch Product Details (API first, then Scrape Fallback) ---
         product_details = await fetch_product_details_v2(product_id)
 
-        if not product_details:
-            await context.bot.send_message(
-                chat_id=chat_id,
-                text=f"❌ Could not fetch details for product ID: {product_id}"
-            )
-            return
+        # Initialize variables
+        product_image = None
+        product_price = None
+        product_currency = ''
+        product_title = f"Product {product_id}" # Default title
+        price_str = "Price not available"
+        details_source = "None" # Track where details came from: 'API', 'Scraped', 'None'
 
-        product_image = product_details.get('image_url')
-        product_price = product_details.get('price')
-        product_currency = product_details.get('currency', '')
-        product_title = product_details.get('title', f"Product {product_id}")
+        if product_details:
+            # Details from API
+            product_image = product_details.get('image_url')
+            product_price = product_details.get('price')
+            product_currency = product_details.get('currency', '')
+            product_title = product_details.get('title', product_title) # Use API title or default
+            price_str = f"{product_price} {product_currency}".strip() if product_price else price_str
+            details_source = "API"
+            logger.info(f"Successfully fetched details via API for product ID: {product_id}")
+        else:
+            # API failed, try scraping
+            logger.warning(f"API failed for product ID: {product_id}. Attempting scraping fallback.")
+            try:
+                loop = asyncio.get_event_loop()
+                # Run synchronous scraping function in executor
+                scraped_name, scraped_image = await loop.run_in_executor(
+                    executor, get_product_details_by_id, product_id
+                )
 
-        # Format price string
-        price_str = f"{product_price} {product_currency}".strip() if product_price else "Price not available"
+                if scraped_name:
+                    product_title = scraped_name # Use scraped title
+                    product_image = scraped_image # Use scraped image (can be None)
+                    details_source = "Scraped"
+                    logger.info(f"Successfully scraped details for product ID: {product_id}")
+                else:
+                    logger.warning(f"Scraping also failed for product ID: {product_id}")
+                    # Keep default title, image is None, price is unavailable
+                    details_source = "None"
 
+            except Exception as scrape_err:
+                logger.error(f"Error during scraping fallback for product ID {product_id}: {scrape_err}")
+                details_source = "None"
+
+        # --- Generate Affiliate Links ---
         # 1. Build all target URLs for the different offers
         target_urls_map = {} # Map offer_key to target_url
         urls_to_fetch = []
@@ -581,12 +609,21 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
             else:
                 logger.warning(f"Failed to get affiliate link for offer {offer_key} (target: {target_url}) for product {product_id}")
 
-        # Build the response message (HTML formatted)
-        message_lines = [
-            f"<b>{product_title[:250]}</b>",
-            f"\n<b>Sale Price:</b> {price_str}\n",
-            "<b>Offers:</b>"
-        ]
+        # --- Build the response message (HTML formatted) ---
+        message_lines = []
+
+        # Add title (always available, either API, scraped, or default)
+        message_lines.append(f"<b>{product_title[:250]}</b>")
+
+        # Add price only if available (from API)
+        if details_source == "API" and product_price:
+             message_lines.append(f"\n<b>Sale Price:</b> {price_str}\n")
+        elif details_source == "Scraped":
+             message_lines.append("\n<b>Sale Price:</b> Unavailable \n") 
+        else: # details_source == "None"
+             message_lines.append("\n<b>Product details unavailable</b>\n")
+
+        message_lines.append("<b>Offers:</b>")
 
         for offer_key in OFFER_ORDER:
             link = generated_links.get(offer_key)
@@ -618,9 +655,12 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        # Send the message (photo with caption if image available, else text)
-        if success_count > 0:
+        # --- Send the message ---
+        response_text = "\n".join(message_lines) # Build the final text here
+
+        if success_count > 0: # Check if any offer links were generated
             try:
+                # Send photo only if an image URL exists (from API or scraping)
                 if product_image:
                     await context.bot.send_photo(
                         chat_id=chat_id,
@@ -630,6 +670,7 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
                         reply_markup=reply_markup
                     )
                 else:
+                    # Send text message if no image available or if sending photo failed
                     await context.bot.send_message(
                         chat_id=chat_id,
                         text=response_text,
@@ -639,14 +680,23 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
                     )
             except Exception as send_error:
                  logger.error(f"Failed to send message with keyboard for product {product_id} to chat {chat_id}: {send_error}")
+                 # Fallback text message - send offers part if possible
+                 offers_part = "\n".join(message_lines[message_lines.index("<b>Offers:</b>"):]) if "<b>Offers:</b>" in message_lines else "Offers unavailable."
                  await context.bot.send_message(
                      chat_id=chat_id,
-                     text=f"⚠️ Error formatting or sending message for product {product_id}. Please check logs."
+                     text=f"⚠️ Error sending message for product {product_id}.\n\n{offers_part}",
+                     parse_mode=ParseMode.HTML,
+                     disable_web_page_preview=True,
+                     reply_markup=reply_markup # Still try to send keyboard
                  )
         else:
+            # No offer links generated
             await context.bot.send_message(
                 chat_id=chat_id,
-                text="We couldn't find an offer for this product"
+                text=f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product.", # Include title even if no offers
+                parse_mode=ParseMode.HTML,
+                disable_web_page_preview=True,
+                reply_markup=reply_markup # Send keyboard even if no offers
             )
 
     except Exception as e:
