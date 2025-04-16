@@ -525,7 +525,16 @@ async def generate_affiliate_links_batch(target_urls: list[str]) -> dict[str, st
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Sends a welcome message when the /start command is issued."""
     await update.message.reply_html(
-        "Hello! Send me an AliExpress product link, and I'll try to generate affiliate links for it."
+        "👋 Welcome to the AliExpress Discount Bot! 🛍️\n\n"
+        "🔍 <b>How to use this bot:</b>\n"
+        "1️⃣ Copy a product link from AliExpress 📋\n"
+        "2️⃣ Send the link to this bot 📤\n"
+        "3️⃣ The bot will automatically generate affiliate links for you ✨\n"
+        "4️⃣ Use the links to share and earn 💰\n\n"
+        "🔗 <b>Supported link types:</b>\n"
+        "• Regular AliExpress product links 🌐\n"
+        "• Shortened AliExpress links 🔄\n\n"
+        "🚀 Send any AliExpress product link now to try the bot! 🎁"
     )
 
 # --- Telegram Message Processing ---
