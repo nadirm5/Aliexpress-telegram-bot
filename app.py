@@ -73,7 +73,7 @@ SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|
 
 # --- Offer Parameter Mapping ---
 OFFER_PARAMS = {
-    "coin": {"name": "🪙 Coin", "params": {"sourceType": "620", "channel": "coin" , "afSmartRedirect": "y"}},
+    "coin": {"name": "🪙 Coin", "params": {"sourceType": "620%26channel=coin" , "afSmartRedirect": "y"}},
     "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562", "channel": "sd" , "afSmartRedirect": "y"}},
     "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers" , "afSmartRedirect": "y"}},
     "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680", "channel": "bigSave" , "afSmartRedirect": "y"}},
@@ -261,7 +261,13 @@ def build_url_with_offer_params(base_url, params_to_add):
             if len(parts) >= 2 and 'aliexpress' in parts[-2]:
                 netloc = f"aliexpress.{parts[-1]}"
         
-        new_query_string = urlencode(params_to_add)
+        # Special handling for sourceType parameter that contains encoded '&'
+        if 'sourceType' in params_to_add and '%26' in params_to_add['sourceType']:
+            # The parameter already contains encoded values, use it directly
+            new_query_string = '&'.join([f"{k}={v}" for k, v in params_to_add.items() if k != 'channel' and '%26channel=' in params_to_add['sourceType']])
+        else:
+            new_query_string = urlencode(params_to_add)
+            
         # Reconstruct URL ensuring path is preserved correctly
         reconstructed_url = urlunparse((
             parsed_url.scheme,
