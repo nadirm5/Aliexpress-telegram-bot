@@ -753,6 +753,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Indicate processing
     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+    loading_animation = await context.bot.send_sticker(chat_id, "CAACAgIAAxkBAAIU1GYOk5jWvCvtykd7TZkeiFFZRdUYAAIjAAMoD2oUJ1El54wgpAY0BA") # Send loading sticker
 
     processed_product_ids = set()
     tasks = []
@@ -806,6 +807,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             chat_id=chat_id,
             text="❌ We couldn't find any valid AliExpress product links in your message ❌"
         )
+        # Delete sticker if no tasks were generated
+        if loading_animation:
+             try:
+                 await context.bot.delete_message(chat_id, loading_animation.message_id)
+             except Exception as delete_err:
+                 logger.warning(f"Could not delete loading sticker (no tasks): {delete_err}")
         return
 
     # If multiple links are being processed, notify the user
@@ -817,6 +824,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     logger.info(f"Processing {len(tasks)} unique AliExpress products for chat {chat_id}")
     await asyncio.gather(*tasks)
+
+    # Delete sticker after processing is done
+    if loading_animation:
+        try:
+            await context.bot.delete_message(chat_id, loading_animation.message_id)
+        except Exception as delete_err:
+            logger.warning(f"Could not delete loading sticker (after tasks): {delete_err}")
 
 
 # --- Main Bot Execution ---
