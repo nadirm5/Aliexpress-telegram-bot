@@ -278,7 +278,7 @@ def build_url_with_offer_params(base_url, params_to_add):
             ''
         ))
         # Add the star.aliexpress.com prefix to the reconstructed URL
-        reconstructed_url = f"https://star.aliexpress.com/share/share.htm?&redirectUrl={reconstructed_url}"
+        reconstructed_url = f"https://star.aliexpress.com/share/share.htm?platform=AE&businessType=ProductDetail&redirectUrl={reconstructed_url}"
         return reconstructed_url
     except ValueError:
         logger.error(f"Error building URL with params for base: {base_url}")
@@ -425,7 +425,7 @@ async def generate_affiliate_links_batch(target_urls: list[str]) -> dict[str, st
     for url in uncached_urls:
         # Only add the prefix if it's not already there
         if "star.aliexpress.com/share/share.htm" not in url:
-            prefixed_urls.append(f"https://star.aliexpress.com/share/share.htm?&redirectUrl={url}")
+            prefixed_urls.append(f"https://star.aliexpress.com/share/share.htm?platform=AE&businessType=ProductDetail&redirectUrl={url}")
         else:
             prefixed_urls.append(url)
     source_values_str = ",".join(prefixed_urls)
