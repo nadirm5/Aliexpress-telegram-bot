@@ -632,50 +632,54 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
 
         # Add price only if available (from API)
         if details_source == "API" and product_price:
-             message_lines.append(f"\n<b>Sale Price:</b> {price_str}\n")
+             message_lines.append(f"\n💰 <b>Price:</b> {price_str}\n")
         elif details_source == "Scraped":
-             message_lines.append("\n<b>Sale Price:</b> Unavailable \n") 
+             message_lines.append("\n💰 <b>Price:</b> Unavailable\n") 
         else: # details_source == "None"
-             message_lines.append("\n<b>Product details unavailable</b>\n")
+             message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-        message_lines.append("<b>Offers:</b>")
+        message_lines.append("🎁 <b>Special Offers:</b>")
+        message_lines.append("──────────────\n")
 
+        # Add offers with emojis and better spacing
         for offer_key in OFFER_ORDER:
             link = generated_links.get(offer_key)
             offer_name = OFFER_PARAMS[offer_key]["name"]
             if link:
-                # Ensure link is properly HTML escaped if needed (though URLs usually are safe)
-                message_lines.append(f'{offer_name}: <a href="{link}">Click Here</a>')
+                message_lines.append(f'▫️ {offer_name}: <a href="{link}">Get Discount</a>\n')
             else:
-                message_lines.append(f"{offer_name}: ❌ Failed")
+                message_lines.append(f"▫️ {offer_name}: ❌ Not Available")
 
-        # Add footer text
-        message_lines.append("\n<i>By RizoZ</i>")
+        message_lines.append("──────────────")
+        message_lines.append("\n🔔 <b>Follow Us:</b>")
+        message_lines.append("📱 Telegram: @Aliexpress_Deal_Dz")
+        message_lines.append(f"💻 GitHub: <a href='https://github.com/ReizoZ'>ReizoZ</a>")
+        message_lines.append("🤝 Discord: Join Our Community")
+        message_lines.append("\n<i>By RizoZ - Deals Bot</i>")
         response_text = "\n".join(message_lines)
 
-        # --- Create Inline Keyboard ---
+        # --- Create Inline Keyboard with organized buttons ---
         keyboard = [
             [
-                InlineKeyboardButton("Choice Day", url="https://s.click.aliexpress.com/e/_oCPK1K1"),
-                InlineKeyboardButton("Best Deals", url="https://s.click.aliexpress.com/e/_onx9vR3")
+                InlineKeyboardButton("🎯 Choice Day", url="https://s.click.aliexpress.com/e/_oCPK1K1"),
+                InlineKeyboardButton("🔥 Best Deals", url="https://s.click.aliexpress.com/e/_onx9vR3")
             ],
             [
-                InlineKeyboardButton("GitHub", url="https://github.com/ReizoZ"),
-                InlineKeyboardButton("Discord", url="https://discord.gg/9QzECYfmw8"),
-                InlineKeyboardButton("Telegram", url="https://t.me/Aliexpress_Deal_Dz")
+                InlineKeyboardButton("💻 GitHub", url="https://github.com/ReizoZ"),
+                InlineKeyboardButton("🎮 Discord", url="https://discord.gg/9QzECYfmw8"),
+                InlineKeyboardButton("📱 Channel", url="https://t.me/Aliexpress_Deal_Dz")
             ],
             [
-                InlineKeyboardButton("☕ Buy Me Coffee", url="https://ko-fi.com/reizoz")
+                InlineKeyboardButton("☕ Support Me", url="https://ko-fi.com/reizoz")
             ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         # --- Send the message ---
-        response_text = "\n".join(message_lines) # Build the final text here
+        response_text = "\n".join(message_lines)
 
-        if success_count > 0: # Check if any offer links were generated
+        if success_count > 0:
             try:
-                # Send photo only if an image URL exists (from API or scraping)
                 if product_image:
                     await context.bot.send_photo(
                         chat_id=chat_id,
@@ -685,7 +689,6 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
                         reply_markup=reply_markup
                     )
                 else:
-                    # Send text message if no image available or if sending photo failed
                     await context.bot.send_message(
                         chat_id=chat_id,
                         text=response_text,
@@ -695,23 +698,21 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
                     )
             except Exception as send_error:
                  logger.error(f"Failed to send message with keyboard for product {product_id} to chat {chat_id}: {send_error}")
-                 # Fallback text message - send offers part if possible
                  offers_part = "\n".join(message_lines[message_lines.index("<b>Offers:</b>"):]) if "<b>Offers:</b>" in message_lines else "Offers unavailable."
                  await context.bot.send_message(
                      chat_id=chat_id,
                      text=f"⚠️ Error sending message for product {product_id}.\n\n{offers_part}",
                      parse_mode=ParseMode.HTML,
                      disable_web_page_preview=True,
-                     reply_markup=reply_markup # Still try to send keyboard
+                     reply_markup=reply_markup
                  )
         else:
-            # No offer links generated
             await context.bot.send_message(
                 chat_id=chat_id,
-                text=f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product.", # Include title even if no offers
+                text=f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product.",
                 parse_mode=ParseMode.HTML,
                 disable_web_page_preview=True,
-                reply_markup=reply_markup # Send keyboard even if no offers
+                reply_markup=reply_markup
             )
 
     except Exception as e:
