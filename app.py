@@ -61,10 +61,10 @@ SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|
 COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
 
 OFFER_PARAMS = {
-    "coin": {"name": "🪙 Coin", "params": {"sourceType": "620%26channel=coin", "afSmartRedirect": "y"}},
-    "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562", "channel": "sd", "afSmartRedirect": "y"}},
-    "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers", "afSmartRedirect": "y"}},
-    "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680", "channel": "bigSave", "afSmartRedirect": "y"}},
+    "coin": {"name": "🪙 Coin", "params": {"sourceType": "620%26channel=coin"}},
+    "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562", "channel": "sd"}},
+    "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers"}},
+    "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680", "channel": "bigSave"}},
 }
 OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
 
@@ -206,7 +206,7 @@ def build_url_with_offer_params(base_url: str, params_to_add: dict) -> str | Non
         if '.' in netloc and netloc.count('.') > 1:
             parts = netloc.split('.')
             if len(parts) >= 2 and 'aliexpress' in parts[-2]:
-                netloc = f"aliexpress.{parts[-1]}"
+                netloc = f"www.aliexpress.{parts[-1]}"
 
         if 'sourceType' in params_to_add and '%26' in params_to_add['sourceType']:
             new_query_string = '&'.join([f"{k}={v}" for k, v in params_to_add.items() if k != 'channel' and '%26channel=' in params_to_add['sourceType']])
