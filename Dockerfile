@@ -19,4 +19,4 @@ COPY --chown=appuser:appgroup . .
 USER appuser
 
 
-CMD ["python", "app.py"]
+CMD ["sh", "-c", "python keep_alive.py & python app.py"]
