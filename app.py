@@ -552,18 +552,13 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     return "\n".join(message_lines)
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
-     keyboard = [
-        [
-            InlineKeyboardButton("🎯 Choice Day", url="https://s.click.aliexpress.com/e/_oCPK1K1"),
-            InlineKeyboardButton("🔥 Best Deals", url="https://s.click.aliexpress.com/e/_onx9vR3")
-        ],
-        [
-            InlineKeyboardButton("💻 GitHub", url="https://github.com/ReizoZ"),
-            InlineKeyboardButton("🎮 Discord", url="https://discord.gg/9QzECYfmw8"),
-            InlineKeyboardButton("📱 Channel", url="https://t.me/Aliexpress_Deal_Dz")
-        ],
-        [
-            InlineKeyboardButton("☕ Support Me", url="https://ko-fi.com/reizoz")
+   keyboard = types.InlineKeyboardMarkup(row_width=1)
+btn1 = types.InlineKeyboardButton("⭐️ألعاب لجمع العملات المعدنية⭐️",
+                                  callback_data="games")
+btn2 = types.InlineKeyboardButton("⭐️تخفيض العملات على منتجات السلة 🛒⭐️",
+                                  callback_data='click')
+btn3 = types.InlineKeyboardButton("❤️ اشترك في القناة للمزيد من العروض ❤️",
+                                  url="https://t.me/AliXPromotion")
         ]
     ]
      return InlineKeyboardMarkup(keyboard)
