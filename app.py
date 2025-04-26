@@ -471,7 +471,7 @@ async def generate_affiliate_links_batch(target_urls: list[str]) -> dict[str, st
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_html(
- await update.message.reply_html(
+
         "👋 Welcome to the AliExpress Discount Bot! 🛍️\n\n"
         "🔍 <b>How to use:</b>\n"
         "1️⃣ Copy an AliExpress product link 📋\n"
@@ -479,12 +479,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "3️⃣ Get affiliate links back ✨\n\n"
         "🔗 Supports regular & short links.\n"
         "🚀 Send a link to start! 🎁"
-"🔍 <b>كيفية الاستخدام:</b>\n"
-("1️⃣ انسخ رابط منتج من AliExpress 📋\n"
-"2️⃣ أرسل الرابط هنا 📤\n")
-"3️⃣ احصل على روابط الأفلييت الخاصة بك ✨\n\n"
-"🔗 يدعم الروابط العادية والقصيرة.\n"
-"🚀 أرسل الرابط الآن للبدء! 🎁"
+
 
 
     )
