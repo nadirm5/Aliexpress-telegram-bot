@@ -61,10 +61,34 @@ SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|
 COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
 
 OFFER_PARAMS = {
-    "coin": {"name": "🪙 Coin", "params": {"sourceType": "620%26channel=coin"}},
-    "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562", "channel": "sd"}},
-    "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers"}},
-    "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680", "channel": "bigSave"}},
+  "coin": {
+    "name": "🪙 عملات",
+    "params": {
+        "sourceType": "620%26channel=coin"
+    }
+},
+"super": {
+    "name": "🔥 عروض سوبر",
+    "params": {
+        "sourceType": "562",
+        "channel": "sd"
+    }
+},
+"limited": {
+    "name": "⏳ عروض محدودة",
+    "params": {
+        "sourceType": "561",
+        "channel": "limitedoffers"
+    }
+},
+"bigsave": {
+    "name": "💰 توفير كبير",
+    "params": {
+        "sourceType": "680",
+        "channel": "bigSave"
+    }
+}
+
 }
 OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
 
@@ -447,13 +471,17 @@ async def generate_affiliate_links_batch(target_urls: list[str]) -> dict[str, st
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_html(
-        "👋 Welcome to the AliExpress Discount Bot! 🛍️\n\n"
-        "🔍 <b>How to use:</b>\n"
-        "1️⃣ Copy an AliExpress product link 📋\n"
-        "2️⃣ Send the link here 📤\n"
-        "3️⃣ Get affiliate links back ✨\n\n"
-        "🔗 Supports regular & short links.\n"
-        "🚀 Send a link to start! 🎁"
+       👋AliExpress مرحبًا بك في بوت خصومات 🛍️
+
+message_lines.append("👋 مرحبًا بك في بوت خصومات AliExpress! 🛍️\n\n")
+message_lines.append("🔍 <b>كيفية الاستخدام:</b>\n")
+message_lines.append("1️⃣ انسخ رابط منتج من AliExpress 📋\n")
+message_lines.append("2️⃣ أرسل الرابط هنا 📤\n")
+message_lines.append("3️⃣ احصل على روابط الأفلييت الخاصة بك ✨\n\n")
+message_lines.append("🔗 يدعم الروابط العادية والقصيرة.\n")
+message_lines.append("🚀 أرسل الرابط الآن للبدء! 🎁")
+
+
     )
 
 async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
@@ -516,16 +544,17 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     message_lines.append(f"<b>{product_title[:250]}</b>")
 
-    if details_source == "API" and product_price:
-        price_str = f"{product_price} {product_currency}".strip()
-        message_lines.append(f"\n💰 <b>Price:</b> {price_str}\n")
-    elif details_source == "Scraped":
-        message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
-    else:
-        message_lines.append("\n❌ <b>Product details unavailable</b>\n")
+   if details_source == "API" and product_price:
+    price_str = f"{product_price} {product_currency}".strip()
+    message_lines.append(f"\n💰 <b>السعر:</b> {price_str}\n")
+elif details_source == "Scraped":
+    message_lines.append("\n💰 <b>السعر:</b> غير متوفر (Scraped)\n")
+else:
+    message_lines.append("\n❌ <b>تفاصيل المنتج غير متوفرة</b>\n")
 
-    message_lines.append("🎁 <b>Special Offers:</b>")
-    message_lines.append("──────────────\n")
+message_lines.append("🎁 <b>عروض خاصة:</b>")
+message_lines.append("──────────────\n")
+
 
     offers_available = False
     for offer_key in OFFER_ORDER:
@@ -542,25 +571,25 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
 
     if offers_available:
-        message_lines.append("──────────────")
-        message_lines.append("\n🔔 <b>Follow Us:</b>")
-        message_lines.append("📱 Telegram: @Aliexpress_Deal_Dz")
-        message_lines.append(f"💻 GitHub: <a href='https://github.com/ReizoZ'>ReizoZ</a>")
-        message_lines.append("🤝 Discord: Join Our Community")
-        message_lines.append("\n<i>By RizoZ - Deals Bot</i>")
+       message_lines.append("──────────────")
+message_lines.append("\n🔔 <b>تابعنا:</b>")
+message_lines.append("📱 تيليجرام: @RayanCoupon")
+message_lines.append(f"💻 موثع كل العروض: <a href='https://moneyexpress.fun/>")
+
+
 
     return "\n".join(message_lines)
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
      keyboard = [
         [
-            InlineKeyboardButton("🎯 Choice Day", url="https://s.click.aliexpress.com/e/_oCPK1K1"),
-            InlineKeyboardButton("🔥 Best Deals", url="https://s.click.aliexpress.com/e/_onx9vR3")
-        ],
-        [
-            InlineKeyboardButton("💻 GitHub", url="https://github.com/ReizoZ"),
-            InlineKeyboardButton("🎮 Discord", url="https://discord.gg/9QzECYfmw8"),
-            InlineKeyboardButton("📱 Channel", url="https://t.me/Aliexpress_Deal_Dz")
+          InlineKeyboardButton("🎯  عروض Choice", url="https://s.click.aliexpress.com/e/_oB1TWCv"),
+InlineKeyboardButton("🔥 أفضل العروض", url="https://s.click.aliexpress.com/e/_onXLvJx")
+],
+[
+InlineKeyboardButton("📱 القناة", url="https://t.me/RayanCoupon")
+]
+
         ],
         [
             InlineKeyboardButton("☕ Support Me", url="https://ko-fi.com/reizoz")
