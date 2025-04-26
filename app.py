@@ -807,34 +807,9 @@ if __name__ == "__main__":
 
 
 
-import logging
-import os
-import re
-import json
-import asyncio
-import time
-from datetime import datetime, timedelta
-from urllib.parse import urlparse, urlunparse, urlencode
-from concurrent.futures import ThreadPoolExecutor
-import aiohttp
-from dotenv import load_dotenv
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, JobQueue
-from telegram.constants import ParseMode, ChatAction
 
-import iop
-from aliexpress_utils import get_product_details_by_id
 
-load_dotenv()
-
-# In[2]:
-
-bot = telebot.TeleBot('7851686998:AAE__oayqocUnTcv9QPoo5FArcjQ5Ky11D8')
-  
-aliexpress = AliexpressApi('506592', 'ggkzfJ7lilLc7OXs6khWfT4qTZdZuJbh',
-                           models.Language.EN, models.Currency.EUR, 'default')
-# In[3]:
 
 keyboardStart = types.InlineKeyboardMarkup(row_width=1)
 btn1 = types.InlineKeyboardButton("⭐️ألعاب لجمع العملات المعدنية⭐️",
