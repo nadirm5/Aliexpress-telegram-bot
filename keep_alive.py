@@ -44,7 +44,7 @@ def self_ping():
 
         try:
 
-            requests.get("https://your-app-name.herokuapp.com")  
+            requests.get("https://aliexpress-affiliate-telegram-bot-1jv9.onrender.com")  
 
             print(" hello world ")
 
