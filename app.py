@@ -472,7 +472,6 @@ async def generate_affiliate_links_batch(target_urls: list[str]) -> dict[str, st
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_html(
 
-"👋 مرحبًا بك في بوت خصومات AliExpress! 🛍️\n\n"
 "🔍 <b>كيفية الاستخدام:</b>\n"
 ("1️⃣ انسخ رابط منتج من AliExpress 📋\n"
 "2️⃣ أرسل الرابط هنا 📤\n")
