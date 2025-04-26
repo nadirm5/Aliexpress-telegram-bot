@@ -61,10 +61,21 @@ SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|
 COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
 
 OFFER_PARAMS = {
-    "coin": {"name": "🪙 Coin", "params": {"sourceType": "620%26channel=coin"}},
-    "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562", "channel": "sd"}},
-    "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers"}},
-    "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680", "channel": "bigSave"}},
+     img_link,
+                     caption=" \n🛒 منتجك هو  : 🔥 \n"
+                     f" {title_link} 🛍 \n"
+                     f"  سعر المنتج  : "
+                     f" {price_pro}  دولار 💵\n"
+                     " \n قارن بين الاسعار واشتري 🔥 \n"
+                     "💰 عرض العملات (السعر النهائي عند الدفع)  : \n"
+                     f"الرابط {affiliate_link} \n"
+                     f"💎 عرض السوبر  : \n"
+                     f"الرابط {super_links} \n"
+                     f"♨️ عرض محدود  : \n"
+                     f"الرابط {limit_links} \n\n"
+                     "#AliXPromotion ✅",
+                     reply_markup=keyboard)
+
 }
 OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
 
