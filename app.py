@@ -61,10 +61,10 @@ SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|
 COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
 
 OFFER_PARAMS = {
-    "coin": {"name": "馃獧 Coins 乇丕亘胤 丕賱毓賲賱丕鬲", "params": {"sourceType": "620%26channel=coin", "afSmartRedirect": "y"}},
-    "super": {"name": "馃敟 Super Deals", "params": {"sourceType": "562", "channel": "sd", "afSmartRedirect": "y"}},
-    "limited": {"name": "鈴� Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers", "afSmartRedirect": "y"}},
-    "bigsave": {"name": "馃挵 Big Save", "params": {"sourceType": "680", "channel": "bigSave", "afSmartRedirect": "y"}},
+    "coin": {"name": "🪙 Coins رابط العملات", "params": {"sourceType": "620%26channel=coin", "afSmartRedirect": "y"}},
+    "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562", "channel": "sd", "afSmartRedirect": "y"}},
+    "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers", "afSmartRedirect": "y"}},
+    "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680", "channel": "bigSave", "afSmartRedirect": "y"}},
 }
 OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
 
@@ -447,20 +447,20 @@ async def generate_affiliate_links_batch(target_urls: list[str]) -> dict[str, st
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_html(
-        "馃憢 Welcome to the AliExpress Discount Bot! 馃泹锔廫n\n"
-        "馃憢 賲乇丨亘賸丕 亘賰 賮賷 亘賵鬲 禺氐賵賲丕鬲 毓賱賷 廿賰爻亘乇賷爻! 馃泹锔廫n\n"
-        "馃攳 <b>How to use:</b>\n"
-        "馃攳 <b>賰賷賮賷丞 丕賱丕爻鬲禺丿丕賲:</b>\n"
-        "1锔忊儯 Copy an AliExpress product link 馃搵\n"
-        "1锔忊儯 丕賳爻禺 乇丕亘胤 賲賳鬲噩 賲賳 毓賱賷 廿賰爻亘乇賷爻 馃搵\n"
-        "2锔忊儯 Send the link here 馃摛\n"
-        "2锔忊儯 兀乇爻賱 丕賱乇丕亘胤 賴賳丕 馃摛\n"
-        "3锔忊儯 Get links back 鉁╘n\n"
-        "3锔忊儯 爻鬲丨氐賱 毓賱賶 乇賵丕亘胤 亘丕賯賱 丕賱丕爻毓丕乇 鉁╘n\n"
-        "馃敆 Supports regular & short links.\n"
-        "馃敆 賷丿毓賲 丕賱乇賵丕亘胤 丕賱胤賵賷賱丞 賵丕賱賯氐賷乇丞.\n"
-        "馃殌 Send a link to start! 馃巵"
-          "馃殌 兀乇爻賱 乇丕亘胤賸丕 賱賱亘丿亍! 馃巵"
+        "👋 Welcome to the AliExpress Discount Bot! 🛍️\n\n"
+        "👋 مرحبًا بك في بوت خصومات علي إكسبريس! 🛍️\n\n"
+        "🔍 <b>How to use:</b>\n"
+        "🔍 <b>كيفية الاستخدام:</b>\n"
+        "1️⃣ Copy an AliExpress product link 📋\n"
+        "1️⃣ انسخ رابط منتج من علي إكسبريس 📋\n"
+        "2️⃣ Send the link here 📤\n"
+        "2️⃣ أرسل الرابط هنا 📤\n"
+        "3️⃣ Get links back ✨\n\n"
+        "3️⃣ ستحصل على روابط باقل الاسعار ✨\n\n"
+        "🔗 Supports regular & short links.\n"
+        "🔗 يدعم الروابط الطويلة والقصيرة.\n"
+        "🚀 Send a link to start! 🎁"
+          "🚀 أرسل رابطًا للبدء! 🎁"
     )
 
 async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
@@ -525,33 +525,33 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     if details_source == "API" and product_price:
         price_str = f"{product_price} {product_currency}".strip()
-        message_lines.append(f"\n馃挵 <b>Price:</b> {price_str}\n")
+        message_lines.append(f"\n💰 <b>Price:</b> {price_str}\n")
     elif details_source == "Scraped":
-        message_lines.append("\n馃挵 <b>Price:</b> Unavailable (Scraped)\n")
+        message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
     else:
-        message_lines.append("\n鉂� <b>Product details unavailable</b>\n")
+        message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    message_lines.append("馃巵 <b>Special Offers:</b>")
-    message_lines.append("鈹�鈹�鈹�鈹�鈹�鈹�鈹�鈹�鈹�鈹�鈹�鈹�鈹�鈹�\n")
+    message_lines.append("🎁 <b>Special Offers:</b>")
+    message_lines.append("──────────────\n")
 
     offers_available = False
     for offer_key in OFFER_ORDER:
         link = generated_links.get(offer_key)
         offer_name = OFFER_PARAMS[offer_key]["name"]
         if link:
-            message_lines.append(f'鈻笍 {offer_name}: <a href="{link}">Get Discount</a>\n')
+            message_lines.append(f'▫️ {offer_name}: <a href="{link}">Get Discount</a>\n')
             offers_available = True
         else:
-            message_lines.append(f"鈻笍 {offer_name}: 鉂� Not Available")
+            message_lines.append(f"▫️ {offer_name}: ❌ Not Available")
 
     if not offers_available:
          message_lines = [f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."]
 
 
     if offers_available:
-        message_lines.append("鈹�鈹�鈹�鈹�鈹�鈹�鈹�鈹�鈹�鈹�鈹�鈹�鈹�鈹�")
-        message_lines.append("\n馃敂 <b>Follow Us:</b>")
-        message_lines.append("馃摫 Telegram: @RayanCoupon")
+        message_lines.append("──────────────")
+        message_lines.append("\n🔔 <b>Follow Us:</b>")
+        message_lines.append("📱 Telegram: @RayanCoupon")
 
 
     return "\n".join(message_lines)
@@ -559,14 +559,14 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 def _build_reply_markup() -> InlineKeyboardMarkup:
      keyboard = [
         [
-            InlineKeyboardButton("馃幆 Choice Day", url="https://s.click.aliexpress.com/e/_omRiewZ"),
-            InlineKeyboardButton("馃敟 Best Deals", url="https://s.click.aliexpress.com/e/_olUPW8V")
+            InlineKeyboardButton("🎯 Choice Day", url="https://s.click.aliexpress.com/e/_omRiewZ"),
+            InlineKeyboardButton("🔥 Best Deals", url="https://s.click.aliexpress.com/e/_olUPW8V")
         ],
         [
-            InlineKeyboardButton("馃摫 Channel", url="https://t.me/RayanCoupon")
+            InlineKeyboardButton("📱 Channel", url="https://t.me/RayanCoupon")
         ],
         [
-            InlineKeyboardButton("鈽� Support Me", url="https://moneyexpress.fun")
+            InlineKeyboardButton("☕ Support Me", url="https://moneyexpress.fun")
         ]
     ]
      return InlineKeyboardMarkup(keyboard)
@@ -598,7 +598,7 @@ async def _send_telegram_response(context: ContextTypes.DEFAULT_TYPE, chat_id: i
         try:
             await context.bot.send_message(
                 chat_id=chat_id,
-                text=f"鈿狅笍 Error displaying product {product_id}. Please try again or check the logs.",
+                text=f"⚠️ Error displaying product {product_id}. Please try again or check the logs.",
                 reply_markup=reply_markup # Still provide buttons if possible
             )
         except Exception as fallback_error:
@@ -650,7 +650,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if not potential_urls:
         await context.bot.send_message(
             chat_id=chat_id,
-            text="鉂� No AliExpress links found. Please send a valid AliExpress product link."
+            text="❌ No AliExpress links found. Please send a valid AliExpress product link."
         )
         return
 
@@ -707,13 +707,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         logger.info(f"No processable AliExpress product links found after filtering/resolution.")
         await context.bot.send_message(
             chat_id=chat_id,
-            text="鉂� We couldn't find any valid AliExpress product links in your message."
+            text="❌ We couldn't find any valid AliExpress product links in your message."
         )
     else:
         if len(tasks) > 1:
             await context.bot.send_message(
                 chat_id=chat_id,
-                text=f"鈴� Processing {len(tasks)} AliExpress products. Please wait..."
+                text=f"⏳ Processing {len(tasks)} AliExpress products. Please wait..."
             )
         logger.info(f"Processing {len(tasks)} unique AliExpress products for chat {chat_id}")
         await asyncio.gather(*tasks)
