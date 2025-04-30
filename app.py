@@ -62,7 +62,8 @@ COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a
 
 OFFER_PARAMS = {
     "coin": {
-        "name": "🪙 <b>COINS OFFER</b>\n🔻 <b>Lowest Price</b>\n➡️ <b>اضغط هنا على الرابط تجد أقل سعر تخفيض بالعملات!</b> 👇",
+        "name": "🪙 <b>COINS OFFER</b>\n🔻 
+        ➡️ <b>اضغط هنا على الرابط تجد أقل سعر تخفيض بالعملات!</b> 👇",
         "params": {
             "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
