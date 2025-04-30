@@ -61,7 +61,7 @@ SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|
 COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
 
 OFFER_PARAMS = {
-    "coin": {"name": "🪙 Coins رابط العملات", "params": {"sourceType": "620%26channel=coin", "afSmartRedirect": "y"}},
+    "coin": {"name": "🪙 Coins اضغط هنا رابط العملات", "params": {"sourceType": "620%26channel=coin", "afSmartRedirect": "y"}},
     "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562", "channel": "sd", "afSmartRedirect": "y"}},
     "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers", "afSmartRedirect": "y"}},
     "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680", "channel": "bigSave", "afSmartRedirect": "y"}},
