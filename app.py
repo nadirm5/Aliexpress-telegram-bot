@@ -535,7 +535,13 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     if details_source == "API" and product_price:
         price_str = f"{product_price} {product_currency}".strip()
         message_lines.append(f"\n💰 <b>Price السعر بدون تخفيض:</b> {price_str}\n")
+
     
+    message_lines.append(f"\n🪙 <b>🎯 Coins</b> – <b>اضغط هنا ⬇️ أقل سعر بالعملات 💸</b> 👉\n")
+message_lines.append(f"sourceType: 620%26channel=coin\nafSmartRedirect: y\n")
+
+
+
     elif details_source == "Scraped":
         message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
     else:
