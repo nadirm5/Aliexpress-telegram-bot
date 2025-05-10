@@ -533,6 +533,26 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
             if scraped_name:
                 details_source = "Scraped"
                 logger.info(f"Successfully scraped details for product ID: {product_id}")
+
+
+async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
+    product_details = await fetch_product_details_v2(product_id)
+    details_source = "None"
+
+    if product_details:
+        details_source = "API"
+        logger.info(f"Successfully fetched details via API for product ID: {product_id}")
+        return product_details, details_source
+    else:
+        logger.warning(f"API failed for product ID: {product_id}. Attempting scraping fallback.")
+        try:
+            loop = asyncio.get_event_loop()
+            scraped_name, scraped_image = await loop.run_in_executor(
+                executor, get_product_details_by_id, product_id
+            )
+            if scraped_name:
+                details_source = "Scraped"
+                logger.info(f"Successfully scraped details for product ID: {product_id}")
                 return {'title': scraped_name, 'image_url': scraped_image, 'price': None, 'currency': None}, details_source
             else:
                 logger.warning(f"Scraping also failed for product ID: {product_id}")
@@ -598,8 +618,6 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     if not offers_available:
          message_lines = [f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."]
-
-
     
 
 
