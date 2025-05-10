@@ -69,7 +69,7 @@ OFFER_PARAMS = {
         }
     },
 
-    "coin": {
+    "link": {
         "name": "🚀 <b>🔗 رابط المنتوج بالتخفيض</b>",
         "params": {
             "sourceType": "620%26channel=coin",
