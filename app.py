@@ -532,22 +532,18 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     message_lines.append(f"<b>{product_title[:250]}</b>")
 
-    if details_source == "API" and product_price:
+if details_source == "API" and product_price:
     price_str = f"{product_price} {product_currency}".strip()
     message_lines.append(f"\n💰 <b>Price السعر بدون تخفيض:</b> {price_str}\n")
-
     message_lines.append(f"\n🪙 <b>🎯 Coins</b> – <b>اضغط هنا ⬇️ أقل سعر بالعملات 💸</b> 👉\n")
     message_lines.append(f"sourceType: 620%26channel=coin\nafSmartRedirect: y\n")
     
 elif details_source == "Scraped":
-    # Ajoutez ici le code pour le cas "Scraped"
-    pass
-        message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
-    else:
-        message_lines.append("\n❌ <b>Product details unavailable</b>\n")
-
+    message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
     message_lines.append("🎁 <b>Special Offers:</b>")
     message_lines.append("──────────────\n")
+else:
+    message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
     offers_available = False
     for offer_key in OFFER_ORDER:
