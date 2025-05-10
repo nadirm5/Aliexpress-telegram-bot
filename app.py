@@ -554,12 +554,14 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     elif details_source == "Scraped":
         message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
 
-    return '\n'.join(message_lines)
+    
     else:
         message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
     message_lines.append("🎁 <b>Special Offers:</b>")
     message_lines.append("──────────────\n")
+return '\n'.join(message_lines)
+
 
     offers_available = False
     for offer_key in OFFER_ORDER:
