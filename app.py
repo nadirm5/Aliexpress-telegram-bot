@@ -525,7 +525,8 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
     return generated_links
 
 
-def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
+
+    def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
     product_title = product_data.get('title', 'Unknown Product')
     product_price = product_data.get('price')
@@ -553,14 +554,13 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         message_lines.append(f"\n💰 <b>Price:</b> {price_str}\n")
     elif details_source == "Scraped":
         message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
-
-    
     else:
         message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
     message_lines.append("🎁 <b>Special Offers:</b>")
     message_lines.append("──────────────\n")
-return '\n'.join(message_lines)
+
+    return '\n'.join(message_lines)
 
 
     offers_available = False
