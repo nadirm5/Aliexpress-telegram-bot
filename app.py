@@ -515,7 +515,8 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 
     all_links_dict = await generate_affiliate_links_batch(urls_to_fetch)
 
-    generated_links = {}async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
+    generated_links = {}
+    async def_get_product_data(product_id: str) -> tuple[dict | None, str]:
     product_details = await fetch_product_details_v2(product_id)
     details_source = "None"
 
