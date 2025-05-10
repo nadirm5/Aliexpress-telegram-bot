@@ -70,8 +70,12 @@ OFFER_PARAMS = {
     },
 
 
-# Séparateur visuel
-message_lines.append("──────────────\n")
+    "separator": {
+        "type": "separator",  # <-- repère spécial
+        "value": "──────────────"
+    },
+
+
     
     "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562", "channel": "sd", "afSmartRedirect": "y"}},
     "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers", "afSmartRedirect": "y"}},
