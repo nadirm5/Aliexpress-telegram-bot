@@ -75,6 +75,10 @@ OFFER_PARAMS = {
             "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
     
+        }
+    },
+
+
     
     "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562", "channel": "sd", "afSmartRedirect": "y"}},
     "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers", "afSmartRedirect": "y"}},
