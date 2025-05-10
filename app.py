@@ -524,6 +524,7 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 
     return generated_links
 
+
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
     product_title = product_data.get('title', 'Unknown Product')
@@ -532,11 +533,28 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     message_lines.append(f"<b>{product_title[:250]}</b>")
 
-    if details_source == "API" and product_price:
+    # Trouver le prix et le lien les moins chers
+    min_price = None
+    min_link = None
+    for name, data in generated_links.items():
+        price = data.get('price')
+        link = data.get('link')
+        if price is not None and (min_price is None or price < min_price):
+            min_price = price
+            min_link = link
+
+    if min_price is not None:
+        price_str = f"{min_price} {product_currency}".strip()
+        message_lines.append(f"\n💰 <b>Lowest Price:</b> {price_str}")
+        if min_link:
+            message_lines.append(f"\n🔗 <b>Link:</b> {min_link}\n")
+    elif details_source == "API" and product_price:
         price_str = f"{product_price} {product_currency}".strip()
         message_lines.append(f"\n💰 <b>Price:</b> {price_str}\n")
     elif details_source == "Scraped":
         message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
+
+    return '\n'.join(message_lines)
     else:
         message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
