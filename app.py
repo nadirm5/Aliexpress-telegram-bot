@@ -471,78 +471,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "🚀 Send a link to start! 🎁"
           "🚀 أرسل رابطًا للبدء! 🎁"
     )
-
-async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
-    product_details = await fetch_product_details_v2(product_id)
-    details_source = "None"
-
-    if product_details:
-        details_source = "API"
-        logger.info(f"Successfully fetched details via API for product ID: {product_id}")
-        return product_details, details_source
-    else:
-        logger.warning(f"API failed for product ID: {product_id}. Attempting scraping fallback.")
-        try:
-            loop = asyncio.get_event_loop()
-            scraped_name, scraped_image = await loop.run_in_executor(
-                executor, get_product_details_by_id, product_id
-            )
-            if scraped_name:
-                details_source = "Scraped"
-                logger.info(f"Successfully scraped details for product ID: {product_id}")
-                return {'title': scraped_name, 'image_url': scraped_image, 'price': None, 'currency': None}, details_source
-            else:
-                logger.warning(f"Scraping also failed for product ID: {product_id}")
-                return {'title': f"Product {product_id}", 'image_url': None, 'price': None, 'currency': None}, details_source
-        except Exception as scrape_err:
-            logger.error(f"Error during scraping fallback for product ID {product_id}: {scrape_err}")
-            return {'title': f"Product {product_id}", 'image_url': None, 'price': None, 'currency': None}, details_source
-
-async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
-    target_urls_map = {}
-    urls_to_fetch = []
-    for offer_key in OFFER_ORDER:
-        offer_info = OFFER_PARAMS[offer_key]
-        target_url = build_url_with_offer_params(base_url, offer_info["params"])
-        if target_url:
-            target_urls_map[offer_key] = target_url
-            urls_to_fetch.append(target_url)
-        else:
-            logger.warning(f"Could not build target URL for offer {offer_key} with base {base_url}")
-
-    if not urls_to_fetch:
-        return {}
-
-    all_links_dict = await generate_affiliate_links_batch(urls_to_fetch)
-
-    generated_links = {}
-
-async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
-    product_details = await fetch_product_details_v2(product_id)
-    details_source = "None"
-
-    if product_details:
-        details_source = "API"
-        logger.info(f"Successfully fetched details via API for product ID: {product_id}")
-        return product_details, details_source
-    else:
-        logger.warning(f"API failed for product ID: {product_id}. Attempting scraping fallback.")
-        try:
-            loop = asyncio.get_event_loop()
-            scraped_name, scraped_image = await loop.run_in_executor(
-                executor, get_product_details_by_id, product_id
-            )
-            if scraped_name:
-                details_source = "Scraped"
-                logger.info(f"Successfully scraped details for product ID: {product_id}")
-
-
-async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
-    product_details = await fetch_product_details_v2(product_id)
-    details_source = "None"
-
-    if product_details:
-        details_source = "API"
 async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
     product_details = await fetch_product_details_v2(product_id)
     details_source = "None"
@@ -626,6 +554,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     if not offers_available:
          message_lines = [f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."]
+
 
 
     if offers_available:
