@@ -535,7 +535,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     if details_source == "API" and product_price:
         price_str = f"{product_price} {product_currency}".strip()
         message_lines.append(f"\n💰 <b>Price السعر بدون تخفيض:</b> {price_str}\n")
-        "coin": {
+        message_lines.append(f"\n <b>coins<b> : {
         "name": "🪙 <b>🎯 Coins</b> – <b>  ⬇️ السعر بالتخفيص  💸</b> 👉",
         "params": {
             "sourceType": "620%26channel=coin",
