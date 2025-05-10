@@ -472,76 +472,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
           "🚀 أرسل رابطًا للبدء! 🎁"
     )
 
-
-# --- Telegram Message Processing ---
-
-async def process_product_telegram(product_id: str, base_url: str, update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Fetches details, generates links, and sends a formatted message to Telegram."""
-    chat_id = update.effective_chat.id
-    logger.info(f"Processing Product ID: {product_id} for chat {chat_id}")
-
-    try:
-        # --- Fetch Product Details (API first, then Scrape Fallback) ---
-        product_details = await fetch_product_details_v2(product_id)
-
-        # Initialize variables
-        product_image = None
-        product_price = None
-        product_currency = ''
-        product_title = f"Product {product_id}" # Default title
-        price_str = "Price not available"
-        details_source = "None" # Track where details came from: 'API', 'Scraped', 'None'
-
-        if product_details:
-            # Details from API
-            product_image = product_details.get('image_url')
-            product_price = product_details.get('price')
-            product_currency = product_details.get('currency', '')
-            product_title = product_details.get('title', product_title) # Use API title or default
-            price_str = f"{product_price} {product_currency}".strip() if product_price else price_str
-            details_source = "API"
-            logger.info(f"Successfully fetched details via API for product ID: {product_id}")
-        else:
-            # API failed, try scraping
-            logger.warning(f"API failed for product ID: {product_id}. Attempting scraping fallback.")
-            try:
-                loop = asyncio.get_event_loop()
-                # Run synchronous scraping function in executor
-                scraped_name, scraped_image = await loop.run_in_executor(
-                    executor, get_product_details_by_id, product_id
-                )
-
-                if scraped_name:
-                    product_title = scraped_name # Use scraped title
-                    product_image = scraped_image # Use scraped image (can be None)
-                    details_source = "Scraped"
-                    logger.info(f"Successfully scraped details for product ID: {product_id}")
-                else:
-                    logger.warning(f"Scraping also failed for product ID: {product_id}")
-                    # Keep default title, image is None, price is unavailable
-                    details_source = "None"
-
-            except Exception as scrape_err:
-                logger.error(f"Error during scraping fallback for product ID {product_id}: {scrape_err}")
-                details_source = "None"
-
-        # --- Generate Affiliate Links ---
-        # 1. Build all target URLs for the different offers
-        target_urls_map = {} # Map offer_key to target_url
-        urls_to_fetch = []
-        for offer_key in OFFER_ORDER:
-            offer_info = OFFER_PARAMS[offer_key]
-            params_for_offer = offer_info["params"]
-            target_url = build_url_with_offer_params(base_url, params_for_offer)
-            if target_url:
-                target_urls_map[offer_key] = target_url
-                urls_to_fetch.append(target_url)
-            else:
-                logger.warning(f"Could not build target URL for offer {offer_key} with base {base_url}")
-
-        # 2. Generate affiliate links in a batch
-        logger.info(f"Requesting batch affiliate links for product {product_id}")
-
 async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
     product_details = await fetch_product_details_v2(product_id)
     details_source = "None"
@@ -628,8 +558,8 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
 
 
-
     
+
 
     if offers_available:
         message_lines.append("──────────────")
