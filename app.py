@@ -541,6 +541,12 @@ async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
 
     if product_details:
         details_source = "API"
+async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
+    product_details = await fetch_product_details_v2(product_id)
+    details_source = "None"
+
+    if product_details:
+        details_source = "API"
         logger.info(f"Successfully fetched details via API for product ID: {product_id}")
         return product_details, details_source
     else:
@@ -618,7 +624,6 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     if not offers_available:
          message_lines = [f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."]
-    
 
 
     if offers_available:
