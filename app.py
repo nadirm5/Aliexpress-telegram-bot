@@ -70,7 +70,7 @@ OFFER_PARAMS = {
     },
 
     "coin": {
-        "name": "🚀 <b>🔗 الرابط بالتخفيض</b>",
+        "name": "🚀 <b>🔗 رابط المنتوج بالتخفيض</b>",
         "params": {
             "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
