@@ -541,47 +541,90 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
 
         # 2. Generate affiliate links in a batch
         logger.info(f"Requesting batch affiliate links for product {product_id}")
-        all_links_dict = await generate_affiliate_links_batch(urls_to_fetch) # Returns {target_url: promo_link | None}
 
-        # 3. Map results back to offer keys
-        generated_links = {} # Map offer_key to promo_link | None
-        success_count = 0
-        for offer_key, target_url in target_urls_map.items():
-            promo_link = all_links_dict.get(target_url)
-            generated_links[offer_key] = promo_link
-            if promo_link:
-                success_count += 1
+async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
+    product_details = await fetch_product_details_v2(product_id)
+    details_source = "None"
+
+    if product_details:
+        details_source = "API"
+        logger.info(f"Successfully fetched details via API for product ID: {product_id}")
+        return product_details, details_source
+    else:
+        logger.warning(f"API failed for product ID: {product_id}. Attempting scraping fallback.")
+        try:
+            loop = asyncio.get_event_loop()
+            scraped_name, scraped_image = await loop.run_in_executor(
+                executor, get_product_details_by_id, product_id
+            )
+            if scraped_name:
+                details_source = "Scraped"
+                logger.info(f"Successfully scraped details for product ID: {product_id}")
+                return {'title': scraped_name, 'image_url': scraped_image, 'price': None, 'currency': None}, details_source
             else:
-                logger.warning(f"Failed to get affiliate link for offer {offer_key} (target: {target_url}) for product {product_id}")
+                logger.warning(f"Scraping also failed for product ID: {product_id}")
+                return {'title': f"Product {product_id}", 'image_url': None, 'price': None, 'currency': None}, details_source
+        except Exception as scrape_err:
+            logger.error(f"Error during scraping fallback for product ID {product_id}: {scrape_err}")
+            return {'title': f"Product {product_id}", 'image_url': None, 'price': None, 'currency': None}, details_source
 
-        # --- Build the response message (HTML formatted) ---
-        message_lines = []
+async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
+    target_urls_map = {}
+    urls_to_fetch = []
+    for offer_key in OFFER_ORDER:
+        offer_info = OFFER_PARAMS[offer_key]
+        target_url = build_url_with_offer_params(base_url, offer_info["params"])
+        if target_url:
+            target_urls_map[offer_key] = target_url
+            urls_to_fetch.append(target_url)
+        else:
+            logger.warning(f"Could not build target URL for offer {offer_key} with base {base_url}")
 
-        # Add title (always available, either API, scraped, or default)
-        message_lines.append(f"<b>{product_title[:250]}</b>")
+    if not urls_to_fetch:
+        return {}
 
-        # Add price only if available (from API)
-        if details_source == "API" and product_price:
-             message_lines.append(f"\n<b>Sale Price:</b> {price_str}\n")
-        elif details_source == "Scraped":
-             message_lines.append("\n<b>Sale Price:</b> Unavailable \n") 
-        else: # details_source == "None"
-             message_lines.append("\n<b>Product details unavailable</b>\n")
+    all_links_dict = await generate_affiliate_links_batch(urls_to_fetch)
 
-        message_lines.append("<b>Offers:</b>")
+    generated_links = {}
+    for offer_key, target_url in target_urls_map.items():
+        promo_link = all_links_dict.get(target_url)
+        generated_links[offer_key] = promo_link
+        if not promo_link:
+            logger.warning(f"Failed to get affiliate link for offer {offer_key} (target: {target_url})")
 
-        for offer_key in OFFER_ORDER:
-            link = generated_links.get(offer_key)
-            offer_name = OFFER_PARAMS[offer_key]["name"]
-            if link:
-                # Ensure link is properly HTML escaped if needed (though URLs usually are safe)
-                message_lines.append(f'{offer_name}: <a href="{link}">Click Here</a>')
-            else:
-                message_lines.append(f"{offer_name}: ❌ Failed")
+    return generated_links
 
-        # Add footer text
-        message_lines.append("\n<i>By RizoZ</i>")
-        response_text = "\n".join(message_lines)
+def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
+    message_lines = []
+    product_title = product_data.get('title', 'Unknown Product')
+    product_price = product_data.get('price')
+    product_currency = product_data.get('currency', '')
+
+    message_lines.append(f"<b>{product_title[:250]}</b>")
+
+    if details_source == "API" and product_price:
+        price_str = f"{product_price} {product_currency}".strip()
+        message_lines.append(f"\n💰 <b>Price:</b> {price_str}\n")
+    elif details_source == "Scraped":
+        message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
+    else:
+        message_lines.append("\n❌ <b>Product details unavailable</b>\n")
+
+    message_lines.append("🎁 <b>Special Offers:</b>")
+    message_lines.append("──────────────\n")
+
+    offers_available = False
+    for offer_key in OFFER_ORDER:
+        link = generated_links.get(offer_key)
+        offer_name = OFFER_PARAMS[offer_key]["name"]
+        if link:
+            message_lines.append(f'▫️ {offer_name}: <a href="{link}">Get Discount</a>\n')
+            offers_available = True
+        else:
+            message_lines.append(f"▫️ {offer_name}: ❌ Not Available")
+
+    if not offers_available:
+         message_lines = [f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."]
 
 
 
