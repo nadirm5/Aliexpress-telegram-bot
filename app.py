@@ -553,35 +553,34 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")  
     else:
         message_lines.append("\n❌ <b>Product details unavailable</b>\n")
-        
-
-    message_lines.append("🎁 <b>Special Offers:</b>")
-    message_lines.append("──────────────\n")
 
     offers_available = False
     for offer_key in OFFER_ORDER:
         link = generated_links.get(offer_key)
         offer_name = OFFER_PARAMS[offer_key]["name"]
-        if link:
+        
+        if offer_name == "Coins" and link:
+            message_lines.append(f'▫️ <b>{offer_name}:</b> <a href="{link}"><b>{link}</b></a>\n')
+            message_lines.append("──────────────")
+            offers_available = True
+            
+        elif link:
             message_lines.append(f'▫️ <b>{offer_name}:</b> <a href="{link}"><b>{link}</b></a>\n')
             offers_available = True
-
-            # Ajouter un trait après le lien "Coins" uniquement
-            if offer_name == "Coins":
-                message_lines.append("──────────────")  # Ajoute un trait après "Coins"
-                
         else:
             message_lines.append(f"▫️ {offer_name}: ❌ Not Available")
+
+    if offers_available:
+        message_lines.append("🎁 <b>Special Offers:</b>")
+        message_lines.append("──────────────\n")
 
     if not offers_available:
          message_lines = [f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."]
 
-    if offers_available:
-        message_lines.append("──────────────")
-        message_lines.append("\n🔔 <b>Follow Us:</b>")
-        message_lines.append("📱 Telegram: @RayanCoupon")
+    message_lines.append("──────────────")
+    message_lines.append("\n🔔 <b>Follow Us:</b>")
+    message_lines.append("📱 Telegram: @RayanCoupon")
 
-    # Retourner le message complet
     return "\n".join(message_lines)
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
