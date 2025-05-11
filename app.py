@@ -556,14 +556,14 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
 
     for offer_key in OFFER_ORDER:
-    offer = OFFER_PARAMS.get(offer_key)
-    if offer:
-        name = offer["name"]
-        link = generated_links.get(offer_key, "#")
-        price = product_data.get(f"{offer_key}_price", "N/A")
-
-        message_lines.append(f"▫️ {name}: {price} {product_currency}")
-        message_lines.append(f"🔗 <a href=\"{link}\">{link}</a>\n")
+        offer = OFFER_PARAMS.get(offer_key)
+        if offer:
+            name = offer["name"]
+            link = generated_links.get(offer_key, "#")
+            price = product_data.get(f"{offer_key}_price", "N/A")
+            
+            message_lines.append(f"▫️ {name}: {price} {product_currency}")
+            message_lines.append(f"🔗 <a href=\"{link}\">{link}</a>\n")
 
 
 
