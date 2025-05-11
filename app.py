@@ -378,21 +378,27 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
 
 
         product_data = products[0]
-offer_data = await get_offer_price(product_id, ALIEXPRESS_TRACKING_ID)
+offer_daproduct_data = products[0]
 
-# Extraire les valeurs de offer_data
-sale_price = offer_data.get('sale_price', 'N/A')
-original_price = offer_data.get('original_price', product_data.get('target_sale_price'))
-savings = offer_data.get('savings', '0')
+try:
+    offer_data = await get_offer_price(product_id, ALIEXPRESS_TRACKING_ID)
+    sale_price = offer_data.get('sale_price', 'N/A')
+    original_price = offer_data.get('original_price', product_data.get('target_sale_price'))
+    savings = offer_data.get('savings', '0')
+except Exception as e:
+    print("Erreur lors de la récupération du prix coins:", e)
+    sale_price = 'N/A'
+    original_price = product_data.get('target_sale_price')
+    savings = '0'
 
 product_info = {
     'image_url': product_data.get('product_main_image_url'),
-    'price': original_price,  # prix de base
+    'price': original_price,
     'currency': product_data.get('target_sale_price_currency', TARGET_CURRENCY),
     'title': product_data.get('product_title', f'Product {product_id}'),
-    'coins_price': sale_price,  # prix avec coins
-    'savings': savings  # économie
-}
+    'coins_price': sale_price,
+    'savings': savings
+            }
 
 
 
