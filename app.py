@@ -54,31 +54,44 @@ except Exception as e:
 
 
 
+
+
+
 # Fonction pour récupérer le prix de l'offre "Coins" de l'API AliExpress
 async def get_offer_price(product_id: str, tracking_id: str) -> str:
     url = "https://api-sg.aliexpress.com/sync"
     params = {
-        "app_key": ALIEXPRESS_APP_KEY,
-        "method": "aliexpress.affiliate.productdetail.get",
-        "tracking_id": tracking_id,
-        "product_ids": product_id,
-        "fields": "product_id,sale_price",
-        "target_currency": TARGET_CURRENCY,
-        "target_language": TARGET_LANGUAGE,
-        "site_id": "glo",
-        "country": QUERY_COUNTRY,
+        "app_key": ALIEXPRESS_APP_KEY,  # Ta clé d'application AliExpress
+        "method": "aliexpress.affiliate.productdetail.get",  # Méthode pour récupérer les détails produits
+        "tracking_id": tracking_id,  # Identifiant de suivi (pour les commissions affiliées)
+        "product_ids": product_id,  # L'ID du produit
+        "fields": "product_id,sale_price",  # On demande à l'API de renvoyer les informations relatives au produit et au prix
+        "target_currency": TARGET_CURRENCY,  # La devise cible (par exemple, USD)
+        "target_language": TARGET_LANGUAGE,  # Langue cible
+        "site_id": "glo",  # AliExpress global
+        "country": QUERY_COUNTRY,  # Le pays de la requête
         "source_type": "620",  # Type de l'offre Coins
-        "channel": "coin",
+        "channel": "coin",  # Canal de l'offre (ici "coin" pour l'offre avec réduction)
     }
 
+    # Effectuer la requête HTTP
     async with aiohttp.ClientSession() as session:
         async with session.get(url, params=params) as response:
             data = await response.json()
+    
+    # Afficher la réponse brute de l'API pour vérification
+    print("Response from AliExpress API:", data)
 
+    # Tentative d'extraction du prix
     try:
+        # Si la clé existe, renvoie le prix de vente
         return data['resp_result']['result']['products'][0]['sale_price']
     except KeyError:
-        return "N/A"
+        # Si la clé n'existe pas (erreur), renvoie un message d'erreur ou "N/A"
+        return "Price not available"
+
+
+
 
 
 
