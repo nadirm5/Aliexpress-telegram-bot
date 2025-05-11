@@ -58,7 +58,10 @@ except Exception as e:
 
 
 try:
-    product_data = products[0]  # Assurez-vous que products[0] est défini correctement
+    if not products:
+        raise ValueError("Aucun produit trouvé.")  # Si products est vide
+
+    product_data = products[0]  # Produit principal
     offer_data = await get_offer_price(product_id, ALIEXPRESS_TRACKING_ID)
 
     sale_price = offer_data.get('sale_price', 'N/A')
@@ -67,7 +70,6 @@ try:
 
 except Exception as e:
     print("Erreur lors de la récupération du prix coins:", e)
-    # Si une erreur survient, définir les valeurs par défaut
     product_data = {}
     sale_price = 'N/A'
     original_price = 'N/A'
