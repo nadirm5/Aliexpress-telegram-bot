@@ -57,46 +57,27 @@ except Exception as e:
 
 
 
-# Fonction pour récupérer le prix de l'offre "Coins" de l'API AliExpress
-# Nouvelle fonction complète
-async def get_offer_price(product_id: str, tracking_id: str) -> dict:
-    url = "https://api-sg.aliexpress.com/sync"
-    params = {
-        "app_key": ALIEXPRESS_APP_KEY,
-        "method": "aliexpress.affiliate.productdetail.get",
-        "tracking_id": tracking_id,
-        "product_ids": product_id,
-        "fields": "product_id,sale_price,original_price",
-        "target_currency": TARGET_CURRENCY,
-        "target_language": TARGET_LANGUAGE,
-        "site_id": "glo",
-        "country": QUERY_COUNTRY,
-        "source_type": "620",
-        "channel": "coin"
-    }
+product_data = products[0]
 
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url, params=params) as response:
-            data = await response.json()
+try:
+    offer_data = await get_offer_price(product_id, ALIEXPRESS_TRACKING_ID)
+    sale_price = offer_data.get('sale_price', 'N/A')
+    original_price = offer_data.get('original_price', product_data.get('target_sale_price'))
+    savings = offer_data.get('savings', '0')
+except Exception as e:
+    print("Erreur lors de la récupération du prix coins:", e)
+    sale_price = 'N/A'
+    original_price = product_data.get('target_sale_price')
+    savings = '0'
 
-    print("Response from AliExpress API:", data)
-
-    try:
-        product = data['resp_result']['result']['products'][0]
-        sale_price = float(product['sale_price'])
-        original_price = float(product.get('original_price', sale_price))
-        return {
-            "sale_price": sale_price,
-            "original_price": original_price,
-            "savings": round(original_price - sale_price, 2)
-        }
-    except (KeyError, IndexError, ValueError) as e:
-        print("Erreur dans get_offer_price:", e)
-        return {
-            "sale_price": 0.0,
-            "original_price": 0.0,
-            "savings": 0.0
-        }
+product_info = {
+    'image_url': product_data.get('product_main_image_url'),
+    'price': original_price,
+    'currency': product_data.get('target_sale_price_currency', TARGET_CURRENCY),
+    'title': product_data.get('product_title', f'Product {product_id}'),
+    'coins_price': sale_price,
+    'savings': savings
+}
 
 
 
