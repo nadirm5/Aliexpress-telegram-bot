@@ -353,11 +353,13 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
             return None
 
         product_data = products[0]
+        coins_price = await get_offer_price(product_id, ALIEXPRESS_TRACKING_ID)
         product_info = {
             'image_url': product_data.get('product_main_image_url'),
             'price': product_data.get('target_sale_price'), 
             'currency': product_data.get('target_sale_price_currency', TARGET_CURRENCY),
             'title': product_data.get('product_title', f'Product {product_id}')
+              'coins_price': coins_price  
         }
 
         await product_cache.set(product_id, product_info)
