@@ -52,6 +52,37 @@ except Exception as e:
     logger.exception(f"Error initializing AliExpress API client: {e}")
     exit()
 
+
+
+# Fonction pour récupérer le prix de l'offre "Coins" de l'API AliExpress
+async def get_offer_price(product_id: str, tracking_id: str) -> str:
+    url = "https://api-sg.aliexpress.com/sync"
+    params = {
+        "app_key": ALIEXPRESS_APP_KEY,
+        "method": "aliexpress.affiliate.productdetail.get",
+        "tracking_id": tracking_id,
+        "product_ids": product_id,
+        "fields": "product_id,sale_price",
+        "target_currency": TARGET_CURRENCY,
+        "target_language": TARGET_LANGUAGE,
+        "site_id": "glo",
+        "country": QUERY_COUNTRY,
+        "source_type": "620",  # Type de l'offre Coins
+        "channel": "coin",
+    }
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, params=params) as response:
+            data = await response.json()
+
+    try:
+        return data['resp_result']['result']['products'][0]['sale_price']
+    except KeyError:
+        return "N/A"
+
+
+
+
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
 URL_REGEX = re.compile(r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*', re.IGNORECASE)
