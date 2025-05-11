@@ -558,7 +558,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         link = generated_links.get(offer_key)
         offer_name = OFFER_PARAMS[offer_key]["name"]
         if link:
-            message_lines.append(f'▫️ {offer_name}: {link}\n')
+            message_lines.append(f'▫️ <b>{offer_name}:</b> <a href="{link}"><b>{link}</b></a>\n')
             offers_available = True
         else:
             message_lines.append(f"▫️ {offer_name}: ❌ Not Available")
