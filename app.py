@@ -537,6 +537,7 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 
 
 
+
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
     product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:50]
@@ -557,7 +558,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     coins_link = generated_links.get("coins")
     if coins_link:
         message_lines.append(f"▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸 👉: <b>{coins_link}</b>\n")
-        message_lines.append("──────────────\n\n")  # Plus d'espace après Coins
+        message_lines.append("──────────────\n")
 
     message_lines.append("🎁 <b>Special Offers:</b>")
     message_lines.append("──────────────\n")
@@ -565,7 +566,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     offers_available = False
     for offer_key in OFFER_ORDER:
         if offer_key == "coins":
-            continue  # Déjà traité
+            continue
         link = generated_links.get(offer_key)
         offer_name = OFFER_PARAMS[offer_key]["name"]
         if link:
