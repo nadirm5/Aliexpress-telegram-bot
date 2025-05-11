@@ -89,7 +89,6 @@ OFFER_PARAMS = {
 
 OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
 
-
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
@@ -323,13 +322,13 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
             logger.warning(f"No products found in API response for ID {product_id}")
             return None
 
-
-
-
-
-
-
-
+        product_data = products[0]
+        product_info = {
+            'image_url': product_data.get('product_main_image_url'),
+            'price': product_data.get('target_sale_price'), 
+            'currency': product_data.get('target_sale_price_currency', TARGET_CURRENCY),
+            'title': product_data.get('product_title', f'Product {product_id}')
+        }
 
         await product_cache.set(product_id, product_info)
         expiry_date = datetime.now() + timedelta(days=CACHE_EXPIRY_DAYS)
@@ -535,6 +534,7 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
             logger.warning(f"Failed to get affiliate link for offer {offer_key} (target: {target_url})")
 
     return generated_links
+
 
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
