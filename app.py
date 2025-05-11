@@ -566,9 +566,9 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
             message_lines.append(f'▫️ <b>{offer_name}:</b> <a href="{link}"><b>{link}</b></a>\n')
             offers_available = True
 
-            # Si c'est l'offre "Coins", ajouter un trait après le lien
+            # Ajouter un trait après le lien "Coins" uniquement
             if offer_name == "Coins":
-                message_lines.append("──────────────")  # Ajoute un trait après le lien "Coins"
+                message_lines.append("──────────────")  # Ajoute un trait après "Coins"
                 
         else:
             message_lines.append(f"▫️ {offer_name}: ❌ Not Available")
