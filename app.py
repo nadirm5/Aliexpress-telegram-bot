@@ -331,11 +331,6 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
 
 
 
-        product_data = products[0]
-offer_da
-
-
-
 
 
 
