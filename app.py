@@ -56,14 +56,6 @@ except Exception as e:
 
 
 
-async def get_sale_price_only(product_id):
-    try:
-        offer_data = await get_offer_price(product_id, ALIEXPRESS_TRACKING_ID)
-        sale_price = offer_data.get('sale_price', 'N/A')  # Récupère le prix après réduction
-        return sale_price
-    except Exception as e:
-        print("Erreur lors de la récupération du prix réduit:", e)
-        return 'N/A'
 
 
 
