@@ -574,28 +574,27 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     message_lines.append("──────────────\n")
     message_lines.append("🎁 <b>Offers</b>:")
 
-    # Noms lisibles pour les offres
-    offer_names = {
-        "super_deals": "🔥 Super Deals",
-        "limited_offers": "⏱️ Limited Offers",
-        "big_save": "💰 Big Save"
-    }
+offers_available = False
+    for offer_key in OFFER_ORDER:
+        if offer_key == "coin":  # Skip the coin link as it's already added
+            continue
+        link = generated_links.get(offer_key)
+        offer_name = OFFER_PARAMS[offer_key]["name"]
+        if link:
+            # Affichage du lien d'offre directement en texte
+            message_lines.append(f'▫️ <b>{offer_name}:</b> {link}\n')  # Lien apparant comme texte
+            offers_available = True
+        else:
+            # Affichage si l'offre n'est pas disponible
+            message_lines.append(f"▫️ {offer_name}: ❌ Not Available\n")
 
-    offers_found = False
-    for offer_key in ["super_deals", "limited_offers", "big_save"]:
-        offer_link = generated_links.get(offer_key)
-        if offer_link:
-            offer_label = offer_names.get(offer_key, offer_key.replace('_', ' ').title())
-            message_lines.append(f"▫️ {offer_label}: {offer_link}\n")
-            offers_found = True
+    # Si aucune offre n'est disponible, afficher un message de défaut
+    if not offers_available and not coin_link:
+        return f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."
 
-    # Si aucun lien d'offre n'est trouvé
-    if not offers_found and not coin_link:
-        message_lines.append("❌ No special offers found for this product.\n")
-
-    # Fin du message
+    # Ajouter la fin du message avec l'invitation à suivre sur Telegram
     message_lines.append("──────────────\n")
-    message_lines.append("🔔 <b>تابعنا لأفضل العروض كل يوم!</b>")
+    message_lines.append("🔔 <b>تابعنا لأفضل العروض كل يوم:</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
