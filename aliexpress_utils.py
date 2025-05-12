@@ -1,58 +1,45 @@
 import requests
 from bs4 import BeautifulSoup
-import re
-
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+import time
 
 def get_aliexpress_product_info(product_url):
     """
-    Extract product name, image, and special prices (Super Deals, Coins) from AliExpress without Selenium.
+    Extract product name and price from AliExpress using Selenium
     Args:
         product_url (str): AliExpress product page URL
     Returns:
-        tuple: (product_name, img_url, super_deals_price, coins_price)
+        tuple: (product_name, img_url, price)
     """
     product_name = None  # Initialize product_name
     img_url = None       # Initialize img_url
-    super_deals_price = None  # Initialize price for Super Deals
-    coins_price = None  # Initialize price for Coins offer
+    price = None         # Initialize price
+    
+    options = Options()
+    options.headless = True  # Run browser in headless mode (without UI)
+    driver = webdriver.Chrome(options=options)
+    
     try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
-        cookies = {"x-hng": "lang=en-US", "intl_locale": "en_US"}
-        response = requests.get(product_url, headers=headers, cookies=cookies, timeout=15)
-        if response.status_code != 200:
-            print(f"Failed to load page: {response.status_code}")
-            return None, None, None, None  # Return None for all if page fails
+        # Load the page using Selenium
+        driver.get(product_url)
+        time.sleep(5)  # Wait for the page to load
         
-        soup = BeautifulSoup(response.text, "html.parser")
-        
-        # Extract product name
+        # --- Get product name ---
+        soup = BeautifulSoup(driver.page_source, "html.parser")
         root_div = soup.find("div", id="root")
         if root_div:
             h1 = root_div.select_one("div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > h1")
             if h1:
                 product_name = h1.get_text(strip=True)
 
-        # Fallback to og:title meta tag
         if not product_name:
             meta_title = soup.find("meta", property="og:title")
             if meta_title and meta_title.has_attr("content"):
                 product_name = meta_title["content"]
-
-        # Fallback to keywords meta tag
-        if not product_name:
-            meta_name = soup.find("meta", attrs={"name": "keywords"})
-            if meta_name and meta_name.has_attr("content"):
-                product_name = meta_name["content"].split(",")[0].strip()
-
-        # Fallback to h1 with data-pl attribute
-        if not product_name:
-            h1 = soup.find("h1", {"data-pl": "product-title"})
-            if h1:
-                product_name = h1.get_text(strip=True)
-
-        # --- Image Extraction ---
+        
+        # --- Get product image URL ---
         img_tag = soup.find("img", {"class": lambda x: x and "magnifier--image" in x})
         if img_tag and img_tag.has_attr("src"):
             img_url = img_tag["src"]
@@ -61,28 +48,26 @@ def get_aliexpress_product_info(product_url):
             if meta_img and meta_img.has_attr("content"):
                 img_url = meta_img["content"]
 
-        # --- Extract Prices ---
-        # Extract Super Deals Price (if available)
-        super_deals_tag = soup.find("span", {"class": "super-deal-price"})
-        if super_deals_tag and super_deals_tag.get_text(strip=True):
-            super_deals_price = super_deals_tag.get_text(strip=True)
-
-        # Extract Coins Price (if available)
-        coins_tag = soup.find("span", {"class": "coins-price"})
-        if coins_tag and coins_tag.get_text(strip=True):
-            coins_price = coins_tag.get_text(strip=True)
-
-        # Clean up Product Name ---
+        # --- Get product price ---
+        try:
+            # Example of finding price, adjust the CSS selector accordingly
+            price_element = driver.find_element(By.CSS_SELECTOR, '.product-price-value')  # Example CSS selector for the price
+            price = price_element.text if price_element else None
+        except Exception as e:
+            print(f"Failed to extract price: {e}")
+        
+        # Clean up the product name (if necessary)
         if product_name:
+            import re
             product_name = re.sub(r'\s*-\s*AliExpress(\s+\d+)?$', '', product_name).strip()
-            product_name = re.sub(r'-AliExpress(\s+\d+)?$', '', product_name).strip()
 
-        return product_name, img_url, super_deals_price, coins_price
+        return product_name, img_url, price
 
     except Exception as e:
         print(f"An error occurred in get_aliexpress_product_info: {str(e)}")
-        return None, None, None, None  # Return None for all on error
-
+        return None, None, None
+    finally:
+        driver.quit()  # Make sure to close the browser after scraping
 
 def get_product_details_by_id(product_id):
     """
@@ -90,8 +75,13 @@ def get_product_details_by_id(product_id):
     Args:
         product_id (str or int): The AliExpress product ID.
     Returns:
-        tuple: (product_name, img_url, super_deals_price, coins_price) or (None, None, None, None) if failed.
+        tuple: (product_name, img_url, price) or (None, None, None) if failed.
     """
     product_url = f"https://www.aliexpress.com/item/{product_id}.html"
     print(f"Constructed URL: {product_url}")
     return get_aliexpress_product_info(product_url)
+
+# Example usage
+product_id = "1234567890"  # Replace with a real product ID
+product_name, img_url, price = get_product_details_by_id(product_id)
+print(f"Product Name: {product_name}, Image URL: {img_url}, Price: {price}")
