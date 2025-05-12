@@ -67,7 +67,7 @@ OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
-            "product_url": "https://www.aliexpress.com/item/1234567890",  # Exemple d'URL produit
+            "product_url": "https://www.aliexpress.com/item/1234567890?aff_platform=coin",  # Exemple d'URL produit spécifique aux coins
             "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
         }
@@ -75,7 +75,7 @@ OFFER_PARAMS = {
     "link": {
         "name": "🚀 <b>🔗 رابط المنتوج بالتخفيض</b>",
         "params": {
-            "product_url": "https://www.aliexpress.com/item/1234567890",  # Exemple d'URL produit
+            "product_url": "https://www.aliexpress.com/item/1234567890",  # Exemple d'URL produit standard
             "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
         }
@@ -83,7 +83,7 @@ OFFER_PARAMS = {
     "super": {
         "name": "🔥 Super Deals",
         "params": {
-            "product_url": "https://www.aliexpress.com/item/1234567890",  # Exemple d'URL produit
+            "product_url": "https://www.aliexpress.com/item/1234567890?aff_platform=superdeal",  # URL pour Super Deals
             "sourceType": "562",
             "channel": "sd",
             "afSmartRedirect": "y"
@@ -92,7 +92,7 @@ OFFER_PARAMS = {
     "limited": {
         "name": "⏳ Limited Offers",
         "params": {
-            "product_url": "https://www.aliexpress.com/item/1234567890",  # Exemple d'URL produit
+            "product_url": "https://www.aliexpress.com/item/1234567890?aff_platform=limited",  # URL pour Limited Offers
             "sourceType": "561",
             "channel": "limitedoffers",
             "afSmartRedirect": "y"
@@ -101,7 +101,7 @@ OFFER_PARAMS = {
     "bigsave": {
         "name": "💰 Big Save",
         "params": {
-            "product_url": "https://www.aliexpress.com/item/1234567890",  # Exemple d'URL produit
+            "product_url": "https://www.aliexpress.com/item/1234567890?aff_platform=bigsave",  # URL pour Big Save
             "sourceType": "680",
             "channel": "bigSave",
             "afSmartRedirect": "y"
@@ -111,26 +111,32 @@ OFFER_PARAMS = {
 
 OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
 
-# Fonction pour récupérer le prix d'un produit via l'URL
+# Fonction pour récupérer le prix du produit en fonction de l'URL
 def get_price_from_product_url(product_url):
-    # Dans un cas réel, vous pouvez interroger l'API ou extraire des informations de la page produit
-    # Pour l'instant, retour fictif
-    # Exemple de prix
-    return 15.99  # Remplacer cette ligne par la logique réelle pour obtenir le prix via l'URL
+    # Logique pour obtenir le prix réel à partir de l'URL (ajoutez ici la méthode réelle que vous utilisez)
+    # Par exemple, un appel API, ou un parsing du contenu de la page
+    if "coin" in product_url:
+        return 10.99  # Prix spécifique pour l'offre "coin"
+    elif "superdeal" in product_url:
+        return 12.99  # Prix spécifique pour l'offre "super deal"
+    elif "limited" in product_url:
+        return 8.99  # Prix spécifique pour l'offre "limited"
+    elif "bigsave" in product_url:
+        return 14.99  # Prix spécifique pour l'offre "big save"
+    else:
+        return 15.99  # Prix par défaut si aucune offre spécifique n'est trouvée
 
 # Ajouter le prix aux offres dans OFFER_PARAMS
 for offer_key, offer in OFFER_PARAMS.items():
-    # Vérifier si l'URL produit est disponible dans les paramètres
     product_url = offer["params"].get("product_url")
     
-    if product_url:  # Si l'URL est présente
-        price = get_price_from_product_url(product_url)  # Obtenez le prix réel via l'URL
+    if product_url:  # Si l'URL produit est présente
+        price = get_price_from_product_url(product_url)  # Appel à la fonction pour obtenir le prix en fonction de l'URL
         offer["price"] = price  # Ajouter le prix à l'offre
 
 # Affichage du résultat
 for offer_key, offer in OFFER_PARAMS.items():
     print(f"{offer['name']} : {offer.get('price', 'Prix non disponible')}")
-
 
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
