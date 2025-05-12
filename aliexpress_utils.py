@@ -1,79 +1,51 @@
-import requests
-from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.action_chains import ActionChains
+import time
 
-def get_aliexpress_product_info(product_url):
-    """
-    Extract product details (name, image, price) from AliExpress without Selenium.
-    Args:
-        product_url (str): AliExpress product page URL
-    Returns:
-        tuple: (product_name, img_url, price) or (None, None, None) if failed.
-    """
-    product_name = None
-    img_url = None
-    price = None
-    
+def get_product_details_with_selenium(product_url):
+    # Initialiser Chrome avec options
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")  # Mode sans tête (pas d'interface graphique)
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
     try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
-        cookies = {"x-hng": "lang=en-US", "intl_locale": "en_US"}
-        response = requests.get(product_url, headers=headers, cookies=cookies, timeout=15)
-        
-        if response.status_code != 200:
-            print(f"Failed to load page: {response.status_code}")
-            return None, None, None
-        
-        soup = BeautifulSoup(response.text, "html.parser")
-        
-        # --- Extract Product Name ---
-        root_div = soup.find("div", id="root")
-        if root_div:
-            h1 = root_div.select_one("div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > h1")
-            if h1:
-                product_name = h1.get_text(strip=True)
-        
-        # Fallback to meta title if product name is not found
-        if not product_name:
-            meta_title = soup.find("meta", property="og:title")
-            if meta_title and meta_title.has_attr("content"):
-                product_name = meta_title["content"]
-        
-        # --- Extract Image URL ---
-        img_tag = soup.find("img", {"class": lambda x: x and "magnifier--image" in x})
-        if img_tag and img_tag.has_attr("src"):
-            img_url = img_tag["src"]
-        else:
-            # Fallback to og:image meta tag
-            meta_img = soup.find("meta", property="og:image")
-            if meta_img and meta_img.has_attr("content"):
-                img_url = meta_img["content"]
-        
-        # --- Extract Price ---
-        price_tag = soup.find("span", {"class": "product-price-value"})
-        if price_tag:
-            price = price_tag.get_text(strip=True)
-        
-        # Clean up the product name (remove AliExpress suffix)
-        if product_name:
-            import re
-            product_name = re.sub(r'\s*-\s*AliExpress(\s+\d+)?$', '', product_name).strip()
-            product_name = re.sub(r'-AliExpress(\s+\d+)?$', '', product_name).strip()
+        # Ouvrir la page du produit
+        driver.get(product_url)
+        time.sleep(3)  # Attendre que la page se charge
 
-        return product_name, img_url, price
-    
+        # Trouver le bouton ou le lien à cliquer pour afficher les prix
+        # (Remplacer avec le sélecteur correct du bouton de promotion)
+        try:
+            # Exemple de clic sur un bouton pour afficher les prix (ajuste le sélecteur CSS)
+            promo_button = driver.find_element(By.CSS_SELECTOR, "button.promotion-button")  # Remplace par le sélecteur correct
+            ActionChains(driver).move_to_element(promo_button).click().perform()
+            time.sleep(3)  # Attendre que le contenu soit chargé
+        except Exception as e:
+            print(f"Erreur en cliquant sur le bouton de promotion : {e}")
+
+        # Récupérer le nom du produit
+        product_name = driver.find_element(By.CSS_SELECTOR, "h1.product-title-text").text
+
+        # Récupérer le prix standard
+        standard_price = driver.find_element(By.CSS_SELECTOR, "span.product-price-value").text
+
+        # Récupérer le prix promotionnel (si disponible)
+        try:
+            discount_price = driver.find_element(By.CSS_SELECTOR, "span.product-price-now").text
+        except:
+            discount_price = None  # Si pas de prix promo, mettre None
+
+        return product_name, standard_price, discount_price
+
     except Exception as e:
-        print(f"An error occurred in get_aliexpress_product_info: {str(e)}")
-        return None, None, None
+        print(f"Erreur : {e}")
+    finally:
+        driver.quit()
 
-def get_product_details_by_id(product_id):
-    """
-    Constructs URL from product ID and fetches product details.
-    Args:
-        product_id (str or int): The AliExpress product ID.
-    Returns:
-        tuple: (product_name, img_url, price) or (None, None, None) if failed.
-    """
-    product_url = f"https://www.aliexpress.com/item/{product_id}.html"
-    print(f"Constructed URL: {product_url}")
-    return get_aliexpress_product_info(product_url)
+# Utilisation de la fonction avec un lien de produit spécifique
+product_url = "https://www.aliexpress.com/item/123456789"
+product_name, standard_price, discount_price = get_product_details_with_selenium(product_url)
+print(product_name, standard_price, discount_price)
