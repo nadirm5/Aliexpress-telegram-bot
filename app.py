@@ -543,47 +543,49 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
 
-    # Titre du produit avec émojis génériques pour tous types de produits  
-    product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]  
-    decorated_title = f"✨⭐️ {product_title} ⭐️✨"  
-    product_price = product_data.get('price')  
-    product_currency = product_data.get('currency', '')  
+    # Titre du produit avec émojis génériques pour tous types de produits
+    product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
+    decorated_title = f"✨⭐️ {product_title} ⭐️✨"
+    product_price = product_data.get('price')
+    product_currency = product_data.get('currency', '')
 
-    print(f"Product Title: {product_title}")  
-    print(f"Product Price: {product_price} {product_currency}")  
-    print(f"Generated Links: {generated_links}")  
+    print(f"Product Title: {product_title}")
+    print(f"Product Price: {product_price} {product_currency}")
+    print(f"Generated Links: {generated_links}")
 
-    # Titre  
-    message_lines.append(f"<b>{decorated_title}</b>")  
+    # Titre
+    message_lines.append(f"<b>{decorated_title}</b>")
 
-    # Prix  
-    if details_source == "API" and product_price:  
-        price_str = f"{product_price} {product_currency}".strip()  
-        message_lines.append(f"\n💰 <b>Price $السعر بدون تخفيض:</b> {price_str}\n")  
-    elif details_source == "Scraped":  
-        message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")  
-    else:  
-        message_lines.append("\n❌ <b>Product details unavailable</b>\n")  
+    # Prix
+    if details_source == "API" and product_price:
+        price_str = f"{product_price} {product_currency}".strip()
+        message_lines.append(f"\n💰 <b>Price $السعر بدون تخفيض:</b> {price_str}\n")
+    elif details_source == "Scraped":
+        message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
+    else:
+        message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    # Lien coin  
-    coin_link = generated_links.get("coin")  
-    if coin_link:  
-        message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: {coin_link}")  
-        message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")  
+    # Lien coin
+    coin_link = generated_links.get("coin")
+    if coin_link:
+        message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: {coin_link}")
+        message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
-    # Autres liens  
-    message_lines.append("──────────────\n")  
-    message_lines.append("🎁 <b>Offers</b>:")  
 
-    for offer_key in ["super_deals", "limited_offers", "big_save"]:  
-        offer_link = generated_links.get(offer_key)  
-        if offer_link:  
-            message_lines.append(f"▫️ {offer_key.replace('_', ' ').title()}: {offer_link}\n")  
+    # Autres liens
+    message_lines.append("──────────────\n")
+    message_lines.append("🎁 <b>Offers</b>:")
+    message_lines.append("──────────────\n")
 
-    # Fin  
-    message_lines.append("──────────────\n")  
-    message_lines.append("🔔 <b>Follow us</b>")  
-    message_lines.append("📱 Telegram: @RayanCoupon")  
+    for offer_key in ["super_deals", "limited_offers", "big_save"]:
+        offer_link = generated_links.get(offer_key)
+        if offer_link:
+            message_lines.append(f"▫️ {offer_key.replace('_', ' ').title()}: {offer_link}\n")
+
+    # Fin
+    message_lines.append("──────────────\n")
+    message_lines.append("🔔 <b>Follow us</b>")
+    message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
 
