@@ -537,33 +537,38 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     if details_source == "API" and product_price:
         price_str = f"{product_price} {product_currency}".strip()
-        message_lines.append(f"💰 <b>Price $السعر بدون تخفيض:</b> {price_str}")
+        message_lines.append(f"\n💰 <b>Price $السعر بدون تخفيض:</b> {price_str}\n")
     elif details_source == "Scraped":
-        message_lines.append("💰 <b>Price:</b> Unavailable (Scraped)")
+        message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
     else:
-        message_lines.append("❌ <b>Product details unavailable</b>")
+        message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
     coins_link = generated_links.get("coins")
     if coins_link:
-        message_lines.append("\n🔥🌟 <b>أقل سعر مع تخفيض يصل حتى +70%</b>")
-        message_lines.append("🔻 <b>لا تفوت الفرصة! العرض الأفضل والأقل سعر في السوق هنا:</b>")
-        message_lines.append(f"👉 <b>أقل سعر عبر Coins:</b> <a href=\"{coins_link}\">اضغط هنا لتوفير المزيد!</a>")
-        message_lines.append("──────────────")
+        message_lines.append(f"▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸 👉: <b>{coins_link}</b>\n")
+        message_lines.append("──────────────\n")
 
-    # Affiche uniquement les autres offres s’ils existent
-    offers_displayed = False
-    for offer_type in ["super", "limited", "bigsave"]:
-        offer = OFFER_PARAMS.get(offer_type)
-        offer_link = generated_links.get(offer_type)
-        if offer_link:
-            if not offers_displayed:
-                message_lines.append("🎁 <b>عروض إضافية:</b>")
-                message_lines.append("──────────────")
-                offers_displayed = True
-            message_lines.append(f"▫️ {offer['name']} {offer_link}")
+    message_lines.append("🎁 <b>Special Offers:</b>")
+    message_lines.append("──────────────\n")
 
-    if offers_displayed:
-        message_lines.append("──────────────")
+    offers_available = False
+    for offer_key in OFFER_ORDER:
+        if offer_key == "coins":
+            continue
+        link = generated_links.get(offer_key)
+        offer_name = OFFER_PARAMS[offer_key]["name"]
+        if link:
+            message_lines.append(f'▫️ <b>{offer_name}:</b> <a href="{link}"><b>{link}</b></a>\n')
+            offers_available = True
+        else:
+            message_lines.append(f"▫️ {offer_name}: ❌ Not Available\n")
+
+    if not offers_available and not coins_link:
+        return f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."
+
+    message_lines.append("──────────────\n")
+    message_lines.append("🔔 <b>Follow Us:</b>")
+    message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
 
