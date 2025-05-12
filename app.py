@@ -94,6 +94,22 @@ class CacheWithExpiry:
         self.cache = {}
         self.expiry_seconds = expiry_seconds
         self._lock = asyncio.Lock()
+async def fetch_price_from_url(url):
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+        }
+        async with aiohttp.ClientSession(headers=headers) as session:
+            async with session.get(url, timeout=10) as response:
+                html = await response.text()
+
+                match = re.search(r'([$\€£]?\s?\d{1,4}[\s.,]?\d{1,2})', html)
+                if match:
+                    return match.group(1).strip()
+                else:
+                    return "Prix non trouvé"
+    except Exception:
+        return "Erreur"
 
     async def get(self, key):
         async with self._lock:
