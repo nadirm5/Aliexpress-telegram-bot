@@ -103,6 +103,24 @@ OFFER_PARAMS = {
     },
 }
 OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
+# Fonction pour récupérer le prix d'un produit (simulée ou API)
+def get_price_from_product_url(product_url):
+    # Pour l'instant, retourne un prix fictif pour l'exemple
+    return 15.99  # Remplacer cette ligne par la logique réelle pour obtenir le prix réel via l'URL
+
+# Ajouter le prix aux offres dans OFFER_PARAMS
+for offer_key, offer in OFFER_PARAMS.items():
+    # Ici, tu peux ajouter une URL de produit à tester (facultatif si déjà inclus)
+    product_url = offer["params"].get("product_url")
+    
+    if product_url:  # Vérifier que le produit URL est bien disponible
+        price = get_price_from_product_url(product_url)  # Appeler la fonction pour obtenir le prix
+        offer["price"] = price  # Ajouter le prix à l'offre
+
+# Affichage du résultat
+for offer_key, offer in OFFER_PARAMS.items():
+    print(f"{offer['name']} : {offer.get('price', 'Prix non disponible')}")
+
 
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
