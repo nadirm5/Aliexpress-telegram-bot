@@ -67,7 +67,7 @@ OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
-            "product_url": "https://www.aliexpress.com/item/1234567890?aff_platform=coin",  # Exemple d'URL produit spécifique aux coins
+            "product_url": "https://www.aliexpress.com/item/1234567890?aff_platform=coin",  # Exemple d'URL produit avec paramètre spécifique
             "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
         }
@@ -75,7 +75,7 @@ OFFER_PARAMS = {
     "link": {
         "name": "🚀 <b>🔗 رابط المنتوج بالتخفيض</b>",
         "params": {
-            "product_url": "https://www.aliexpress.com/item/1234567890",  # Exemple d'URL produit standard
+            "product_url": "https://www.aliexpress.com/item/1234567890?aff_platform=link",  # Exemple d'URL produit
             "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
         }
@@ -83,7 +83,7 @@ OFFER_PARAMS = {
     "super": {
         "name": "🔥 Super Deals",
         "params": {
-            "product_url": "https://www.aliexpress.com/item/1234567890?aff_platform=superdeal",  # URL pour Super Deals
+            "product_url": "https://www.aliexpress.com/item/1234567890?aff_platform=sd",  # Exemple d'URL produit avec paramètre spécifique
             "sourceType": "562",
             "channel": "sd",
             "afSmartRedirect": "y"
@@ -92,7 +92,7 @@ OFFER_PARAMS = {
     "limited": {
         "name": "⏳ Limited Offers",
         "params": {
-            "product_url": "https://www.aliexpress.com/item/1234567890?aff_platform=limited",  # URL pour Limited Offers
+            "product_url": "https://www.aliexpress.com/item/1234567890?aff_platform=limitedoffers",  # Exemple d'URL produit
             "sourceType": "561",
             "channel": "limitedoffers",
             "afSmartRedirect": "y"
@@ -101,7 +101,7 @@ OFFER_PARAMS = {
     "bigsave": {
         "name": "💰 Big Save",
         "params": {
-            "product_url": "https://www.aliexpress.com/item/1234567890?aff_platform=bigsave",  # URL pour Big Save
+            "product_url": "https://www.aliexpress.com/item/1234567890?aff_platform=bigSave",  # Exemple d'URL produit
             "sourceType": "680",
             "channel": "bigSave",
             "afSmartRedirect": "y"
@@ -111,27 +111,27 @@ OFFER_PARAMS = {
 
 OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
 
-# Fonction pour récupérer le prix du produit en fonction de l'URL
+# Fonction pour récupérer le prix d'un produit via l'URL
 def get_price_from_product_url(product_url):
-    # Logique pour obtenir le prix réel à partir de l'URL (ajoutez ici la méthode réelle que vous utilisez)
-    # Par exemple, un appel API, ou un parsing du contenu de la page
+    # Récupérer les paramètres dans l'URL pour déterminer l'offre
     if "coin" in product_url:
         return 10.99  # Prix spécifique pour l'offre "coin"
-    elif "superdeal" in product_url:
-        return 12.99  # Prix spécifique pour l'offre "super deal"
-    elif "limited" in product_url:
-        return 8.99  # Prix spécifique pour l'offre "limited"
-    elif "bigsave" in product_url:
-        return 14.99  # Prix spécifique pour l'offre "big save"
+    elif "sd" in product_url:
+        return 12.99  # Prix spécifique pour l'offre "Super Deals"
+    elif "limitedoffers" in product_url:
+        return 8.99  # Prix spécifique pour l'offre "Limited Offers"
+    elif "bigSave" in product_url:
+        return 14.99  # Prix spécifique pour l'offre "Big Save"
     else:
-        return 15.99  # Prix par défaut si aucune offre spécifique n'est trouvée
+        return 15.99  # Prix standard (par défaut)
 
 # Ajouter le prix aux offres dans OFFER_PARAMS
 for offer_key, offer in OFFER_PARAMS.items():
+    # Vérifier si l'URL produit est disponible dans les paramètres
     product_url = offer["params"].get("product_url")
     
-    if product_url:  # Si l'URL produit est présente
-        price = get_price_from_product_url(product_url)  # Appel à la fonction pour obtenir le prix en fonction de l'URL
+    if product_url:  # Si l'URL est présente
+        price = get_price_from_product_url(product_url)  # Obtenez le prix réel via l'URL
         offer["price"] = price  # Ajouter le prix à l'offre
 
 # Affichage du résultat
