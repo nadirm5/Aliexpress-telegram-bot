@@ -538,7 +538,7 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 
 
 
-def _build_response_message(product_data: dict, generated_links: dict, details_source: str, lowest_price: str | None = None) -> str:
+def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
     product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
     product_price = product_data.get('price')
@@ -646,30 +646,13 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
              return
 
         product_data['id'] = product_id # Add ID for logging in send function
- async def handle_offer_request(base_url, product_data, details_source):
-    try:
+
         generated_links = await _generate_offer_links(base_url)
 
-        if not generated_links:
-            logger.warning("No generated links found.")
-            response_text = "Sorry, we couldn't find any available offers for this product."
-            reply_markup = _build_reply_markup()
-        else:
-            lowest_price, best_offer = await get_lowest_price(generated_links)
-            response_text = _build_response_message(product_data, generated_links, details_source, lowest_price)
-            reply_markup = _build_reply_markup()
-
-    except Exception as e:
-        logger.error(f"An error occurred: {e}")
-        response_text = "There was an error while fetching offers."
+        response_text = _build_response_message(product_data, generated_links, details_source)
         reply_markup = _build_reply_markup()
 
-    return response_text, reply_markup
-except Exception as e:
-    logger.error(f"An error occurred: {e}")
-    response_text = "There was an error while fetching offers."
-    reply_markup = _build_reply_markup()
-          await _send_telegram_response(context, chat_id, product_data, response_text, reply_markup)
+        await _send_telegram_response(context, chat_id, product_data, response_text, reply_markup)
 
     except Exception as e:
         logger.exception(f"Unhandled error processing product {product_id} in chat {chat_id}: {e}")
@@ -814,4 +797,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
