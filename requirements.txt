@@ -4,4 +4,4 @@ aiohttp
 requests 
 beautifulsoup4
 flask
-selenium==4.10.0  
+  
