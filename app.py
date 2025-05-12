@@ -526,7 +526,7 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 
     return generated_links
 
-def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
+
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
     product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
