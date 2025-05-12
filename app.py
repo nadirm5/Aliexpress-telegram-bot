@@ -646,11 +646,6 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
              return
 
         product_data['id'] = product_id # Add ID for logging in send function
-
-
-
-
-
  try:
     generated_links = await _generate_offer_links(base_url)
 
@@ -667,14 +662,7 @@ except Exception as e:
     logger.error(f"An error occurred: {e}")
     response_text = "There was an error while fetching offers."
     reply_markup = _build_reply_markup()
-        
-
-
-
-
-
-
-        await _send_telegram_response(context, chat_id, product_data, response_text, reply_markup)
+          await _send_telegram_response(context, chat_id, product_data, response_text, reply_markup)
 
     except Exception as e:
         logger.exception(f"Unhandled error processing product {product_id} in chat {chat_id}: {e}")
