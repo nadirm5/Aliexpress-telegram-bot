@@ -649,8 +649,8 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
 
         generated_links = await _generate_offer_links(base_url)
 lowest_price, best_offer = await get_lowest_price(generated_links)
-        response_text = _build_response_message(product_data, generated_links, details_source)
-        reply_markup = _build_reply_markup()
+response_text = _build_response_message(product_data, generated_links, details_source, lowest_price)
+reply_markup = _build_reply_markup()
 
         await _send_telegram_response(context, chat_id, product_data, response_text, reply_markup)
 
