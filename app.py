@@ -541,13 +541,21 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
+
+    # Vérification du titre du produit
     product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
     product_price = product_data.get('price')
     product_currency = product_data.get('currency', '')
 
+    print(f"Product Title: {product_title}")
+    print(f"Product Price: {product_price} {product_currency}")
+    print(f"Generated Links: {generated_links}")
+
+    # Ajouter le titre du produit à la réponse
     message_lines.append(f"<b>{product_title[:250]}</b>")
     message_lines.append("──────────────")
 
+    # Affichage du prix du produit
     if details_source == "API" and product_price:
         price_str = f"{product_price} {product_currency}".strip()
         message_lines.append(f"\n💰 <b>Price $السعر بدون تخفيض:</b> {price_str}\n")
@@ -556,18 +564,19 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     else:
         message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    coins_link = generated_links.get("coins")
-    if coins_link:
-        message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉: <a href=\"{coins_link}\">اضغط هنا</a>\n")
+    # Ajout du lien "Coins" s'il est disponible
+    coin_link = generated_links.get("coin")  # Notez ici que "coin" est utilisé, pas "coins"
+    if coin_link:
+        message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉: <a href=\"{coin_link}\">اضغط هنا</a>\n")
         message_lines.append("──────────────\n")
 
+    # Ajout des offres spéciales
     message_lines.append("🎁 <b>عروض خاصة إضافية:</b>")
     message_lines.append("──────────────\n")
 
+    # Flag pour savoir si des offres sont disponibles
     offers_available = False
     for offer_key in OFFER_ORDER:
-        if offer_key == "coins":
-            continue
         link = generated_links.get(offer_key)
         offer_name = OFFER_PARAMS[offer_key]["name"]
         if link:
@@ -576,13 +585,16 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         else:
             message_lines.append(f"▫️ {offer_name}: ❌ Not Available\n")
 
-    if not offers_available and not coins_link:
+    # Si aucune offre n'est trouvée, retourner un message d'absence d'offre
+    if not offers_available and not coin_link:
         return f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."
 
+    # Ajouter la fin du message
     message_lines.append("──────────────\n")
     message_lines.append("🔔 <b>تابعنا لأفضل العروض كل يوم:</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
 
+    # Retourner le message complet sous forme de chaîne
     return "\n".join(message_lines)
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
