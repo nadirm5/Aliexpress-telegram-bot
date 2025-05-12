@@ -1,3 +1,4 @@
+
 import logging
 import os
 import re
@@ -68,6 +69,15 @@ OFFER_PARAMS = {
         "params": {
             "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
+        }
+    },
+
+    "link": {
+        "name": "🚀 <b>🔗 رابط المنتوج بالتخفيض</b>",
+        "params": {
+            "sourceType": "620%26channel=coin",
+            "afSmartRedirect": "y"
+    
         }
     },
 
@@ -527,7 +537,7 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
     return generated_links
 
 
-def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
+
 
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
@@ -574,7 +584,6 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
-
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
      keyboard = [
