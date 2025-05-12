@@ -668,10 +668,7 @@ except Exception as e:
     response_text = "There was an error while fetching offers."
     reply_markup = _build_reply_markup()
         
-except Exception as e:
-    logger.error(f"An error occurred: {e}")
-    response_text = "An error occurred. Please try again later."
-    reply_markup = None
+
 
 
 
