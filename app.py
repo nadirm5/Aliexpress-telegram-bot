@@ -527,16 +527,15 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
     return generated_links
 
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
+def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
     product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
     product_price = product_data.get('price')
     product_currency = product_data.get('currency', '')
 
-    # Titre du produit
-    message_lines.append(f"<b>📦 {product_title[:250]}</b>")
+    message_lines.append(f"<b>{product_title[:250]}</b>")
     message_lines.append("──────────────")
 
-    # Prix de base
     if details_source == "API" and product_price:
         price_str = f"{product_price} {product_currency}".strip()
         message_lines.append(f"\n💰 <b>السعر بدون تخفيض:</b> {price_str}\n")
@@ -545,33 +544,28 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     else:
         message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    # Offres spéciales
+    # Coins link comes before special offers
+    coins_link = generated_links.get("coins")
+    if coins_link:
+        message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> {coins_link}\n")
+
+    # Special offers section after coins link
     message_lines.append("🎁 <b>عروض خاصة إضافية:</b>")
     message_lines.append("──────────────")
-    offers_available = False
+
     for offer_key in OFFER_ORDER:
         if offer_key == "coins":
             continue
         link = generated_links.get(offer_key)
         offer_name = OFFER_PARAMS[offer_key]["name"]
         if link:
-            message_lines.append(f'▫️ <b>{offer_name}:</b> <a href="{link}"><b>اضغط هنا</b></a>')
-            offers_available = True
+            message_lines.append(f"▫️ {offer_name}: {link}")
         else:
-            message_lines.append(f"▫️ <b>{offer_name}:</b> ❌ غير متوفر")
+            message_lines.append(f"▫️ {offer_name}: ❌ غير متاح")
 
-    # Coins (après les offres spéciales maintenant)
-    coins_link = generated_links.get("coins")
-    if coins_link:
-        message_lines.append("──────────────")
-        message_lines.append("🪙 <b>أقل سعر عبر العملات (Coins):</b>")
-        message_lines.append("🎯 وفر حتى 70% من السعر الأصلي")
-        message_lines.append(f"👉 <a href=\"{coins_link}\"><b>اضغط هنا للحصول على السعر المخفّض</b></a>")
-
-    # Footer
     message_lines.append("──────────────")
-    message_lines.append("🔔 <b>تابعنا لأفضل العروض كل يوم:</b>")
-    message_lines.append("📱 Telegram: <a href=\"https://t.me/RayanCoupon\">@RayanCoupon</a>")
+    message_lines.append("🔔 تابعنا لأفضل العروض كل يوم:")
+    message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
 
