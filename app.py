@@ -145,6 +145,35 @@ class CacheWithExpiry:
 product_cache = CacheWithExpiry(CACHE_EXPIRY_SECONDS)
 link_cache = CacheWithExpiry(CACHE_EXPIRY_SECONDS)
 resolved_url_cache = CacheWithExpiry(CACHE_EXPIRY_SECONDS)
+async def build_offer_message(product_id):
+    product_details = await get_product_details_by_id(product_id)
+    if not product_details:
+        return "❌ Impossible de récupérer les détails du produit."
+
+    title = product_details.get("title", "Produit")
+    image_url = product_details.get("image_url", "")
+    price = product_details.get("price", "Prix inconnu")
+    currency = product_details.get("currency", TARGET_CURRENCY)
+
+    message_lines = [f"<b>{title}</b>", f"💵 <b>Prix actuel :</b> {price} {currency}", ""]
+
+    for offer_key in OFFER_ORDER:
+        offer = OFFER_PARAMS.get(offer_key)
+        if offer:
+            base_url = f"https://s.click.aliexpress.com/deep_link.htm"
+            product_link = f"https://www.aliexpress.com/item/{product_id}.html"
+            params = {
+                "dp": product_link,
+                "af": ALIEXPRESS_TRACKING_ID,
+                **offer["params"]
+            }
+            offer_url = f"{base_url}?{urlencode(params)}"
+            message_lines.append(f'{offer["name"]}\n{offer_url}\n')
+
+    if image_url:
+        message_lines.insert(1, f'<a href="{image_url}">&#8205;</a>')  # pour l'aperçu
+
+    return "\n".join(message_lines)
 
 async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> str | None:
     cached_final_url = await resolved_url_cache.get(short_url)
