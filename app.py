@@ -647,10 +647,32 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
 
         product_data['id'] = product_id # Add ID for logging in send function
 
-        generated_links = await _generate_offer_links(base_url)
-lowest_price, best_offer = await get_lowest_price(generated_links)
-response_text = _build_response_message(product_data, generated_links, details_source, lowest_price)
-reply_markup = _build_reply_markup()
+
+
+
+
+        try:
+    generated_links = await _generate_offer_links(base_url)
+
+    if not generated_links:
+        logger.warning("No generated links found.")
+        response_text = "Sorry, we couldn't find any available offers for this product."
+        reply_markup = _build_reply_markup()
+    else:
+        lowest_price, best_offer = await get_lowest_price(generated_links)
+
+        response_text = _build_response_message(product_data, generated_links, details_source, lowest_price)
+
+        reply_markup = _build_reply_markup()
+
+except Exception as e:
+    logger.error(f"An error occurred: {e}")
+    response_text = "An error occurred. Please try again later."
+    reply_markup = None
+
+
+
+
 
         await _send_telegram_response(context, chat_id, product_data, response_text, reply_markup)
 
