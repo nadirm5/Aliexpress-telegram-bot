@@ -1,3 +1,4 @@
+
 import logging
 import os
 import re
@@ -567,8 +568,9 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     # Lien "coin"
     coin_link = generated_links.get("coin")
     if coin_link:
-      message_lines.append(f"▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ 👉: <b>{coin_link}</b>")
-message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
+        message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: {coin_link}")
+        message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
+
 # Ajouter les offres spéciales disponibles
     message_lines.append("🎁 <b> Offers:</b>")
     message_lines.append("──────────────\n")
@@ -810,4 +812,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
