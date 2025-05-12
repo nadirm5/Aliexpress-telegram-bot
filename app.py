@@ -1,3 +1,4 @@
+
 import logging
 import os
 import re
@@ -16,10 +17,6 @@ from telegram.constants import ParseMode, ChatAction
 
 import iop
 from aliexpress_utils import get_product_details_by_id
-import selenium
-from webdriver_manager.chrome import ChromeDriverManager
-
-print(selenium.__version__)  # Vérifie que selenium est bien installé
 
 load_dotenv()
 
@@ -66,81 +63,32 @@ STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://(?!a\.|s\.click\.)([\w-
 SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
 COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
 
-
 OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
-            "product_url": "https://www.aliexpress.com/item/1234567890?aff_platform=coin",  # Exemple d'URL produit avec paramètre spécifique
             "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
         }
     },
+
     "link": {
         "name": "🚀 <b>🔗 رابط المنتوج بالتخفيض</b>",
         "params": {
-            "product_url": "https://www.aliexpress.com/item/1234567890?aff_platform=link",  # Exemple d'URL produit
             "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
+    
         }
     },
-    "super": {
-        "name": "🔥 Super Deals",
-        "params": {
-            "product_url": "https://www.aliexpress.com/item/1234567890?aff_platform=sd",  # Exemple d'URL produit avec paramètre spécifique
-            "sourceType": "562",
-            "channel": "sd",
-            "afSmartRedirect": "y"
-        }
-    },
-    "limited": {
-        "name": "⏳ Limited Offers",
-        "params": {
-            "product_url": "https://www.aliexpress.com/item/1234567890?aff_platform=limitedoffers",  # Exemple d'URL produit
-            "sourceType": "561",
-            "channel": "limitedoffers",
-            "afSmartRedirect": "y"
-        }
-    },
-    "bigsave": {
-        "name": "💰 Big Save",
-        "params": {
-            "product_url": "https://www.aliexpress.com/item/1234567890?aff_platform=bigSave",  # Exemple d'URL produit
-            "sourceType": "680",
-            "channel": "bigSave",
-            "afSmartRedirect": "y"
-        }
-    },
+
+
+    
+    "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562", "channel": "sd", "afSmartRedirect": "y"}},
+    "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers", "afSmartRedirect": "y"}},
+    "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680", "channel": "bigSave", "afSmartRedirect": "y"}},
 }
 
 OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
-
-# Fonction pour récupérer le prix d'un produit via l'URL
-def get_price_from_product_url(product_url):
-    # Récupérer les paramètres dans l'URL pour déterminer l'offre
-    if "coin" in product_url:
-        return 10.99  # Prix spécifique pour l'offre "coin"
-    elif "sd" in product_url:
-        return 12.99  # Prix spécifique pour l'offre "Super Deals"
-    elif "limitedoffers" in product_url:
-        return 8.99  # Prix spécifique pour l'offre "Limited Offers"
-    elif "bigSave" in product_url:
-        return 14.99  # Prix spécifique pour l'offre "Big Save"
-    else:
-        return 15.99  # Prix standard (par défaut)
-
-# Ajouter le prix aux offres dans OFFER_PARAMS
-for offer_key, offer in OFFER_PARAMS.items():
-    # Vérifier si l'URL produit est disponible dans les paramètres
-    product_url = offer["params"].get("product_url")
-    
-    if product_url:  # Si l'URL est présente
-        price = get_price_from_product_url(product_url)  # Obtenez le prix réel via l'URL
-        offer["price"] = price  # Ajouter le prix à l'offre
-
-# Affichage du résultat
-for offer_key, offer in OFFER_PARAMS.items():
-    print(f"{offer['name']} : {offer.get('price', 'Prix non disponible')}")
 
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
@@ -183,35 +131,6 @@ class CacheWithExpiry:
 product_cache = CacheWithExpiry(CACHE_EXPIRY_SECONDS)
 link_cache = CacheWithExpiry(CACHE_EXPIRY_SECONDS)
 resolved_url_cache = CacheWithExpiry(CACHE_EXPIRY_SECONDS)
-async def build_offer_message(product_id):
-    product_details = await get_product_details_by_id(product_id)
-    if not product_details:
-        return "❌ Impossible de récupérer les détails du produit."
-
-    title = product_details.get("title", "Produit")
-    image_url = product_details.get("image_url", "")
-    price = product_details.get("price", "Prix inconnu")
-    currency = product_details.get("currency", TARGET_CURRENCY)
-
-    message_lines = [f"<b>{title}</b>", f"💵 <b>Prix actuel :</b> {price} {currency}", ""]
-
-    for offer_key in OFFER_ORDER:
-        offer = OFFER_PARAMS.get(offer_key)
-        if offer:
-            base_url = f"https://s.click.aliexpress.com/deep_link.htm"
-            product_link = f"https://www.aliexpress.com/item/{product_id}.html"
-            params = {
-                "dp": product_link,
-                "af": ALIEXPRESS_TRACKING_ID,
-                **offer["params"]
-            }
-            offer_url = f"{base_url}?{urlencode(params)}"
-            message_lines.append(f'{offer["name"]}\n{offer_url}\n')
-
-    if image_url:
-        message_lines.insert(1, f'<a href="{image_url}">&#8205;</a>')  # pour l'aperçu
-
-    return "\n".join(message_lines)
 
 async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> str | None:
     cached_final_url = await resolved_url_cache.get(short_url)
