@@ -16,6 +16,10 @@ from telegram.constants import ParseMode, ChatAction
 
 import iop
 from aliexpress_utils import get_product_details_by_id
+import selenium
+from webdriver_manager.chrome import ChromeDriverManager
+
+print(selenium.__version__)  # Vérifie que selenium est bien installé
 
 load_dotenv()
 
