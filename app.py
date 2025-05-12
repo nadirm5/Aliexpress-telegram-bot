@@ -540,9 +540,10 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 
 
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
+def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
 
-    # Titre du produit avec émojis génériques pour tous types de produits
+    # Titre du produit avec émojis génériques pour attirer l'attention
     product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
     decorated_title = f"✨⭐️ {product_title} ⭐️✨"
     product_price = product_data.get('price')
@@ -552,7 +553,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     print(f"Product Price: {product_price} {product_currency}")
     print(f"Generated Links: {generated_links}")
 
-    # Titre
+    # Titre avec décoration
     message_lines.append(f"<b>{decorated_title}</b>")
 
     # Prix
@@ -569,7 +570,6 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     if coin_link:
         message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: {coin_link}")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
-
 
     # Autres liens
     message_lines.append("──────────────\n")
