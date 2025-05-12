@@ -565,9 +565,9 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
     # Ajout du lien "Coins" si disponible
-    coin_link = generated_links.get("coin")  # "coin" est utilisé ici
+    coin_link = generated_links.get("coin")
     if coin_link:
-        message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉: {coin_link}\n")  # Affichage du lien en texte
+        message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉: <b>{coin_link}</b>\n")
         message_lines.append("──────────────\n")
 
     # Ajouter les offres spéciales disponibles
@@ -576,23 +576,19 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     offers_available = False
     for offer_key in OFFER_ORDER:
-        if offer_key == "coin":  # Skip the coin link as it's already added
+        if offer_key == "coin":
             continue
         link = generated_links.get(offer_key)
         offer_name = OFFER_PARAMS[offer_key]["name"]
         if link:
-            # Affichage du lien d'offre directement en texte
-            message_lines.append(f'▫️ <b>{offer_name}:</b> {link}\n')  # Lien apparant comme texte
+            message_lines.append(f'▫️ <b>{offer_name}:</b> {link}\n')
             offers_available = True
         else:
-            # Affichage si l'offre n'est pas disponible
             message_lines.append(f"▫️ {offer_name}: ❌ Not Available\n")
 
-    # Si aucune offre n'est disponible, afficher un message de défaut
     if not offers_available and not coin_link:
         return f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."
 
-    # Ajouter la fin du message avec l'invitation à suivre sur Telegram
     message_lines.append("──────────────\n")
     message_lines.append("🔔 <b>تابعنا لأفضل العروض كل يوم:</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
