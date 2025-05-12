@@ -662,6 +662,11 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
         lowest_price, best_offer = await get_lowest_price(generated_links)
         response_text = _build_response_message(product_data, generated_links, details_source, lowest_price)
         reply_markup = _build_reply_markup()
+
+except Exception as e:
+    logger.error(f"An error occurred: {e}")
+    response_text = "There was an error while fetching offers."
+    reply_markup = _build_reply_markup()
         
 except Exception as e:
     logger.error(f"An error occurred: {e}")
