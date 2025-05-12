@@ -62,10 +62,12 @@ STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://(?!a\.|s\.click\.)([\w-
 SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
 COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
 
+
 OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
+            "product_url": "https://www.aliexpress.com/item/1234567890",  # Exemple d'URL produit
             "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
         }
@@ -73,6 +75,7 @@ OFFER_PARAMS = {
     "link": {
         "name": "🚀 <b>🔗 رابط المنتوج بالتخفيض</b>",
         "params": {
+            "product_url": "https://www.aliexpress.com/item/1234567890",  # Exemple d'URL produit
             "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
         }
@@ -80,6 +83,7 @@ OFFER_PARAMS = {
     "super": {
         "name": "🔥 Super Deals",
         "params": {
+            "product_url": "https://www.aliexpress.com/item/1234567890",  # Exemple d'URL produit
             "sourceType": "562",
             "channel": "sd",
             "afSmartRedirect": "y"
@@ -88,6 +92,7 @@ OFFER_PARAMS = {
     "limited": {
         "name": "⏳ Limited Offers",
         "params": {
+            "product_url": "https://www.aliexpress.com/item/1234567890",  # Exemple d'URL produit
             "sourceType": "561",
             "channel": "limitedoffers",
             "afSmartRedirect": "y"
@@ -96,25 +101,30 @@ OFFER_PARAMS = {
     "bigsave": {
         "name": "💰 Big Save",
         "params": {
+            "product_url": "https://www.aliexpress.com/item/1234567890",  # Exemple d'URL produit
             "sourceType": "680",
             "channel": "bigSave",
             "afSmartRedirect": "y"
         }
     },
 }
+
 OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
-# Fonction pour récupérer le prix d'un produit (simulée ou API)
+
+# Fonction pour récupérer le prix d'un produit via l'URL
 def get_price_from_product_url(product_url):
-    # Pour l'instant, retourne un prix fictif pour l'exemple
-    return 15.99  # Remplacer cette ligne par la logique réelle pour obtenir le prix réel via l'URL
+    # Dans un cas réel, vous pouvez interroger l'API ou extraire des informations de la page produit
+    # Pour l'instant, retour fictif
+    # Exemple de prix
+    return 15.99  # Remplacer cette ligne par la logique réelle pour obtenir le prix via l'URL
 
 # Ajouter le prix aux offres dans OFFER_PARAMS
 for offer_key, offer in OFFER_PARAMS.items():
-    # Ici, tu peux ajouter une URL de produit à tester (facultatif si déjà inclus)
+    # Vérifier si l'URL produit est disponible dans les paramètres
     product_url = offer["params"].get("product_url")
     
-    if product_url:  # Vérifier que le produit URL est bien disponible
-        price = get_price_from_product_url(product_url)  # Appeler la fonction pour obtenir le prix
+    if product_url:  # Si l'URL est présente
+        price = get_price_from_product_url(product_url)  # Obtenez le prix réel via l'URL
         offer["price"] = price  # Ajouter le prix à l'offre
 
 # Affichage du résultat
