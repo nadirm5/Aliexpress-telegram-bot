@@ -570,11 +570,11 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: {coin_link}")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
-    # Séparateur
+# Ajouter les offres spéciales disponibles
+    message_lines.append("🎁 <b> Offers:</b>")
     message_lines.append("──────────────\n")
-    message_lines.append("🎁 <b>Offers</b>:")
 
-offers_available = False
+    offers_available = False
     for offer_key in OFFER_ORDER:
         if offer_key == "coin":  # Skip the coin link as it's already added
             continue
@@ -594,7 +594,7 @@ offers_available = False
 
     # Ajouter la fin du message avec l'invitation à suivre sur Telegram
     message_lines.append("──────────────\n")
-    message_lines.append("🔔 <b>تابعنا لأفضل العروض كل يوم:</b>")
+    message_lines.append("🔔 <b>  Follow Us:</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
