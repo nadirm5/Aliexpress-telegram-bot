@@ -545,7 +545,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     coins_link = generated_links.get("coins")
     if coins_link:
-        message_lines.append(f"▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸 👉: <b>{coins_link}</b>\n")
+        message_lines.append(f'▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض:</b> <a href="{coins_link}"><b>{coins_link}</b></a>\n')
         message_lines.append("──────────────\n")
 
     message_lines.append("🎁 <b>Special Offers:</b>")
