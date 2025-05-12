@@ -651,7 +651,7 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
 
 
 
-        try:
+ try:
     generated_links = await _generate_offer_links(base_url)
 
     if not generated_links:
@@ -660,11 +660,9 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
         reply_markup = _build_reply_markup()
     else:
         lowest_price, best_offer = await get_lowest_price(generated_links)
-
         response_text = _build_response_message(product_data, generated_links, details_source, lowest_price)
-
         reply_markup = _build_reply_markup()
-
+        
 except Exception as e:
     logger.error(f"An error occurred: {e}")
     response_text = "An error occurred. Please try again later."
