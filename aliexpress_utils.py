@@ -8,11 +8,10 @@ def get_aliexpress_product_info(product_url):
     Args:
         product_url (str): AliExpress product page URL
     Returns:
-        tuple: (product_name, img_url, original_price, final_price, discount_percentage)
+        tuple: (product_name, img_url, final_price, discount_percentage)
     """
     product_name = None  # Initialize product_name
     img_url = None  # Initialize img_url
-    original_price = None  # Initialize original_price
     final_price = None  # Initialize final_price
     discount_percentage = None  # Initialize discount_percentage
 
@@ -24,7 +23,7 @@ def get_aliexpress_product_info(product_url):
         response = requests.get(product_url, headers=headers, cookies=cookies, timeout=15)
         if response.status_code != 200:
             print(f"Failed to load page: {response.status_code}")
-            return None, None, None, None, None  # Return None for all if page fails
+            return None, None, None, None  # Return None for all if page fails
         soup = BeautifulSoup(response.text, "html.parser")
 
         # --- Product name extraction ---
@@ -90,11 +89,15 @@ def get_aliexpress_product_info(product_url):
             product_name = re.sub(r'\s*-\s*AliExpress(\s+\d+)?$', '', product_name).strip()
             product_name = re.sub(r'-AliExpress(\s+\d+)?$', '', product_name).strip()
 
-        return product_name, img_url, original_price, final_price, discount_percentage
+        # If there's a discount, return the final price and discount percentage
+        if discount_percentage is not None:
+            return product_name, img_url, final_price, discount_percentage
+        else:
+            return product_name, img_url, final_price, None  # No discount
 
     except Exception as e:
         print(f"An error occurred in get_aliexpress_product_info: {str(e)}")
-        return None, None, None, None, None  # Return None for all on error
+        return None, None, None, None  # Return None for all on error
 
 
 def get_product_details_by_id(product_id):
@@ -103,7 +106,7 @@ def get_product_details_by_id(product_id):
     Args:
         product_id (str or int): The AliExpress product ID.
     Returns:
-        tuple: (product_name, img_url, original_price, final_price, discount_percentage) or (None, None, None, None, None) if failed.
+        tuple: (product_name, img_url, final_price, discount_percentage) or (None, None, None, None) if failed.
     """
     product_url = f"https://vi.aliexpress.com/item/{product_id}.html"
     print(f"Constructed URL: {product_url}")
