@@ -538,69 +538,7 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 
 
 
-def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
-    message_lines = []
 
-    # Titre du produit
-    product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
-    decorated_title = f"✨⭐️ {product_title} ⭐️✨"
-
-    # Prix
-    product_price = product_data.get('price')
-    coin_price = product_data.get('coin_price')  # Prix réduit à partir du lien coin
-    product_currency = product_data.get('currency', '')
-
-    print(f"Product Title: {product_title}")
-    print(f"Product Price: {product_price} {product_currency}")
-    print(f"Coin Price: {coin_price} {product_currency}")
-    print(f"Generated Links: {generated_links}")
-
-    message_lines.append(f"<b>{decorated_title}</b>")
-
-    # Affichage du prix initial + coin_price s’il est plus bas
-    if details_source == "API" and product_price:
-        if coin_price and float(coin_price) < float(product_price):
-            message_lines.append(
-                f"\n💰 <b>السعر:</b> <s>{product_price} {product_currency}</s> ➜ <b>{coin_price} {product_currency}</b>\n"
-            )
-        else:
-            price_str = f"{product_price} {product_currency}".strip()
-            message_lines.append(f"\n💰 <b>السعر:</b> {price_str}\n")
-    elif details_source == "Scraped":
-        message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
-    else:
-        message_lines.append("\n❌ <b>Product details unavailable</b>\n")
-
-    # Lien coin
-    coin_link = generated_links.get("coin")
-    if coin_link:
-        message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
-        message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
-
-    # Autres offres
-    message_lines.append("🎁 <b> Offers:</b>")
-    message_lines.append("──────────────\n")
-
-    offers_available = False
-    for offer_key in OFFER_ORDER:
-        if offer_key == "coin":
-            continue
-        link = generated_links.get(offer_key)
-        offer_name = OFFER_PARAMS[offer_key]["name"]
-        if link:
-            message_lines.append(f'▫️ <b>{offer_name}:</b> {link}\n')
-            offers_available = True
-        else:
-            message_lines.append(f"▫️ {offer_name}: ❌ Not Available\n")
-
-    if not offers_available and not coin_link:
-        return f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."
-
-    message_lines.append("──────────────\n")
-    message_lines.append("🔔 <b>  Follow Us:</b>")
-    message_lines.append("📱 Telegram: @RayanCoupon")
-
-    return "\n".join(message_lines)
 def _build_reply_markup() -> InlineKeyboardMarkup:
      keyboard = [
         [
