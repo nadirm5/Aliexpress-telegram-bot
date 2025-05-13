@@ -3,39 +3,58 @@ from bs4 import BeautifulSoup
 import re
 
 def get_aliexpress_product_info(product_url):
-    product_name = None
-    img_url = None
-    final_price = None
-    original_price = None
-    discount_percentage = None
+    """
+    Extract product name, price, image from AliExpress without Selenium
+    Args:
+        product_url (str): AliExpress product page URL
+    Returns:
+        tuple: (product_name, img_url, original_price, final_price, discount_percentage)
+    """
+    product_name = None  # Initialize product_name
+    img_url = None  # Initialize img_url
+    original_price = None  # Initialize original_price
+    final_price = None  # Initialize final_price
+    discount_percentage = None  # Initialize discount_percentage
 
     try:
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
         cookies = {"x-hng": "lang=en-US", "intl_locale": "en_US"}
         response = requests.get(product_url, headers=headers, cookies=cookies, timeout=15)
         if response.status_code != 200:
             print(f"Failed to load page: {response.status_code}")
-            return None, None, None, None, None
-
+            return None, None, None, None, None  # Return None for all if page fails
         soup = BeautifulSoup(response.text, "html.parser")
 
         # --- Product name extraction ---
-        title_tag = soup.find("h1")
-        if title_tag:
-            product_name = title_tag.get_text(strip=True)
-        else:
+        root_div = soup.find("div", id="root")
+        if root_div:
+            h1 = root_div.select_one("div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > h1")
+            if h1:
+                product_name = h1.get_text(strip=True)
+        if not product_name:
             meta_title = soup.find("meta", property="og:title")
-            if meta_title and meta_title.get("content"):
+            if meta_title and meta_title.has_attr("content"):
                 product_name = meta_title["content"]
+        if not product_name:
+            meta_name = soup.find("meta", attrs={"name": "keywords"})
+            if meta_name and meta_name.has_attr("content"):
+                product_name = meta_name["content"].split(",")[0].strip()
+        if not product_name:
+            h1 = soup.find("h1", {"data-pl": "product-title"})
+            if h1:
+                product_name = h1.get_text(strip=True)
+        if not product_name:
+            h1 = soup.find("h1", {"class": lambda x: x and ("product-title-text" in x or "product-title" in x)})
+            if h1:
+                product_name = h1.get_text(strip=True)
+        if not product_name:
+            h1 = soup.find("h1")
+            if h1:
+                product_name = h1.get_text(strip=True)
 
-        # --- Clean up name ---
-        if product_name:
-            product_name = re.sub(r'\s*-\s*AliExpress(\s+\d+)?$', '', product_name).strip()
-            product_name = re.sub(r'-AliExpress(\s+\d+)?$', '', product_name).strip()
-
-        # --- Image ---
+        # --- Image Extraction ---
         img_tag = soup.find("img", {"class": lambda x: x and "magnifier--image" in x})
         if img_tag and img_tag.has_attr("src"):
             img_url = img_tag["src"]
@@ -44,7 +63,7 @@ def get_aliexpress_product_info(product_url):
             if meta_img and meta_img.has_attr("content"):
                 img_url = meta_img["content"]
 
-        # --- Price extraction ---
+        # --- Price Extraction ---
         # Final price (discounted)
         final_price_tag = soup.select_one('span.product-price-value')
         if final_price_tag:
@@ -55,9 +74,9 @@ def get_aliexpress_product_info(product_url):
         if original_price_tag:
             original_price = original_price_tag.get_text(strip=True).replace('$', '')
         else:
-            original_price = final_price  # fallback
+            original_price = final_price  # Fallback to final price if original price is not found
 
-        # Discount calculation
+        # Calculate Discount Percentage
         if original_price and final_price and original_price != final_price:
             try:
                 original = float(original_price)
@@ -66,8 +85,26 @@ def get_aliexpress_product_info(product_url):
             except:
                 discount_percentage = None
 
+        # --- Clean up Product Name ---
+        if product_name:
+            product_name = re.sub(r'\s*-\s*AliExpress(\s+\d+)?$', '', product_name).strip()
+            product_name = re.sub(r'-AliExpress(\s+\d+)?$', '', product_name).strip()
+
         return product_name, img_url, original_price, final_price, discount_percentage
 
     except Exception as e:
         print(f"An error occurred in get_aliexpress_product_info: {str(e)}")
-        return None, None, None, None, None
+        return None, None, None, None, None  # Return None for all on error
+
+
+def get_product_details_by_id(product_id):
+    """
+    Constructs URL from product ID and fetches product details.
+    Args:
+        product_id (str or int): The AliExpress product ID.
+    Returns:
+        tuple: (product_name, img_url, original_price, final_price, discount_percentage) or (None, None, None, None, None) if failed.
+    """
+    product_url = f"https://vi.aliexpress.com/item/{product_id}.html"
+    print(f"Constructed URL: {product_url}")
+    return get_aliexpress_product_info(product_url)
