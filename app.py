@@ -550,6 +550,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     product_original_price = product_data.get('original_price')  # Ancien prix
     product_sale_price = product_data.get('sale_price') or product_data.get('discount_price')  # Prix réduit
     product_currency = product_data.get('currency', '')
+print("DEBUG FULL PRODUCT DATA:", product_data)
 
     print(f"Product Title: {product_title}")
     print(f"Product Price: {product_price} {product_currency}")
