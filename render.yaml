@@ -7,4 +7,4 @@ buildCommand: |
   unzip /tmp/chromedriver.zip -d /opt/render/project/.render/chromedriver/
   wget -q -O /tmp/chrome.zip https://github.com/adieuadieu/serverless-chrome/releases/download/v1.0.0-55/stable-headless-chrome-linux.zip
   unzip /tmp/chrome.zip -d /opt/render/project/.render/chrome/
-startCommand: python coins_price_checker.py
+startCommand: python app.py
