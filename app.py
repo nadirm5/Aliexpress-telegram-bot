@@ -546,55 +546,56 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     decorated_title = f"✨⭐️ {product_title} ⭐️✨"
 
     product_price = product_data.get('price')
-    product_original_price = product_data.get('original_price')
-    product_sale_price = product_data.get('sale_price') or product_data.get('discount_price')
     product_currency = product_data.get('currency', '')
 
-    # DEBUG prints bien indentés
-    print("DEBUG FULL PRODUCT DATA:", product_data)
     print(f"Product Title: {product_title}")
     print(f"Product Price: {product_price} {product_currency}")
     print(f"Generated Links: {generated_links}")
-    print("COINS LINK:", generated_links.get('coins'))
 
     # Ajout du titre
-    message_lines.append(f"<b>{decorated_title}</b>\n")
+    message_lines.append(f"<b>{decorated_title}</b>")
 
-    # Prix avec ou sans réduction
+    # Prix du produit
     if details_source == "API" and product_price:
-        if product_sale_price and float(product_sale_price) < float(product_price):
-            message_lines.append(
-                f"\n💰 <b>السعر:</b> <s>{product_price} {product_currency}</s> ➜ <b>{product_sale_price} {product_currency}</b>\n"
-            )
-        else:
-            message_lines.append(f"\n💰 <b>السعر:</b> {product_price} {product_currency}\n")
+        price_str = f"{product_price} {product_currency}".strip()
+        message_lines.append(f"\n💰 <b>Price $السعر بدون تخفيض:</b> {price_str}\n")
+    elif details_source == "Scraped":
+        message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
+    else:
+        message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    # Lien Coins (réduction)
-    if generated_links.get('coins'):
-        message_lines.append(
-            f"\n▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ 👉: {generated_links['coins']}"
-        )
+    # Lien "coin" en gras
+    coin_link = generated_links.get("coin")
+    if coin_link:
+        message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
-    # Lien Super Deals
-    if generated_links.get('super_deals'):
-        message_lines.append(f"\n▫️ 🔥 Super Deals: {generated_links['super_deals']}")
+    # Ajouter les offres spéciales disponibles
+    message_lines.append("🎁 <b> Offers:</b>")
+    message_lines.append("──────────────\n")
 
-    # Lien Limited Offers
-    if generated_links.get('limited_offer'):
-        message_lines.append(f"\n▫️ ⏳ Limited Offers: {generated_links['limited_offer']}")
+    offers_available = False
+    for offer_key in OFFER_ORDER:
+        if offer_key == "coin":  # Skip the coin link as it's already added
+            continue
+        link = generated_links.get(offer_key)
+        offer_name = OFFER_PARAMS[offer_key]["name"]
+        if link:
+            message_lines.append(f'▫️ <b>{offer_name}:</b> {link}\n')
+            offers_available = True
+        else:
+            message_lines.append(f"▫️ {offer_name}: ❌ Not Available\n")
 
-    # Lien Big Save
-    if generated_links.get('big_save'):
-        message_lines.append(f"\n▫️ 💰 Big Save: {generated_links['big_save']}")
+    # Si aucune offre n'est disponible, afficher un message de défaut
+    if not offers_available and not coin_link:
+        return f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."
 
-    # Ligne de séparation
-    message_lines.append("\n──────────────")
+    # Ajouter la fin du message avec l'invitation à suivre sur Telegram
+    message_lines.append("──────────────\n")
+    message_lines.append("🔔 <b>  Follow Us:</b>")
+    message_lines.append("📱 Telegram: @RayanCoupon")
 
-    # Footer de promotion
-    message_lines.append("\n🔔   Follow Us:\n📱 Telegram: @RayanCoupon")
-
-    return '\n'.join(message_lines)
+    return "\n".join(message_lines)
 def _build_reply_markup() -> InlineKeyboardMarkup:
      keyboard = [
         [
