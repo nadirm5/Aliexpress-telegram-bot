@@ -548,7 +548,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     product_price = product_data.get('price')
     product_original_price = product_data.get('original_price')  # Ancien prix
-product_sale_price = product_data.get('sale_price') or product_data.get('discount_price')  # Prix réduit
+    product_sale_price = product_data.get('sale_price') or product_data.get('discount_price')  # Prix réduit
     product_currency = product_data.get('currency', '')
 
     print(f"Product Title: {product_title}")
@@ -560,11 +560,13 @@ product_sale_price = product_data.get('sale_price') or product_data.get('discoun
 
     # Prix du produit
     if details_source == "API" and product_price:
-    if product_sale_price and float(product_sale_price) < float(product_price):
-        message_lines.append(f"\n💰 <b>السعر:</b> <s>{product_price} {product_currency}</s> ➜ <b>{product_sale_price} {product_currency}</b>\n")
-    else:
-        price_str = f"{product_price} {product_currency}".strip()
-        message_lines.append(f"\n💰 <b>Price $السعر:</b> {price_str}\n")
+        if product_sale_price and float(product_sale_price) < float(product_price):
+            message_lines.append(
+                f"\n💰 <b>السعر:</b> <s>{product_price} {product_currency}</s> ➜ <b>{product_sale_price} {product_currency}</b>\n"
+            )
+        else:
+            price_str = f"{product_price} {product_currency}".strip()
+            message_lines.append(f"\n💰 <b>Price $السعر:</b> {price_str}\n")
     elif details_source == "Scraped":
         message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
     else:
@@ -575,6 +577,7 @@ product_sale_price = product_data.get('sale_price') or product_data.get('discoun
     if coin_link:
         message_lines.append(f"▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ 👉: <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
+
 
 # Ajouter les offres spéciales disponibles
     message_lines.append("🎁 <b> Offers:</b>")
