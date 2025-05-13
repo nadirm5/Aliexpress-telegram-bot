@@ -551,34 +551,49 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     product_sale_price = product_data.get('sale_price') or product_data.get('discount_price')  # Prix réduit
     product_currency = product_data.get('currency', '')
 
-    # DEBUG prints bien indentés
+    # DEBUG
     print("DEBUG FULL PRODUCT DATA:", product_data)
     print(f"Product Title: {product_title}")
     print(f"Product Price: {product_price} {product_currency}")
     print(f"Generated Links: {generated_links}")
+
     # Ajout du titre
     message_lines.append(f"<b>{decorated_title}</b>")
 
     # Prix du produit
     if details_source == "API" and product_price:
-        if product_sale_price and float(product_sale_price) < float(product_price):
+        # Fallback si sale_price n'est pas dispo
+        if not product_sale_price:
+            product_sale_price = product_price
+
+        # Fallback si original_price est vide
+        if not product_original_price and product_price:
+            try:
+                product_original_price = round(float(product_price) * 1.3, 2)
+            except ValueError:
+                product_original_price = None
+
+        try:
+            if product_original_price and float(product_original_price) > float(product_price):
+                message_lines.append(
+                    f"\n💰 <b>السعر:</b> <s>{product_original_price} {product_currency}</s> ➜ <b>{product_price} {product_currency}</b>\n"
+                )
+            else:
+                message_lines.append(
+                    f"\n💰 <b>السعر:</b> <b>{product_price} {product_currency}</b>\n"
+                )
+        except Exception as e:
+            print("Erreur lors du traitement des prix :", e)
             message_lines.append(
-                f"\n💰 <b>السعر:</b> <s>{product_price} {product_currency}</s> ➜ <b>{product_sale_price} {product_currency}</b>\n"
+                f"\n💰 <b>السعر:</b> <b>{product_price} {product_currency}</b>\n"
             )
-        else:
-            price_str = f"{product_price} {product_currency}".strip()
-            message_lines.append(f"\n💰 <b>Price $السعر:</b> {price_str}\n")
-    elif details_source == "Scraped":
-        message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
-    else:
-        message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    # Lien "coin"
-    coin_link = generated_links.get("coin")
-    if coin_link:
-        message_lines.append(f"▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ 👉: <b>{coin_link}</b>")
-        message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
-
+    # Lien principal avec réduction
+    if generated_links.get('coins'):
+        message_lines.append(
+            f"\n▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ 👉: {generated_links['coins']}"
+        )
+        message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%")
 
 # Ajouter les offres spéciales disponibles
     message_lines.append("🎁 <b> Offers:</b>")
