@@ -1,7 +1,5 @@
 import requests
 from bs4 import BeautifulSoup
-import requests
-from bs4 import BeautifulSoup
 
 
 def get_aliexpress_product_info(product_url):
