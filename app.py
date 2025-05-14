@@ -577,15 +577,17 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     return "\n".join(message_lines)
 
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
         [
-            InlineKeyboardButton("🎟️ كوبونات حصرية | Exclusive Coupons", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
-            InlineKeyboardButton("عرض اليوم | Deal of the Day 🎯", url="https://s.click.aliexpress.com/e/_omRiewZ")
+            InlineKeyboardButton("🎟️ كوبونات حصرية\nExclusive Coupons", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
+            InlineKeyboardButton("🎯 عرض اليوم\nDeal of the Day", url="https://s.click.aliexpress.com/e/_omRiewZ")
         ],
         [
-            InlineKeyboardButton("📱 اشترك في القناة | Join VIP Channel", url="https://t.me/RayanCoupon"),
-            InlineKeyboardButton("صفحة كل العروض | Support Me on My Page ☕", url="https://moneyexpress.fun")
+            InlineKeyboardButton("📱 اشترك في القناة\nJoin VIP Channel", url="https://t.me/RayanCoupon"),
+            InlineKeyboardButton("☕ ادعمني على صفحتي\nSupport Me", url="https://moneyexpress.fun")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
