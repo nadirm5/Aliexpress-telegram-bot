@@ -576,7 +576,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
-def _build_reply_markup() -> InlineKeyboardMarkup:
+
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
         [
