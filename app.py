@@ -585,7 +585,7 @@ def _build_reply_markup() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton("📱 اشترك في القناة | Join VIP Channel", url="https://t.me/RayanCoupon"),
-            InlineKeyboardButton("ادعمني على صفحتي | Support Me on My Page ☕", url="https://moneyexpress.fun")
+            InlineKeyboardButton("صفحة كل العروض | Support Me on My Page ☕", url="https://moneyexpress.fun")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
