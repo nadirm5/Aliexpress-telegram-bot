@@ -612,22 +612,23 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
-keyboard = [
-    [
-        InlineKeyboardButton("⏰ Up to 60% OFF | ☀️ Sunshine Deals", url="https://s.click.aliexpress.com/e/_oE3qi3N")
-    ],
-    [
-        InlineKeyboardButton("🎟️ EXCLUSIVE Coupons & Secret Codes", url="https://s.click.aliexpress.com/e/_oliYXEJ")
-    ],
-    [
-        InlineKeyboardButton("🎯 Deal of the Day – Don’t Miss Out!", url="https://s.click.aliexpress.com/e/_omRiewZ")
-    ],
-    [
-        InlineKeyboardButton("📱 Join Our VIP Channel", url="https://t.me/RayanCoupon"),
-        InlineKeyboardButton("☕ Support Me with ❤️", url="https://moneyexpress.fun")
+def _build_reply_markup() -> InlineKeyboardMarkup:
+    keyboard = [
+        [
+            InlineKeyboardButton("⏰ Up to 60% OFF | ☀️ Sunshine Deals", url="https://s.click.aliexpress.com/e/_oE3qi3N")
+        ],
+        [
+            InlineKeyboardButton("🎟️ EXCLUSIVE Coupons & Secret Codes", url="https://s.click.aliexpress.com/e/_oliYXEJ")
+        ],
+        [
+            InlineKeyboardButton("🎯 Deal of the Day – Don’t Miss Out!", url="https://s.click.aliexpress.com/e/_omRiewZ")
+        ],
+        [
+            InlineKeyboardButton("📱 Join Our VIP Channel", url="https://t.me/RayanCoupon"),
+            InlineKeyboardButton("☕ Support Me with ❤️", url="https://moneyexpress.fun")
+        ]
     ]
-]
-return InlineKeyboardMarkup(keyboard)
+    return InlineKeyboardMarkup(keyboard)
     
 async def _send_telegram_response(context: ContextTypes.DEFAULT_TYPE, chat_id: int, product_data: dict, message_text: str, reply_markup: InlineKeyboardMarkup):
     product_image = product_data.get('image_url')
