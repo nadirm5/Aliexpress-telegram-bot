@@ -537,8 +537,6 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 
     return generated_links
 
-
-
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
 
@@ -571,11 +569,9 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
-    message_lines.append("──────────────\n")
-
     offers_available = False
     for offer_key in OFFER_ORDER:
-        if offer_key == "coin":  # Skip the coin link as it's already added
+        if offer_key == "coin":
             continue
         link = generated_links.get(offer_key)
         offer_name = OFFER_PARAMS[offer_key]["name"]
@@ -585,16 +581,17 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         else:
             message_lines.append(f"▫️ {offer_name}: ❌ Not Available\n")
 
-    # Si aucune offre n'est disponible, afficher un message de défaut
+    # Si aucune offre n'est disponible
     if not offers_available and not coin_link:
         return f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."
 
-    # Ajouter la fin du message avec l'invitation à suivre sur Telegram
-    message_lines.append("──────────────\n")
+    # Fin du message
     message_lines.append("🔔 <b>  Follow Us:</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
+
+
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
         [
