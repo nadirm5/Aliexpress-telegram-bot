@@ -537,8 +537,7 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 
     return generated_links
 
-
-def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
+def _build_response_message(product_data: dict, generated_links: dict, details_source: str, user_lang: str) -> str:
     message_lines = []
 
     # Titre du produit décoré avec émojis
@@ -607,18 +606,33 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     # Retourner le message et les boutons
     return "\n".join(message_lines)
 
+
 def _build_reply_markup(user_lang: str) -> InlineKeyboardMarkup:
-    keyboard = [
-        [
-            InlineKeyboardButton("🎟️ كوبونات حصرية | Exclusive Coupons 🎟️", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
-            InlineKeyboardButton("🎯 عرض اليوم | Deal of the Day 🎯", url="https://s.click.aliexpress.com/e/_omRiewZ")
-        ],
-        [
-            InlineKeyboardButton("📱 اشترك في القناة | Join VIP Channel 📱", url="https://t.me/RayanCoupon"),
-            InlineKeyboardButton("☕ ادعمني على صفحتي | Support Me on My Page ☕", url="https://moneyexpress.fun")
+    if user_lang == 'ar':
+        keyboard = [
+            [
+                InlineKeyboardButton("🎟️ كوبونات حصرية | Exclusive Coupons 🎟️", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
+                InlineKeyboardButton("🎯 عرض اليوم | Deal of the Day 🎯", url="https://s.click.aliexpress.com/e/_omRiewZ")
+            ],
+            [
+                InlineKeyboardButton("📱 اشترك في القناة | Join VIP Channel 📱", url="https://t.me/RayanCoupon"),
+                InlineKeyboardButton("☕ ادعمني على صفحتي | Support Me on My Page ☕", url="https://moneyexpress.fun")
+            ]
         ]
-    ]
+    else:  # Default language is English
+        keyboard = [
+            [
+                InlineKeyboardButton("🎟️ Exclusive Coupons | كوبونات حصرية 🎟️", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
+                InlineKeyboardButton("🎯 Deal of the Day | عرض اليوم 🎯", url="https://s.click.aliexpress.com/e/_omRiewZ")
+            ],
+            [
+                InlineKeyboardButton("📱 Join VIP Channel | اشترك في القناة 📱", url="https://t.me/RayanCoupon"),
+                InlineKeyboardButton("☕ Support Me on My Page | ادعمني على صفحتي ☕", url="https://moneyexpress.fun")
+            ]
+        ]
+
     return InlineKeyboardMarkup(keyboard)
+
     
 async def _send_telegram_response(context: ContextTypes.DEFAULT_TYPE, chat_id: int, product_data: dict, message_text: str, reply_markup: InlineKeyboardMarkup):
     product_image = product_data.get('image_url')
