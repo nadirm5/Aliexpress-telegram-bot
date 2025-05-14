@@ -538,6 +538,7 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
     return generated_links
 
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
+def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
 
     # Titre du produit décoré avec émojis
@@ -569,6 +570,10 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
+    # Préparer les boutons
+    keyboard = []
+
+    # Ajout des boutons pour les liens générés
     offers_available = False
     for offer_key in OFFER_ORDER:
         if offer_key == "coin":
@@ -576,7 +581,8 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         link = generated_links.get(offer_key)
         offer_name = OFFER_PARAMS[offer_key]["name"]
         if link:
-            message_lines.append(f'▫️ <b>{offer_name}:</b> {link}\n')
+            # Créer un bouton avec le lien de l'offre
+            keyboard.append([InlineKeyboardButton(f"{offer_name} 📍", url=link)])
             offers_available = True
         else:
             message_lines.append(f"▫️ {offer_name}: ❌ Not Available\n")
@@ -585,12 +591,21 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     if not offers_available and not coin_link:
         return f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."
 
+    # Ajouter le bouton de coins s'il existe
+    if coin_link:
+        keyboard.append([InlineKeyboardButton("🎯 Coins Offer", url=coin_link)])
+
+    # Si des boutons sont créés, ajouter au message
+    if keyboard:
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        message_lines.append("\n🔔 <b>Click below to view offers:</b>")
+
     # Fin du message
     message_lines.append("🔔 <b>  Follow Us:</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
 
+    # Retourner le message et les boutons
     return "\n".join(message_lines)
-
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
