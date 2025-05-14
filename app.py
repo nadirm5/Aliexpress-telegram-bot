@@ -557,20 +557,21 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     message_lines.append(f"<b>{decorated_title}</b>")
 
     # Prix du produit
-    if details_source == "API" and product_price:
-        price_str = f"{product_price} {product_currency}".strip()
-        message_lines.append(f"\n💰 <b>Price $السعر بدون تخفيض:</b> {price_str}\n")
-    elif details_source == "Scraped":
-        message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
-    else:
-        message_lines.append("\n❌ <b>Product details unavailable</b>\n")
+if details_source == "API" and product_price:
+    price_str = f"{product_price} {product_currency}".strip()
+    message_lines.append(f"\n💰 <b>Price $السعر بدون تخفيض:</b> {price_str}\n")
+elif details_source == "Scraped":
+    message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
+else:
+    message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    # Lien "coin" en gras
-    coin_link = generated_links.get("coin")
-    if coin_link:
-        message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
-        message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
+# Lien "coin" en gras
+coin_link = generated_links.get("coin")
+if coin_link:
+    message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
+    message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
+# Cette ligne doit être au même niveau que les blocs précédents (pas indentée sans raison)
 message_lines.append("──────────────\n")
 
     offers_available = False
