@@ -554,9 +554,9 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     print(f"Generated Links: {generated_links}")
 
     # Ajout du titre
-    message_lines.append(f"<b>{decorated_title}</b>")
+message_lines.append(f"<b>{decorated_title}</b>")
 
-    # Prix du produit
+# Prix du produit
 if details_source == "API" and product_price:
     price_str = f"{product_price} {product_currency}".strip()
     message_lines.append(f"\n💰 <b>Price $السعر بدون تخفيض:</b> {price_str}\n")
@@ -571,31 +571,30 @@ if coin_link:
     message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
     message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
-# Cette ligne doit être au même niveau que les blocs précédents (pas indentée sans raison)
 message_lines.append("──────────────\n")
 
-    offers_available = False
-    for offer_key in OFFER_ORDER:
-        if offer_key == "coin":  # Skip the coin link as it's already added
-            continue
-        link = generated_links.get(offer_key)
-        offer_name = OFFER_PARAMS[offer_key]["name"]
-        if link:
-            message_lines.append(f'▫️ <b>{offer_name}:</b> {link}\n')
-            offers_available = True
-        else:
-            message_lines.append(f"▫️ {offer_name}: ❌ Not Available\n")
+offers_available = False
+for offer_key in OFFER_ORDER:
+    if offer_key == "coin":  # Skip the coin link as it's already added
+        continue
+    link = generated_links.get(offer_key)
+    offer_name = OFFER_PARAMS[offer_key]["name"]
+    if link:
+        message_lines.append(f'▫️ <b>{offer_name}:</b> {link}\n')
+        offers_available = True
+    else:
+        message_lines.append(f"▫️ {offer_name}: ❌ Not Available\n")
 
-    # Si aucune offre n'est disponible, afficher un message de défaut
-    if not offers_available and not coin_link:
-        return f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."
+# Si aucune offre n'est disponible, afficher un message de défaut
+if not offers_available and not coin_link:
+    return f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."
 
-    # Ajouter la fin du message avec l'invitation à suivre sur Telegram
-    message_lines.append("──────────────\n")
-    message_lines.append("🔔 <b>  Follow Us:</b>")
-    message_lines.append("📱 Telegram: @RayanCoupon")
+# Ajouter la fin du message avec l'invitation à suivre sur Telegram
+message_lines.append("──────────────\n")
+message_lines.append("🔔 <b>  Follow Us:</b>")
+message_lines.append("📱 Telegram: @RayanCoupon")
 
-    return "\n".join(message_lines)
+return "\n".join(message_lines)
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
         [
