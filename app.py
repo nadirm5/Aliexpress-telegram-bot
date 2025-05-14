@@ -571,9 +571,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
-    # Ajouter les offres spéciales disponibles
-    message_lines.append("🎁 <b> Offers:</b>")
-    message_lines.append("──────────────\n")
+message_lines.append("──────────────\n")
 
     offers_available = False
     for offer_key in OFFER_ORDER:
