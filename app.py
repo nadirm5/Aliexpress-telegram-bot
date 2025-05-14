@@ -579,14 +579,20 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
         [
-            InlineKeyboardButton("🎟️ EXCLUSIVE Coupons & Secret Codes", url="https://s.click.aliexpress.com/e/_oliYXEJ")
+            InlineKeyboardButton("🎟️ كوبونات حصرية", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
+            InlineKeyboardButton("🎟️ EXCLUSIVE Coupons", url="https://s.click.aliexpress.com/e/_oliYXEJ")
         ],
         [
-            InlineKeyboardButton("🎯 Deal of the Day – Don’t Miss Out!", url="https://s.click.aliexpress.com/e/_omRiewZ")
+            InlineKeyboardButton("🎯 عرض اليوم", url="https://s.click.aliexpress.com/e/_omRiewZ"),
+            InlineKeyboardButton("🎯 Deal of the Day", url="https://s.click.aliexpress.com/e/_omRiewZ")
         ],
         [
-            InlineKeyboardButton("📱 Join Our VIP Channel", url="https://t.me/RayanCoupon"),
-            InlineKeyboardButton("☕ Support Me with ❤️", url="https://moneyexpress.fun")
+            InlineKeyboardButton("📱 اشترك في قناتنا", url="https://t.me/RayanCoupon"),
+            InlineKeyboardButton("📱 Join VIP Channel", url="https://t.me/RayanCoupon")
+        ],
+        [
+            InlineKeyboardButton("☕ ادعمني", url="https://moneyexpress.fun"),
+            InlineKeyboardButton("☕ Support Me", url="https://moneyexpress.fun")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
