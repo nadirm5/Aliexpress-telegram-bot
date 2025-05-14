@@ -615,21 +615,24 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
         [
-            InlineKeyboardButton("⏰ Hurry! *Sunshine Savings* End May 19 – Up to *60% OFF*", url="https://s.click.aliexpress.com/e/_oE3qi3N")
+            InlineKeyboardButton("⏰ Up to 60% OFF | ☀️ Sunshine Deals", url="https://s.click.aliexpress.com/e/_oE3qi3N")
         ],
         [
-            InlineKeyboardButton("🎯 Choice Day", url="https://s.click.aliexpress.com/e/_omRiewZ"),
-            InlineKeyboardButton("📱 Xiaomi & POCO", url="https://s.click.aliexpress.com/e/_oo8yC9D")
+            InlineKeyboardButton("🎟️ EXCLUSIVE Coupons & Secret Codes", url="https://s.click.aliexpress.com/e/_oliYXEJ")
         ],
         [
-            InlineKeyboardButton("⚡ Honor", url="https://s.click.aliexpress.com/e/_oErbcfd"),
-            InlineKeyboardButton("🚀 Realme", url="https://s.click.aliexpress.com/e/_oFUE0MJ")
+            InlineKeyboardButton("🎯 Deal of the Day – Don’t Miss Out!", url="https://s.click.aliexpress.com/e/_omRiewZ")
         ],
         [
-            InlineKeyboardButton("📱 Channel", url="https://t.me/RayanCoupon")
+            InlineKeyboardButton("🔥 Xiaomi & POCO – Hot Offers!", url="https://s.click.aliexpress.com/e/_oo8yC9D"),
+            InlineKeyboardButton("⚡ Realme – Flash Deals", url="https://s.click.aliexpress.com/e/_oFUE0MJ")
         ],
         [
-            InlineKeyboardButton("☕ Support Me", url="https://moneyexpress.fun")
+            InlineKeyboardButton("✨ Honor – Style & Power", url="https://s.click.aliexpress.com/e/_oErbcfd")
+        ],
+        [
+            InlineKeyboardButton("📱 Join Our VIP Channel", url="https://t.me/RayanCoupon"),
+            InlineKeyboardButton("☕ Support Me with ❤️", url="https://moneyexpress.fun")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
