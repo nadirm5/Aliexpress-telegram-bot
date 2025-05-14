@@ -571,37 +571,13 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
-    # Ajouter les offres spéciales disponibles
-    message_lines.append("🎁 <b> Offers:</b>")
-    message_lines.append("──────────────\n")
-
-    offers_available = False
-    for offer_key in OFFER_ORDER:
-        if offer_key == "coin":  # Skip the coin link as it's already added
-            continue
-        link = generated_links.get(offer_key)
-        offer_name = OFFER_PARAMS[offer_key]["name"]
-        if link:
-            message_lines.append(f'▫️ <b>{offer_name}:</b> {link}\n')
-            offers_available = True
-        else:
-            message_lines.append(f"▫️ {offer_name}: ❌ Not Available\n")
-
-    # Si aucune offre n'est disponible, afficher un message de défaut
-    if not offers_available and not coin_link:
-        return f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."
-
-    # Ajouter la fin du message avec l'invitation à suivre sur Telegram
-    message_lines.append("──────────────\n")
+    # Fin du message
     message_lines.append("🔔 <b>  Follow Us:</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
-        [
-            InlineKeyboardButton("⏰ Up to 60% OFF | ☀️ Sunshine Deals", url="https://s.click.aliexpress.com/e/_on6HYvv")
-        ],
         [
             InlineKeyboardButton("🎟️ EXCLUSIVE Coupons & Secret Codes", url="https://s.click.aliexpress.com/e/_oliYXEJ")
         ],
