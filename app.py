@@ -615,7 +615,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
         [
-            InlineKeyboardButton("⏰ Up to 60% OFF | ☀️ Sunshine Deals", url="https://s.click.aliexpress.com/e/_oE3qi3N")
+            InlineKeyboardButton("⏰ Up to 60% OFF | ☀️ Sunshine Deals", url="https://s.click.aliexpress.com/e/_on6HYvv")
         ],
         [
             InlineKeyboardButton("🎟️ EXCLUSIVE Coupons & Secret Codes", url="https://s.click.aliexpress.com/e/_oliYXEJ")
