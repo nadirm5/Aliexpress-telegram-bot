@@ -582,12 +582,12 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
         [
-            InlineKeyboardButton("🎟️ كوبونات حصرية\nExclusive Coupons", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
-            InlineKeyboardButton("🎯 عرض اليوم\nDeal of the Day", url="https://s.click.aliexpress.com/e/_omRiewZ")
+            InlineKeyboardButton("🎟️ <b>كوبونات حصرية</b> • <b>Exclusive Coupons</b>", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
+            InlineKeyboardButton("🎯 <b>عرض اليوم</b> • <b>Deal of the Day</b>", url="https://s.click.aliexpress.com/e/_omRiewZ")
         ],
         [
-            InlineKeyboardButton("📱 اشترك في القناة\nJoin VIP Channel", url="https://t.me/RayanCoupon"),
-            InlineKeyboardButton("☕ ادعمني على صفحتي\nSupport Me", url="https://moneyexpress.fun")
+            InlineKeyboardButton("📱 <b>اشترك في القناة</b> • <b>Join VIP Channel</b>", url="https://t.me/RayanCoupon"),
+            InlineKeyboardButton("☕ <b>ادعمني</b> • <b>Support Me</b>", url="https://moneyexpress.fun")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
