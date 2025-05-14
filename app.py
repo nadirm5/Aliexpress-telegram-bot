@@ -1,3 +1,4 @@
+
 import logging
 import os
 import re
@@ -86,10 +87,25 @@ OFFER_PARAMS = {
             "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
         }
-    }
+    },
+
+    "link": {
+        "name": "🚀 <b>🔗 رابط المنتوج بالتخفيض</b>",
+        "params": {
+            "sourceType": "620%26channel=coin",
+            "afSmartRedirect": "y"
+    
+        }
+    },
+
+
+    
+    "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562", "channel": "sd", "afSmartRedirect": "y"}},
+    "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers", "afSmartRedirect": "y"}},
+    "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680", "channel": "bigSave", "afSmartRedirect": "y"}},
 }
 
-OFFER_ORDER = ["coin"]
+OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
 
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
@@ -537,7 +553,9 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 
     return generated_links
 
-def _build_response_message(product_data: dict, generated_links: dict, details_source: str, user_lang: str) -> str:
+
+
+def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
 
     # Titre du produit décoré avec émojis
@@ -569,70 +587,49 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
-    # Préparer les boutons
-    keyboard = []
+    # Ajouter les offres spéciales disponibles
+    message_lines.append("🎁 <b> Offers:</b>")
+    message_lines.append("──────────────\n")
 
-    # Ajout des boutons pour les liens générés
     offers_available = False
     for offer_key in OFFER_ORDER:
-        if offer_key == "coin":
+        if offer_key == "coin":  # Skip the coin link as it's already added
             continue
         link = generated_links.get(offer_key)
         offer_name = OFFER_PARAMS[offer_key]["name"]
         if link:
-            # Créer un bouton avec le lien de l'offre
-            keyboard.append([InlineKeyboardButton(f"{offer_name} 📍", url=link)])
+            message_lines.append(f'▫️ <b>{offer_name}:</b> {link}\n')
             offers_available = True
         else:
             message_lines.append(f"▫️ {offer_name}: ❌ Not Available\n")
 
-    # Si aucune offre n'est disponible
+    # Si aucune offre n'est disponible, afficher un message de défaut
     if not offers_available and not coin_link:
         return f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."
 
-    # Ajouter le bouton de coins s'il existe
-    if coin_link:
-        keyboard.append([InlineKeyboardButton("🎯 Coins Offer", url=coin_link)])
-
-    # Si des boutons sont créés, ajouter au message
-    if keyboard:
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        message_lines.append("\n🔔 <b>Click below to view offers:</b>")
-
-    # Fin du message
+    # Ajouter la fin du message avec l'invitation à suivre sur Telegram
+    message_lines.append("──────────────\n")
     message_lines.append("🔔 <b>  Follow Us:</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
 
-    # Retourner le message et les boutons
     return "\n".join(message_lines)
-
-
-def _build_reply_markup(user_lang: str) -> InlineKeyboardMarkup:
-    if user_lang == 'ar':
-        keyboard = [
-            [
-                InlineKeyboardButton("🎟️ كوبونات حصرية | Exclusive Coupons 🎟️", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
-                InlineKeyboardButton("🎯 عرض اليوم | Deal of the Day 🎯", url="https://s.click.aliexpress.com/e/_omRiewZ")
-            ],
-            [
-                InlineKeyboardButton("📱 اشترك في القناة | Join VIP Channel 📱", url="https://t.me/RayanCoupon"),
-                InlineKeyboardButton("☕ ادعمني على صفحتي | Support Me on My Page ☕", url="https://moneyexpress.fun")
-            ]
+def _build_reply_markup() -> InlineKeyboardMarkup:
+    keyboard = [
+        [
+            InlineKeyboardButton("⏰ Up to 60% OFF | ☀️ Sunshine Deals", url="https://s.click.aliexpress.com/e/_on6HYvv")
+        ],
+        [
+            InlineKeyboardButton("🎟️ EXCLUSIVE Coupons & Secret Codes", url="https://s.click.aliexpress.com/e/_oliYXEJ")
+        ],
+        [
+            InlineKeyboardButton("🎯 Deal of the Day – Don’t Miss Out!", url="https://s.click.aliexpress.com/e/_omRiewZ")
+        ],
+        [
+            InlineKeyboardButton("📱 Join Our VIP Channel", url="https://t.me/RayanCoupon"),
+            InlineKeyboardButton("☕ Support Me with ❤️", url="https://moneyexpress.fun")
         ]
-    else:  # Default language is English
-        keyboard = [
-            [
-                InlineKeyboardButton("🎟️ Exclusive Coupons | كوبونات حصرية 🎟️", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
-                InlineKeyboardButton("🎯 Deal of the Day | عرض اليوم 🎯", url="https://s.click.aliexpress.com/e/_omRiewZ")
-            ],
-            [
-                InlineKeyboardButton("📱 Join VIP Channel | اشترك في القناة 📱", url="https://t.me/RayanCoupon"),
-                InlineKeyboardButton("☕ Support Me on My Page | ادعمني على صفحتي ☕", url="https://moneyexpress.fun")
-            ]
-        ]
-
+    ]
     return InlineKeyboardMarkup(keyboard)
-
     
 async def _send_telegram_response(context: ContextTypes.DEFAULT_TYPE, chat_id: int, product_data: dict, message_text: str, reply_markup: InlineKeyboardMarkup):
     product_image = product_data.get('image_url')
@@ -832,3 +829,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
