@@ -610,17 +610,16 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
         [
-            InlineKeyboardButton("🎟️ كوبونات حصرية | Exclusive Coupons", url="https://s.click.aliexpress.com/e/_oliYXEJ")
-        ],
-        [
-            InlineKeyboardButton("🎯 عروض اليوم | Deal of the Day", url="https://s.click.aliexpress.com/e/_omRiewZ")
+            InlineKeyboardButton("🎟️ كوبونات حصرية | Exclusive Coupons", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
+            InlineKeyboardButton("🎯 عرض اليوم | Deal of the Day", url="https://s.click.aliexpress.com/e/_omRiewZ")
         ],
         [
             InlineKeyboardButton("📱 اشترك في قناتنا | Join VIP Channel", url="https://t.me/RayanCoupon"),
-            InlineKeyboardButton("☕ صفحة كل العروض | Support Me", url="https://moneyexpress.fun")
+            InlineKeyboardButton("☕ ادعمني على صفحتي | Support Me on My Page", url="https://moneyexpress.fun")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
+
 async def _send_telegram_response(context: ContextTypes.DEFAULT_TYPE, chat_id: int, product_data: dict, message_text: str, reply_markup: InlineKeyboardMarkup):
     product_image = product_data.get('image_url')
     product_id = product_data.get('id', 'N/A') 
