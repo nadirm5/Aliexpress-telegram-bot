@@ -61,7 +61,6 @@ URL_REGEX = re.compile(
     re.IGNORECASE
 )
 
-# Correction ici : accepte /item/ID.html ou /i/ID.html
 PRODUCT_ID_REGEX = re.compile(r'/(?:item|i)/(\d+)\.html', re.IGNORECASE)
 
 STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(
