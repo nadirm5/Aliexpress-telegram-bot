@@ -82,7 +82,6 @@ KEYWORD_REGEX = re.compile(
 )
 
 OFFER_PARAMS = {
-    {
     "coin": {
         "name": "🪙 <b>🎯 Coins-العملات</b> – <b>🔥⚡️%الرابط بالتخفيض ⬇️ ⚡️🔥أقل سعر هنا خصم حتى 70 💸</b>",
         "params": {
@@ -93,7 +92,6 @@ OFFER_PARAMS = {
 }
 
 OFFER_ORDER = ["coin"]
-
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
