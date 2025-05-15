@@ -572,7 +572,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     # Fin du message
     message_lines.append("🔔 <b>  Follow Us:</b>")
-    message_lines.append("📱 Telegram: https://t.me/RayanCoupon)
+    message_lines.append("📱 Telegram: https://t.me/RayanCoupon")
 
     return "\n".join(message_lines)
 
