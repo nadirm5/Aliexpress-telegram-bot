@@ -52,12 +52,10 @@ except Exception as e:
     logger.exception(f"Error initializing AliExpress API client: {e}")
     exit()
 
-
-
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
 URL_REGEX = re.compile(
-    r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*',
+    r'https?://(?:s\.click\.aliexpress\.com/e/[a-zA-Z0-9_-]+|a\.aliexpress\.com/_[a-zA-Z0-9_-]+|(?:www\.)?(?:[\w-]+\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*)',
     re.IGNORECASE
 )
 
@@ -75,6 +73,11 @@ SHORT_LINK_DOMAIN_REGEX = re.compile(
 
 COMBINED_DOMAIN_REGEX = re.compile(
     r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com',
+    re.IGNORECASE
+)
+
+KEYWORD_REGEX = re.compile(
+    r'\b(promo|deal|offre|réduction|sale|discount|vente|coupon|bon plan|prix|offres)\b',
     re.IGNORECASE
 )
 
