@@ -1,99 +1,44 @@
-import requests
-from bs4 import BeautifulSoup
+from telegram import Update, InputMediaPhoto
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
+from aliexpress_scraper import get_product_details_by_short_url  # Code d'avant dans un fichier séparé (voir + bas)
 
+TOKEN = 'VOTRE_TOKEN_BOT'
 
-def get_aliexpress_product_info(product_url):
-    """
-    Extract product name from AliExpress without Selenium
-    Args:
-        product_url (str): AliExpress product page URL
-    Returns:
-        str: product name
-    """
-    product_name = None # Initialize product_name
-    img_url = None # Initialize img_url
-    try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
-        cookies = {"x-hng": "lang=en-US", "intl_locale": "en_US"}
-        response = requests.get(product_url, headers=headers, cookies=cookies, timeout=15)
-        if response.status_code != 200:
-            print(f"Failed to load page: {response.status_code}")
-            return None, None # Return None for both if page fails
-        soup = BeautifulSoup(response.text, "html.parser")
-        
-        # Try finding the specific h1 tag first
-        root_div = soup.find("div", id="root")
-        if root_div:
-            h1 = root_div.select_one("div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > h1")
-            if h1:
-                product_name = h1.get_text(strip=True)
+# Commande /start
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Bienvenue ! Envoie-moi un lien AliExpress (même raccourci) et je te montrerai les détails du produit.")
 
-        # Fallback to og:title meta tag
-        if not product_name:
-            meta_title = soup.find("meta", property="og:title")
-            if meta_title and meta_title.has_attr("content"):
-                product_name = meta_title["content"]
+# Quand un utilisateur envoie un lien
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text
+    if "aliexpress.com" in text:
+        await update.message.reply_text("Analyse du lien en cours...")
+        name, img, price, store = get_product_details_by_short_url(text, translate=True)
 
-        # Fallback to keywords meta tag
-        if not product_name:
-            meta_name = soup.find("meta", attrs={"name": "keywords"})
-            if meta_name and meta_name.has_attr("content"):
-                # Take the first keyword as a potential name
-                product_name = meta_name["content"].split(",")[0].strip()
+        if name:
+            message = f"**{name}**\n\n"
+            if price:
+                message += f"💰 *Prix :* {price}\n"
+            if store:
+                message += f"🏬 *Boutique :* {store}\n"
+            message += f"\n🔗 [Voir le produit]({text})"
 
-        # Fallback to h1 with data-pl attribute
-        if not product_name:
-            h1 = soup.find("h1", {"data-pl": "product-title"})
-            if h1:
-                product_name = h1.get_text(strip=True)
-
-        # Fallback to h1 with specific class names
-        if not product_name:
-            h1 = soup.find("h1", {"class": lambda x: x and ("product-title-text" in x or "product-title" in x)})
-            if h1:
-                product_name = h1.get_text(strip=True)
-
-        # Generic h1 fallback (last resort for name)
-        if not product_name:
-            h1 = soup.find("h1")
-            if h1:
-                product_name = h1.get_text(strip=True)
-
-        # --- Image Extraction ---
-        img_tag = soup.find("img", {"class": lambda x: x and "magnifier--image" in x})
-        if img_tag and img_tag.has_attr("src"):
-            img_url = img_tag["src"]
+            if img:
+                await update.message.reply_photo(photo=img, caption=message, parse_mode="Markdown")
+            else:
+                await update.message.reply_text(message, parse_mode="Markdown")
         else:
-            # Fallback to og:image meta tag
-            meta_img = soup.find("meta", property="og:image")
-            if meta_img and meta_img.has_attr("content"):
-                img_url = meta_img["content"]
+            await update.message.reply_text("Échec de récupération du produit.")
+    else:
+        await update.message.reply_text("Veuillez envoyer un lien AliExpress valide.")
 
-        # --- Clean up Product Name ---
-        if product_name:
-            # Remove common AliExpress suffixes, potentially followed by numbers
-            import re
-            # Regex: " - AliExpress" optionally followed by space and digits, at the end of the string
-            product_name = re.sub(r'\s*-\s*AliExpress(\s+\d+)?$', '', product_name).strip()
-            # Also handle case without leading space before hyphen
-            product_name = re.sub(r'-AliExpress(\s+\d+)?$', '', product_name).strip()
+# Lancer le bot
+def main():
+    app = ApplicationBuilder().token(TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    print("Bot lancé...")
+    app.run_polling()
 
-
-        return product_name, img_url
-    except Exception as e:
-        print(f"An error occurred in get_aliexpress_product_info: {str(e)}") # Added function name for clarity
-        return None, None # Return None for both on error
-
-def get_product_details_by_id(product_id):
-    """
-    Constructs URL from product ID and fetches product details.
-    Args:
-        product_id (str or int): The AliExpress product ID.
-    Returns:
-        tuple: (product_name, img_url) or (None, None) if failed.
-    """
-    product_url = f"https://vi.aliexpress.com/item/{product_id}.html"
-    print(f"Constructed URL: {product_url}")
-    return get_aliexpress_product_info(product_url)
+if __name__ == "__main__":
+    main()
