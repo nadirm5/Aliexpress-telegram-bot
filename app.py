@@ -1,5 +1,4 @@
 
-
 import logging
 import os
 import re
@@ -58,11 +57,28 @@ except Exception as e:
 
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
-URL_REGEX = re.compile(r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*', re.IGNORECASE)
-PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html')
-STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id\.aliexpress\.com|th\.aliexpress\.com|ar\.aliexpress\.com)(\.([\w-]+))?(/.*)?', re.IGNORECASE)
-SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
-COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
+URL_REGEX = re.compile(
+    r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*',
+    re.IGNORECASE
+)
+
+# Correction ici : accepte /item/ID.html ou /i/ID.html
+PRODUCT_ID_REGEX = re.compile(r'/(?:item|i)/(\d+)\.html', re.IGNORECASE)
+
+STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(
+    r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?(/.*)?',
+    re.IGNORECASE
+)
+
+SHORT_LINK_DOMAIN_REGEX = re.compile(
+    r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?',
+    re.IGNORECASE
+)
+
+COMBINED_DOMAIN_REGEX = re.compile(
+    r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com',
+    re.IGNORECASE
+)
 
 OFFER_PARAMS = {
     "coin": {
@@ -598,20 +614,23 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     return "\n".join(message_lines)
 def _build_reply_markup() -> InlineKeyboardMarkup:
-     keyboard = [
+    keyboard = [
         [
-            InlineKeyboardButton("🎯 Choice Day", url="https://s.click.aliexpress.com/e/_omRiewZ"),
-            InlineKeyboardButton("🔥 Best Deals", url="https://s.click.aliexpress.com/e/_olUPW8V")
+            InlineKeyboardButton("⏰ Up to 60% OFF | ☀️ Sunshine Deals", url="https://s.click.aliexpress.com/e/_on6HYvv")
         ],
         [
-            InlineKeyboardButton("📱 Channel", url="https://t.me/RayanCoupon")
+            InlineKeyboardButton("🎟️ EXCLUSIVE Coupons & Secret Codes", url="https://s.click.aliexpress.com/e/_oliYXEJ")
         ],
         [
-            InlineKeyboardButton("☕ Support Me", url="https://moneyexpress.fun")
+            InlineKeyboardButton("🎯 Deal of the Day – Don’t Miss Out!", url="https://s.click.aliexpress.com/e/_omRiewZ")
+        ],
+        [
+            InlineKeyboardButton("📱 Join Our VIP Channel", url="https://t.me/RayanCoupon"),
+            InlineKeyboardButton("☕ Support Me with ❤️", url="https://moneyexpress.fun")
         ]
     ]
-     return InlineKeyboardMarkup(keyboard)
-
+    return InlineKeyboardMarkup(keyboard)
+    
 async def _send_telegram_response(context: ContextTypes.DEFAULT_TYPE, chat_id: int, product_data: dict, message_text: str, reply_markup: InlineKeyboardMarkup):
     product_image = product_data.get('image_url')
     product_id = product_data.get('id', 'N/A') 
@@ -810,3 +829,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
