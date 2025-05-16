@@ -82,20 +82,18 @@ KEYWORD_REGEX = re.compile(
 )
 
 
+
 OFFER_PARAMS = {
     "coin": {
-        "name": "🪙 Coin",
+        "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
             "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
         }
     },
     "bundle": {
-        "name": "📦 Bundle Deals",
-        "params": {
-            "businessCode": "guide",
-            "afSmartRedirect": "y"
-        }
+        "name": "🧩 <b>Bundle Deals</b> – <b>عروض تجميع رائعة بسعر أرخص ⬇️</b> 👉",
+        "special_url": "https://www.aliexpress.com/ssr/300000512/BundleDeals2?homeProductIds={productId}"
     }
 }
 
