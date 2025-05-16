@@ -544,7 +544,6 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 
 
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
-def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
 
     # Titre du produit décoré avec émojis
@@ -576,7 +575,12 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
-    # Ajouter la fin du message
+    # Lien "bundle" s'il existe
+    bundle_link = generated_links.get("bundle")
+    if bundle_link:
+        message_lines.append(f"▫️ 🎁 <b>Bundle Deal:</b> {bundle_link}")
+
+    # Footer
     message_lines.append("──────────────\n")
     message_lines.append("🔔 <b>  Follow Us:</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
