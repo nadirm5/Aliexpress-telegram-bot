@@ -83,7 +83,6 @@ KEYWORD_REGEX = re.compile(
 
 
 OFFER_PARAMS = {
-OFFER_PARAMS = {
     "coin": {
         "name": "🪙 Coin",
         "params": {
