@@ -582,7 +582,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     if "bundle" not in generated_links:
         product_id = product_data.get("product_id")
         if product_id:
-            generated_links["bundle"] = generate_bundle_link(product_id)
+            generated_links["bundle"] = generate_bundle_link(product_id)  # Assure-toi que cette fonction existe
 
     bundle_link = generated_links.get("bundle")
     if bundle_link:
@@ -590,24 +590,27 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         message_lines.append("🧩 عرض تجميع لشراء منتجات بسعر أقل\n")
 
     # Footer
-    message_lines.append("🔔 <b>  Follow Us:</b>")
+    message_lines.append("🔔 <b>Follow Us:</b>")
     message_lines.append("📱 Telegram: https://t.me/RayanCoupon")
 
     return "\n".join(message_lines)
+
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
         [
-            InlineKeyboardButton("🎟️ كوبونات حصرية 🎉\Coupons 🎁", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
-            InlineKeyboardButton("🎯 عرض اليوم 🛍️\Deal of the Day 🏷️", url="https://s.click.aliexpress.com/e/_omRiewZ")
+            InlineKeyboardButton("🎟️ كوبونات حصرية 🎉 Coupons 🎁", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
+            InlineKeyboardButton("🎯 عرض اليوم 🛍️ Deal of the Day 🏷️", url="https://s.click.aliexpress.com/e/_omRiewZ")
         ],
         [
-            InlineKeyboardButton("📱 اشترك في القناة 📢\nJoin VIP Channel 💎", url="https://t.me/RayanCoupon"),
-            InlineKeyboardButton("☕ صفحة كل العروض 🛒\aliexpress 💖", url="https://moneyexpress.fun")
+            InlineKeyboardButton("📱 اشترك في القناة 📢 Join VIP Channel 💎", url="https://t.me/RayanCoupon"),
+            InlineKeyboardButton("☕ صفحة كل العروض 🛒 aliexpress 💖", url="https://moneyexpress.fun")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
+
     
 async def _send_telegram_response(context: ContextTypes.DEFAULT_TYPE, chat_id: int, product_data: dict, message_text: str, reply_markup: InlineKeyboardMarkup):
     product_image = product_data.get('image_url')
