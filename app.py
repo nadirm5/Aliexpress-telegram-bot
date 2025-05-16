@@ -81,7 +81,7 @@ KEYWORD_REGEX = re.compile(
     re.IGNORECASE
 )
 
-OFFER_PARAMS = {
+
 OFFER_PARAMS = {
     "coin": {
         "name": "▫️ 🪙 <b>🎯 Coins – الرابط بالتخفيض ⬇️</b>\n💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%",
