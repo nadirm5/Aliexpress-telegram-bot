@@ -549,21 +549,14 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
 
-    # Titre du produit décoré avec émojis
+    # Titre du produit décoré
     product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
     decorated_title = f"✨⭐️ {product_title} ⭐️✨"
-
-    product_price = product_data.get('price')
-    product_currency = product_data.get('currency', '')
-
-    print(f"Product Title: {product_title}")
-    print(f"Product Price: {product_price} {product_currency}")
-    print(f"Generated Links: {generated_links}")
-
-    # Ajout du titre
     message_lines.append(f"<b>{decorated_title}</b>")
 
     # Prix du produit
+    product_price = product_data.get('price')
+    product_currency = product_data.get('currency', '')
     if details_source == "API" and product_price:
         price_str = f"{product_price} {product_currency}".strip()
         message_lines.append(f"\n💰 <b>Price $السعر بدون تخفيض:</b> {price_str}\n")
@@ -572,19 +565,24 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     else:
         message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    # Lien "coin" en gras
+    # Lien "coin"
     coin_link = generated_links.get("coin")
     if coin_link:
         message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
-    # Lien "bundle" s’il existe (ajout demandé)
+    # Lien "bundle"
+    if "bundle" not in generated_links:
+        product_id = product_data.get("product_id")
+        if product_id:
+            generated_links["bundle"] = generate_bundle_link(product_id)
+
     bundle_link = generated_links.get("bundle")
     if bundle_link:
         message_lines.append(f"📌 <b>Bundle Deals – عروض التجميع ⬇️</b> 👉: <b>{bundle_link}</b>")
         message_lines.append("🧩 عرض تجميع لشراء منتجات بسعر أقل\n")
 
-    # Fin du message
+    # Footer
     message_lines.append("🔔 <b>  Follow Us:</b>")
     message_lines.append("📱 Telegram: https://t.me/RayanCoupon")
 
