@@ -82,6 +82,7 @@ KEYWORD_REGEX = re.compile(
 )
 
 OFFER_PARAMS = {
+OFFER_PARAMS = {
     "coin": {
         "name": "▫️ 🪙 <b>🎯 Coins – الرابط بالتخفيض ⬇️</b>\n💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%",
         "params": {
@@ -93,7 +94,8 @@ OFFER_PARAMS = {
         "name": "📌 <b>Bundle Deals – عروض التجميع ⬇️</b>\n🧩 عرض تجميع لشراء منتجات بسعر أقل",
         "params": {
             "sourceType": "620&channel=bundle",
-            "afSmartRedirect": "y"
+            "afSmartRedirect": "y",
+            "wh_pid": "300000512/BundleDeals2"  # Ajout spécial pour Bundle Deals
         }
     }
 }
