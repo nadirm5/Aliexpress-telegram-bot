@@ -578,7 +578,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
-    # Lien "bundle" s’il existe
+    # Lien "bundle" s’il existe (ajout demandé)
     bundle_link = generated_links.get("bundle")
     if bundle_link:
         message_lines.append(f"📌 <b>Bundle Deals – عروض التجميع ⬇️</b> 👉: <b>{bundle_link}</b>")
@@ -589,7 +589,6 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     message_lines.append("📱 Telegram: https://t.me/RayanCoupon")
 
     return "\n".join(message_lines)
-
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
