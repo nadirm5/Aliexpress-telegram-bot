@@ -1,3 +1,5 @@
+
+
 import logging
 import os
 import re
@@ -52,36 +54,15 @@ except Exception as e:
     logger.exception(f"Error initializing AliExpress API client: {e}")
     exit()
 
+
+
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
-URL_REGEX = re.compile(
-    r'https?://(?:s\.click\.aliexpress\.com/e/[a-zA-Z0-9_-]+|a\.aliexpress\.com/_[a-zA-Z0-9_-]+|(?:www\.)?(?:[\w-]+\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*)',
-    re.IGNORECASE
-)
-
-PRODUCT_ID_REGEX = re.compile(r'/(?:item|i)/(\d+)\.html', re.IGNORECASE)
-
-STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(
-    r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?(/.*)?',
-    re.IGNORECASE
-)
-
-SHORT_LINK_DOMAIN_REGEX = re.compile(
-    r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?',
-    re.IGNORECASE
-)
-
-COMBINED_DOMAIN_REGEX = re.compile(
-    r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com',
-    re.IGNORECASE
-)
-
-KEYWORD_REGEX = re.compile(
-    r'\b(promo|deal|offre|réduction|sale|discount|vente|coupon|bon plan|prix|offres)\b',
-    re.IGNORECASE
-)
-
-
+URL_REGEX = re.compile(r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*', re.IGNORECASE)
+PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html')
+STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id\.aliexpress\.com|th\.aliexpress\.com|ar\.aliexpress\.com)(\.([\w-]+))?(/.*)?', re.IGNORECASE)
+SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
+COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
 
 OFFER_PARAMS = {
     "coin": {
@@ -91,13 +72,24 @@ OFFER_PARAMS = {
             "afSmartRedirect": "y"
         }
     },
-    "bundle": {
-        "name": "🧩 <b>Bundle Deals</b> – <b>عروض تجميع رائعة بسعر أرخص ⬇️</b> 👉",
-        "special_url": "https://www.aliexpress.com/ssr/300000512/BundleDeals2?homeProductIds={productId}"
-    }
+
+    "link": {
+        "name": "🚀 <b>🔗 رابط المنتوج بالتخفيض</b>",
+        "params": {
+            "sourceType": "620%26channel=coin",
+            "afSmartRedirect": "y"
+    
+        }
+    },
+
+
+    
+    "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562", "channel": "sd", "afSmartRedirect": "y"}},
+    "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers", "afSmartRedirect": "y"}},
+    "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680", "channel": "bigSave", "afSmartRedirect": "y"}},
 }
 
-OFFER_ORDER = ["coin", "bundle"]
+OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
 
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
@@ -550,14 +542,21 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
 
-    # Titre du produit décoré
+    # Titre du produit décoré avec émojis
     product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
     decorated_title = f"✨⭐️ {product_title} ⭐️✨"
+
+    product_price = product_data.get('price')
+    product_currency = product_data.get('currency', '')
+
+    print(f"Product Title: {product_title}")
+    print(f"Product Price: {product_price} {product_currency}")
+    print(f"Generated Links: {generated_links}")
+
+    # Ajout du titre
     message_lines.append(f"<b>{decorated_title}</b>")
 
     # Prix du produit
-    product_price = product_data.get('price')
-    product_currency = product_data.get('currency', '')
     if details_source == "API" and product_price:
         price_str = f"{product_price} {product_currency}".strip()
         message_lines.append(f"\n💰 <b>Price $السعر بدون تخفيض:</b> {price_str}\n")
@@ -566,46 +565,53 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     else:
         message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    # Lien "coin"
+    # Lien "coin" en gras
     coin_link = generated_links.get("coin")
     if coin_link:
         message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
-    # Lien "bundle"
-    if "bundle" not in generated_links:
-        product_id = product_data.get("product_id")
-        if product_id:
-            generated_links["bundle"] = generate_bundle_link(product_id)  # Assure-toi que cette fonction existe
+    # Ajouter les offres spéciales disponibles
+    message_lines.append("🎁 <b> Offers:</b>")
+    message_lines.append("──────────────\n")
 
-    bundle_link = generated_links.get("bundle")
-    if bundle_link:
-        message_lines.append(f"📌 <b>Bundle Deals – عروض التجميع ⬇️</b> 👉: <b>{bundle_link}</b>")
-        message_lines.append("🧩 عرض تجميع لشراء منتجات بسعر أقل\n")
+    offers_available = False
+    for offer_key in OFFER_ORDER:
+        if offer_key == "coin":  # Skip the coin link as it's already added
+            continue
+        link = generated_links.get(offer_key)
+        offer_name = OFFER_PARAMS[offer_key]["name"]
+        if link:
+            message_lines.append(f'▫️ <b>{offer_name}:</b> {link}\n')
+            offers_available = True
+        else:
+            message_lines.append(f"▫️ {offer_name}: ❌ Not Available\n")
 
-    # Footer
-    message_lines.append("🔔 <b>Follow Us:</b>")
-    message_lines.append("📱 Telegram: https://t.me/RayanCoupon")
+    # Si aucune offre n'est disponible, afficher un message de défaut
+    if not offers_available and not coin_link:
+        return f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."
+
+    # Ajouter la fin du message avec l'invitation à suivre sur Telegram
+    message_lines.append("──────────────\n")
+    message_lines.append("🔔 <b>  Follow Us:</b>")
+    message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
-
-
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
 def _build_reply_markup() -> InlineKeyboardMarkup:
-    keyboard = [
+     keyboard = [
         [
-            InlineKeyboardButton("🎟️ كوبونات حصرية 🎉 Coupons 🎁", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
-            InlineKeyboardButton("🎯 عرض اليوم 🛍️ Deal of the Day 🏷️", url="https://s.click.aliexpress.com/e/_omRiewZ")
+            InlineKeyboardButton("🎯 Choice Day", url="https://s.click.aliexpress.com/e/_omRiewZ"),
+            InlineKeyboardButton("🔥 Best Deals", url="https://s.click.aliexpress.com/e/_olUPW8V")
         ],
         [
-            InlineKeyboardButton("📱 اشترك في القناة 📢 Join VIP Channel 💎", url="https://t.me/RayanCoupon"),
-            InlineKeyboardButton("☕ صفحة كل العروض 🛒 aliexpress 💖", url="https://moneyexpress.fun")
+            InlineKeyboardButton("📱 Channel", url="https://t.me/RayanCoupon")
+        ],
+        [
+            InlineKeyboardButton("☕ Support Me", url="https://moneyexpress.fun")
         ]
     ]
-    return InlineKeyboardMarkup(keyboard)
+     return InlineKeyboardMarkup(keyboard)
 
-    
 async def _send_telegram_response(context: ContextTypes.DEFAULT_TYPE, chat_id: int, product_data: dict, message_text: str, reply_markup: InlineKeyboardMarkup):
     product_image = product_data.get('image_url')
     product_id = product_data.get('id', 'N/A') 
@@ -804,4 +810,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
