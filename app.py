@@ -83,20 +83,21 @@ KEYWORD_REGEX = re.compile(
 
 OFFER_PARAMS = {
     "coin": {
-        "name": "🪙 <b>🎯 Coins-العملات</b> – <b>🔥⚡️%الرابط بالتخفيض ⬇️ ⚡️🔥أقل سعر هنا خصم حتى 70 💸</b>",
+        "name": "▫️ 🪙 <b>🎯 Coins – الرابط بالتخفيض ⬇️</b>\n💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%",
         "params": {
-            "sourceType": "620%26channel=coin",
+            "sourceType": "620&channel=coin",
             "afSmartRedirect": "y"
         }
     },
     "bundle": {
-        "name": "📌 <b>Bundle Deals – عروض التجميع</b>",
+        "name": "📌 <b>Bundle Deals – عروض التجميع ⬇️</b>\n🧩 عرض تجميع لشراء منتجات بسعر أقل",
         "params": {
-            "sourceType": "620%26channel=bundle",
+            "sourceType": "620&channel=bundle",
             "afSmartRedirect": "y"
         }
     }
 }
+
 OFFER_ORDER = ["coin", "bundle"]
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
