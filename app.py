@@ -1,4 +1,3 @@
-
 import logging
 import os
 import re
@@ -88,24 +87,13 @@ OFFER_PARAMS = {
             "afSmartRedirect": "y"
         }
     },
-
-    "link": {
-        "name": "🚀 <b>🔗 رابط المنتوج بالتخفيض</b>",
-        "params": {
-            "sourceType": "620%26channel=coin",
-            "afSmartRedirect": "y"
-    
-        }
-    },
-
-
-    
-    "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562", "channel": "sd", "afSmartRedirect": "y"}},
-    "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers", "afSmartRedirect": "y"}},
-    "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680", "channel": "bigSave", "afSmartRedirect": "y"}},
+    "bundle": {
+        "name": "🧩 <b>Bundle Deals</b> – <b>عروض تجميع رائعة بسعر أرخص ⬇️</b> 👉",
+        "special_url": "https://www.aliexpress.com/ssr/300000512/BundleDeals2?homeProductIds={productId}"
+    }
 }
 
-OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
+OFFER_ORDER = ["coin", "bundle"]
 
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
