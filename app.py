@@ -86,14 +86,16 @@ OFFER_PARAMS = {
     "coin": {
         "name": "▫️ 🪙 <b>🎯 Coins – الرابط بالتخفيض ⬇️</b>\n💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%",
         "params": {
-            "sourceType": "620&channel=coin",
+            "sourceType": "620",
+            "channel": "coin",
             "afSmartRedirect": "y"
         }
     },
     "bundle": {
         "name": "📌 <b>Bundle Deals – عروض التجميع ⬇️</b>\n🧩 عرض تجميع لشراء منتجات بسعر أقل",
         "params": {
-            "sourceType": "620&channel=bundle",
+            "sourceType": "620",
+            "channel": "bundle",
             "afSmartRedirect": "y",
             "wh_pid": "300000512/BundleDeals2"
         }
@@ -101,6 +103,7 @@ OFFER_PARAMS = {
 }
 
 OFFER_ORDER = ["coin", "bundle"]
+
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
