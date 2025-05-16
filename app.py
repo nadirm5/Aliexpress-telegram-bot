@@ -56,28 +56,11 @@ except Exception as e:
 
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
-URL_REGEX = re.compile(
-    r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*',
-    re.IGNORECASE
-)
-
-# Correction ici : accepte /item/ID.html ou /i/ID.html
-PRODUCT_ID_REGEX = re.compile(r'/(?:item|i)/(\d+)\.html', re.IGNORECASE)
-
-STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(
-    r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?(/.*)?',
-    re.IGNORECASE
-)
-
-SHORT_LINK_DOMAIN_REGEX = re.compile(
-    r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?',
-    re.IGNORECASE
-)
-
-COMBINED_DOMAIN_REGEX = re.compile(
-    r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com',
-    re.IGNORECASE
-)
+URL_REGEX = re.compile(r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*', re.IGNORECASE)
+PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html')
+STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id\.aliexpress\.com|th\.aliexpress\.com|ar\.aliexpress\.com)(\.([\w-]+))?(/.*)?', re.IGNORECASE)
+SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
+COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
 
 OFFER_PARAMS = {
     "coin": {
@@ -87,13 +70,24 @@ OFFER_PARAMS = {
             "afSmartRedirect": "y"
         }
     },
-    "bundle": {
-        "name": "🧩 <b>Bundle Deals</b> – <b>عروض تجميع رائعة بسعر أرخص ⬇️</b> 👉",
-        "special_url": "https://www.aliexpress.com/ssr/300000512/BundleDeals2?homeProductIds={productId}"
-    }
+
+    "link": {
+        "name": "🚀 <b>🔗 رابط المنتوج بالتخفيض</b>",
+        "params": {
+            "sourceType": "620%26channel=coin",
+            "afSmartRedirect": "y"
+    
+        }
+    },
+
+
+    
+    "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562", "channel": "sd", "afSmartRedirect": "y"}},
+    "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers", "afSmartRedirect": "y"}},
+    "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680", "channel": "bigSave", "afSmartRedirect": "y"}},
 }
 
-OFFER_ORDER = ["coin", "bundle"]
+OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
 
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
@@ -541,6 +535,8 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 
     return generated_links
 
+
+
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
 
@@ -567,335 +563,33 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     else:
         message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    # Lien "coin" s'il existe
+    # Lien "coin" en gras
     coin_link = generated_links.get("coin")
     if coin_link:
         message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
-    # Ajouter la fin du message
+    # Ajouter les offres spéciales disponibles
+    message_lines.append("🎁 <b> Offers:</b>")
     message_lines.append("──────────────\n")
-    message_lines.append("🔔 <b>  Follow Us:</b>")
-    message_lines.append("📱 Telegram: @RayanCoupon")
 
-    return "\n".join(message_lines)
-
-def build_bundle_link(product_ids: list[str], aff_params: dict) -> str:
-    base_url = "https://www.aliexpress.com/ssr/300000512/BundleDeals2"
-    product_ids_param = ",".join(product_ids)
-    
-    params = {
-        "disableNav": "YES",
-        "pha_manifest": "ssr",
-        "_immersiveMode": "true",
-        "productIds": product_ids_param,
-        # Tu peux ajouter d’autres paramètres d’affiliation ici...
-    }
-    # Ajouter les paramètres d'affiliation
-    params.update(aff_params)
-
-    query_string = "&".join(f"{k}={v}" for k, v in params.items())
-    full_url = f"{base_url}?{query_string}"
-    return full_url
-
-# Exemple d’usage
-affiliation_params = {
-    "aff_fcid": "75485d61d54048c3acf04a553cf50699-1747403194481-07402-_omZaJR5",
-    "aff_fsk": "_omZaJR5",
-    "nr": "n",
-    "aff_platform": "portals-tool",
-    "tt": "CPS_NORMAL",
-    # ajoute tous les paramètres d'affiliation nécessaires ici
-}
-
-bundle_link = build_bundle_link(["1005005706713011"], affiliation_params)
-print(bundle_link)
-def _build_reply_markup() -> InlineKeyboardMarkup:
-    keyboard = [
-        [
-            InlineKeyboardButton("⏰ Up to 60% OFF | ☀️ Sunshine Deals", url="https://s.click.aliexpress.com/e/_on6HYvv")
-        ],
-        [
-            InlineKeyboardButton("🎟️ EXCLUSIVE Coupons & Secret Codes", url="https://s.click.aliexpress.com/e/_oliYXEJ")
-        ],
-        [
-            InlineKeyboardButton("🎯 Deal of the Day – Don’t Miss Out!", url="https://s.click.aliexpress.com/e/_omRiewZ")
-        ],
-        [
-            InlineKeyboardButton("📱 Join Our VIP Channel", url="https://t.me/RayanCoupon"),
-            InlineKeyboardButton("☕ Support Me with ❤️", url="https://moneyexpress.fun")
-        ]
-    ]
-    return InlineKeyboardMarkup(keyboard)
-    
-async def _send_telegram_response(context: ContextTypes.DEFAULT_TYPE, chat_id: int, product_data: dict, message_text: str, reply_markup: InlineKeyboardMarkup):
-    product_image = product_data.get('image_url')
-    product_id = product_data.get('id', 'N/A') 
-
-    try:
-        if product_image and "couldn't find an offer" not in message_text: 
-            await context.bot.send_photo(
-                chat_id=chat_id,
-                photo=product_image,
-                caption=message_text,
-                parse_mode=ParseMode.HTML,
-                reply_markup=reply_markup
-            )
-        else:
-            await context.bot.send_message(
-                chat_id=chat_id,
-                text=message_text,
-                parse_mode=ParseMode.HTML,
-                disable_web_page_preview=True,
-                reply_markup=reply_markup
-            )
-    except Exception as send_error:
-        logger.error(f"Failed to send message for product {product_id} to chat {chat_id}: {send_error}")
-        # Fallback message if sending fails
-        try:
-            await context.bot.send_message(
-                chat_id=chat_id,
-                text=f"⚠️ Error displaying product {product_id}. Please try again or check the logs.",
-                reply_markup=reply_markup # Still provide buttons if possible
-            )
-        except Exception as fallback_error:
-             logger.error(f"Failed to send fallback error message for product {product_id} to chat {chat_id}: {fallback_error}")
-
-
-async def process_product_telegram(product_id: str, base_url: str, update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.effective_chat.id
-    logger.info(f"Processing Product ID: {product_id} for chat {chat_id}")
-
-    try:
-        product_data, details_source = await _get_product_data(product_id)
-        if not product_data:
-             # Should not happen with current _get_product_data logic, but handle defensively
-             logger.error(f"Failed to get any product data (API or Scraped) for {product_id}")
-             await context.bot.send_message(chat_id=chat_id, text=f"Could not retrieve data for product ID {product_id}.")
-             return
-
-        product_data['id'] = product_id # Add ID for logging in send function
-
-        generated_links = await _generate_offer_links(base_url)
-
-        response_text = _build_response_message(product_data, generated_links, details_source)
-        reply_markup = _build_reply_markup()
-
-        await _send_telegram_response(context, chat_id, product_data, response_text, reply_markup)
-
-    except Exception as e:
-        logger.exception(f"Unhandled error processing product {product_id} in chat {chat_id}: {e}")
-        try:
-            await context.bot.send_message(
-                chat_id=chat_id,
-                text=f"An unexpected error occurred while processing product ID {product_id}. Sorry!"
-            )
-        except Exception:
-            logger.error(f"Failed to send error message for product {product_id} to chat {chat_id}")
-
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not update.message or not update.message.text:
-        return
-
-    message_text = update.message.text
-    user = update.effective_user
-    chat_id = update.effective_chat.id
-    logger.info(f"Received message from {user.username or user.id} in chat {chat_id}")
-
-    potential_urls = extract_potential_aliexpress_urls(message_text)
-    if not potential_urls:
-        await context.bot.send_message(
-            chat_id=chat_id,
-            text="❌ No AliExpress links found. Please send a valid AliExpress product link."
-        )
-        return
-
-    logger.info(f"Found {len(potential_urls)} potential URLs in message from {user.username or user.id}")
-
-    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-    loading_sticker_msg = None
-    try:
-        loading_sticker_msg = await context.bot.send_sticker(chat_id, "CAACAgIAAxkBAAIU1GYOk5jWvCvtykd7TZkeiFFZRdUYAAIjAAMoD2oUJ1El54wgpAY0BA")
-    except Exception as sticker_err:
-        logger.warning(f"Could not send loading sticker: {sticker_err}")
-
-
-    processed_product_ids = set()
-    tasks = []
-    async with aiohttp.ClientSession() as session:
-        for url in potential_urls:
-            original_url = url
-            product_id = None
-            base_url = None
-
-            if not url.startswith(('http://', 'https://')):
-                 if COMBINED_DOMAIN_REGEX.search(url): # Use combined regex here
-                    logger.debug(f"Prepending https:// to potential URL: {url}")
-                    url = f"https://{url}"
-                 else:
-                    logger.debug(f"Skipping potential URL without scheme or known AE domain: {original_url}")
-                    continue
-
-            if STANDARD_ALIEXPRESS_DOMAIN_REGEX.match(url):
-                product_id = extract_product_id(url)
-                if product_id:
-                    base_url = clean_aliexpress_url(url, product_id)
-                    logger.debug(f"Standard URL: {url} -> ID: {product_id}, Base: {base_url}")
-
-            elif SHORT_LINK_DOMAIN_REGEX.match(url):
-                logger.debug(f"Potential short link: {url}")
-                final_url = await resolve_short_link(url, session)
-                if final_url:
-                    product_id = extract_product_id(final_url)
-                    if product_id:
-                        base_url = clean_aliexpress_url(final_url, product_id)
-                        logger.debug(f"Resolved short link: {url} -> {final_url} -> ID: {product_id}, Base: {base_url}")
-                else:
-                     logger.warning(f"Could not resolve or extract ID from short link: {original_url}")
-
-            if product_id and base_url and product_id not in processed_product_ids:
-                processed_product_ids.add(product_id)
-                tasks.append(process_product_telegram(product_id, base_url, update, context))
-            elif product_id and product_id in processed_product_ids:
-                 logger.debug(f"Skipping duplicate product ID: {product_id}")
-
-    if not tasks:
-        logger.info(f"No processable AliExpress product links found after filtering/resolution.")
-        await context.bot.send_message(
-            chat_id=chat_id,
-            text="❌ We couldn't find any valid AliExpress product links in your message."
-        )
-    else:
-        if len(tasks) > 1:
-            await context.bot.send_message(
-                chat_id=chat_id,
-                text=f"⏳ Processing {len(tasks)} AliExpress products. Please wait..."
-            )
-        logger.info(f"Processing {len(tasks)} unique AliExpress products for chat {chat_id}")
-        await asyncio.gather(*tasks)
-
-    if loading_sticker_msg:
-        try:
-            await context.bot.delete_message(chat_id, loading_sticker_msg.message_id)
-        except Exception as delete_err:
-            logger.warning(f"Could not delete loading sticker: {delete_err}")
-
-
-def main() -> None:
-    application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
-
-    application.add_handler(CommandHandler("start", start))
-
-    application.add_handler(MessageHandler(
-        filters.TEXT & ~filters.COMMAND & filters.Regex(COMBINED_DOMAIN_REGEX),
-        handle_message
-    ))
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_html(
-        "👋 Welcome to the AliExpress Discount Bot! 🛍️\n\n"
-        "👋 مرحبًا بك في بوت خصومات علي إكسبريس! 🛍️\n\n"
-        "🔍 <b>How to use:</b>\n"
-        "🔍 <b>كيفية الاستخدام:</b>\n"
-        "1️⃣ Copy an AliExpress product link 📋\n"
-        "1️⃣ انسخ رابط منتج من علي إكسبريس 📋\n"
-        "2️⃣ Send the link here 📤\n"
-        "2️⃣ أرسل الرابط هنا 📤\n"
-        "3️⃣ Get links back ✨\n\n"
-        "3️⃣ ستحصل على روابط باقل الاسعار ✨\n\n"
-        "🔗 Supports regular & short links.\n"
-        "🔗 يدعم الروابط الطويلة والقصيرة.\n"
-        "🚀 Send a link to start! 🎁"
-          "🚀 أرسل رابطًا للبدء! 🎁"
-    )
-async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
-    product_details = await fetch_product_details_v2(product_id)
-    details_source = "None"
-
-    if product_details:
-        details_source = "API"
-        logger.info(f"Successfully fetched details via API for product ID: {product_id}")
-        return product_details, details_source
-    else:
-        logger.warning(f"API failed for product ID: {product_id}. Attempting scraping fallback.")
-        try:
-            loop = asyncio.get_event_loop()
-            scraped_name, scraped_image = await loop.run_in_executor(
-                executor, get_product_details_by_id, product_id
-            )
-            if scraped_name:
-                details_source = "Scraped"
-                logger.info(f"Successfully scraped details for product ID: {product_id}")
-                return {'title': scraped_name, 'image_url': scraped_image, 'price': None, 'currency': None}, details_source
-            else:
-                logger.warning(f"Scraping also failed for product ID: {product_id}")
-                return {'title': f"Product {product_id}", 'image_url': None, 'price': None, 'currency': None}, details_source
-        except Exception as scrape_err:
-            logger.error(f"Error during scraping fallback for product ID {product_id}: {scrape_err}")
-            return {'title': f"Product {product_id}", 'image_url': None, 'price': None, 'currency': None}, details_source
-
-async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
-    target_urls_map = {}
-    urls_to_fetch = []
+    offers_available = False
     for offer_key in OFFER_ORDER:
-        offer_info = OFFER_PARAMS[offer_key]
-        target_url = build_url_with_offer_params(base_url, offer_info["params"])
-        if target_url:
-            target_urls_map[offer_key] = target_url
-            urls_to_fetch.append(target_url)
+        if offer_key == "coin":  # Skip the coin link as it's already added
+            continue
+        link = generated_links.get(offer_key)
+        offer_name = OFFER_PARAMS[offer_key]["name"]
+        if link:
+            message_lines.append(f'▫️ <b>{offer_name}:</b> {link}\n')
+            offers_available = True
         else:
-            logger.warning(f"Could not build target URL for offer {offer_key} with base {base_url}")
+            message_lines.append(f"▫️ {offer_name}: ❌ Not Available\n")
 
-    if not urls_to_fetch:
-        return {}
+    # Si aucune offre n'est disponible, afficher un message de défaut
+    if not offers_available and not coin_link:
+        return f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."
 
-    all_links_dict = await generate_affiliate_links_batch(urls_to_fetch)
-
-    generated_links = {}
-    for offer_key, target_url in target_urls_map.items():
-        promo_link = all_links_dict.get(target_url)
-        generated_links[offer_key] = promo_link
-        if not promo_link:
-            logger.warning(f"Failed to get affiliate link for offer {offer_key} (target: {target_url})")
-
-    return generated_links
-
-
-
-def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
-    message_lines = []
-
-    # Titre du produit décoré avec émojis
-    product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
-    decorated_title = f"✨⭐️ {product_title} ⭐️✨"
-
-    product_price = product_data.get('price')
-    product_currency = product_data.get('currency', '')
-
-    print(f"Product Title: {product_title}")
-    print(f"Product Price: {product_price} {product_currency}")
-    print(f"Generated Links: {generated_links}")
-
-    # Ajout du titre
-    message_lines.append(f"<b>{decorated_title}</b>")
-
-    # Prix du produit
-    if details_source == "API" and product_price:
-        price_str = f"{product_price} {product_currency}".strip()
-        message_lines.append(f"\n💰 <b>Price $السعر بدون تخفيض:</b> {price_str}\n")
-    elif details_source == "Scraped":
-        message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
-    else:
-        message_lines.append("\n❌ <b>Product details unavailable</b>\n")
-
-    # Lien "coin" s'il existe
-    coin_link = generated_links.get("coin")
-    if coin_link:
-        message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
-        message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
-
-    # Ajouter la fin du message
+    # Ajouter la fin du message avec l'invitation à suivre sur Telegram
     message_lines.append("──────────────\n")
     message_lines.append("🔔 <b>  Follow Us:</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
