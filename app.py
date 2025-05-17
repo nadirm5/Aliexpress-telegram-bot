@@ -1,18 +1,3 @@
-Conversation ouverte. 1 message lu.
-
-Aller au contenu
-Utiliser Gmail avec un lecteur d'écran
-or lili 
-Activez les notifications sur le bureau pour Gmail.
-   OK  Non, merci
-Corrigé avec coins lien gras
-Boîte de réception
-
-Or LiLi
-mar. 13 mai 10:09 (il y a 4 jours)
-À moi
-
-
 import logging
 import os
 import re
