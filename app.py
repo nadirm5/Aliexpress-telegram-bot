@@ -65,7 +65,7 @@ COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a
 
 OFFER_PARAMS = {
     "coin": {
-        "name": "\ud83e\ude99 <b>\ud83c\udfaf Coins</b> – <b>\u0627\u0644\u0631\u0627\u0628\u0637 \u0628\u0627\u0644\u062a\u062e\u0641\u064a\u0636 \u2b07\ufe0f \u0623\u0642\u0644 \u0633\u0639\u0631 \u0628\u0627\u0644\u0639\u0645\u0644\u0627\u062a \ud83d\udcb8</b> \ud83d\udc49",
+        "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
             "sourceType": "620",
             "channel": "coin",
@@ -73,12 +73,8 @@ OFFER_PARAMS = {
         }
     },
     "bundle": {
-        "name": "\ud83d\udce6 <b>\ud83d\udeCD\ufe0f Bundle Deals</b> – <b>\u0635\u0641\u0642\u0627\u062a \u0627\u0644\u0628\u0627\u0642\u0627\u062a \u2b07\ufe0f</b> \ud83d\udc49",
-        "params": {
-            "sourceType": "650",
-            "channel": "bundle",
-            "afSmartRedirect": "y"
-        }
+        "name": "📦 <b>🛍️ Bundle Deals</b> – <b>صفقات الباقات ⬇️</b> 👉",
+        "dynamic_url": lambda product_id, aff_short_key: f"https://www.aliexpress.com/ssr/300000512/BundleDeals2?productIds={product_id}&channel=bundle&sourceType=650&aff_platform=portals-tool&aff_short_key={aff_short_key}"
     }
 }
 
