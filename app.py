@@ -532,15 +532,11 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
-    # Titre du produit décoré avec émojis
     product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
     decorated_title = f"✨⭐️ {product_title} ⭐️✨"
     product_price = product_data.get('price')
     product_currency = product_data.get('currency', '')
-
-    print(f"Product Title: {product_title}")
-    print(f"Product Price: {product_price} {product_currency}")
-    print(f"Generated Links: {generated_links}")
+    product_id = product_data.get('product_id')
 
     # Ajout du titre
     message_lines.append(f"<b>{decorated_title}</b>")
@@ -548,39 +544,33 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     # Prix du produit
     if details_source == "API" and product_price:
         price_str = f"{product_price} {product_currency}".strip()
-        message_lines.append(f"\n💰 <b>Price $السعر بدون تخفيض:</b> {price_str}\n")
+        message_lines.append(f"\n💰 <b>السعر بدون تخفيض:</b> {price_str}\n")
     elif details_source == "Scraped":
         message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
     else:
         message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    offers_available = False
-
-    # Coin
+    # 🔹 Coin link
     coin_link = generated_links.get("coin")
     if coin_link:
         message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
-        offers_available = True
+    
+    # 🔹 Bundle link (redirige vers page Bundle avec produit en premier)
+    if product_id:
+        bundle_link = f"https://www.aliexpress.com/ssr/300000512/BundleDeals2?productIds={product_id}&aff_fcid=xxx&aff_fsk=xxx&aff_platform=portals-tool&sk=xxx&aff_trace_key=xxx&terminal_id=xxx"
+        message_lines.append(f"📦 <b>Bundle Deals – عروض مجمعة ⬇️</b> 👉: <b>{bundle_link}</b>")
+        message_lines.append("🛍️ عروض مجمعة قد تحتوي على تخفيضات إضافية عند شراء منتجات معًا.\n")
+    else:
+        message_lines.append("📦 Bundle Deals: ❌ غير متوفر")
 
-    # Bundle
-    bundle_link = generated_links.get("bundle")
-    if bundle_link:
-        message_lines.append("🎁 <b>Bundle Deal:</b>")
-        message_lines.append("──────────────")
-        message_lines.append(f"▫️ <b>{OFFER_PARAMS['bundle']['name']}:</b> {bundle_link}")
-        offers_available = True
-
-    # Aucun lien trouvé
-    if not offers_available:
-        return f"<b>{product_title[:250]}</b>\n\n❌ We couldn't find any offer for this product."
-
-    # Fin du message
+    # Fin
     message_lines.append("──────────────")
-    message_lines.append("🔔 <b>Follow Us:</b>")
+    message_lines.append("🔔 <b>تابعنا:</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
+
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
      keyboard = [
