@@ -74,6 +74,10 @@ OFFER_PARAMS = {
     },
     "bundle": {
         "name": "📦 <b>🛍️ Bundle Deals</b> – <b>صفقات الباقات ⬇️</b> 👉",
+        "params": {
+            "sourceType": "650",
+            "channel": "bundle"
+        },
         "dynamic_url": lambda product_id, aff_short_key: f"https://www.aliexpress.com/ssr/300000512/BundleDeals2?productIds={product_id}&channel=bundle&sourceType=650&aff_platform=portals-tool&aff_short_key={aff_short_key}"
     }
 }
