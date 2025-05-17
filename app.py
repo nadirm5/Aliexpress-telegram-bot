@@ -566,14 +566,14 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         message_lines.append("✨ وفر أكثر عند شراء المنتجات معاً\n")
 
     # Fin
-    message_lines.append("🔔 <b>تابعنا لأفضل العروض كل يوم!</b>")
+    message_lines.append("🔔 <b>Follow Us</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
         [
-            InlineKeyboardButton("🎫 Exclusive Coupons", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
+            InlineKeyboardButton("🎫 Coupons", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
             InlineKeyboardButton("🔥 Deal of the Day", url="https://s.click.aliexpress.com/e/_omRiewZ")
         ],
         [
