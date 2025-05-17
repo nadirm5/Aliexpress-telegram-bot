@@ -63,8 +63,9 @@ SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|
 COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
 
 OFFER_PARAMS = {
+OFFER_PARAMS = {
     "coin": {
-        "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
+        "name": "\ud83e\ude99 <b>\ud83c\udfaf Coins</b> – <b>\u0627\u0644\u0631\u0627\u0628\u0637 \u0628\u0627\u0644\u062a\u062e\u0641\u064a\u0636 \u2b07\ufe0f \u0623\u0642\u0644 \u0633\u0639\u0631 \u0628\u0627\u0644\u0639\u0645\u0644\u0627\u062a \ud83d\udcb8</b> \ud83d\udc49",
         "params": {
             "sourceType": "620",
             "channel": "coin",
@@ -72,7 +73,7 @@ OFFER_PARAMS = {
         }
     },
     "bundle": {
-        "name": "📦 <b>🛍️ Bundle Deals</b> – <b>صفقات الباقات ⬇️</b> 👉",
+        "name": "\ud83d\udce6 <b>\ud83d\udeCD\ufe0f Bundle Deals</b> – <b>\u0635\u0641\u0642\u0627\u062a \u0627\u0644\u0628\u0627\u0642\u0627\u062a \u2b07\ufe0f</b> \ud83d\udc49",
         "params": {
             "sourceType": "650",
             "channel": "bundle",
@@ -80,7 +81,9 @@ OFFER_PARAMS = {
         }
     }
 }
+
 OFFER_ORDER = ["coin", "bundle"]
+
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
