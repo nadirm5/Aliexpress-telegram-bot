@@ -71,17 +71,10 @@ OFFER_PARAMS = {
             "channel": "coin",
             "afSmartRedirect": "y"
         }
-    },
-    "bundle": {
-        "name": "...",
-        "params": {
-            "sourceType": "650",
-            "channel": "bundle",
-            "afSmartRedirect": "y"
-        }
     }
 }
-OFFER_ORDER = ["coin", "bundle"]
+
+OFFER_ORDER = ["coin"]
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
