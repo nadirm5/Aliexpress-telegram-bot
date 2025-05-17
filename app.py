@@ -65,7 +65,7 @@ COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a
 
 OFFER_PARAMS = {
     "coin": {
-        "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
+        "name": "...",
         "params": {
             "sourceType": "620",
             "channel": "coin",
@@ -73,17 +73,14 @@ OFFER_PARAMS = {
         }
     },
     "bundle": {
-        "name": "📦 <b>🛍️ Bundle Deals</b> – <b>صفقات الباقات ⬇️</b> 👉",
+        "name": "...",
         "params": {
             "sourceType": "650",
-            "channel": "bundle"
-        },
-        "dynamic_url": lambda product_id, aff_short_key: f"https://www.aliexpress.com/ssr/300000512/BundleDeals2?productIds={product_id}&channel=bundle&sourceType=650&aff_platform=portals-tool&aff_short_key={aff_short_key}"
+            "channel": "bundle",
+            "afSmartRedirect": "y"
+        }
     }
 }
-
-OFFER_ORDER = ["coin", "bundle"]
-
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
