@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import re
 
 def get_aliexpress_product_info(product_url):
     """
@@ -26,7 +27,7 @@ def get_aliexpress_product_info(product_url):
         root_div = soup.find("div", id="root")
         if root_div:
             h1 = root_div.select_one("div > div:nth-of-type(1) > div > div:nth-of-type(1) > "
-                                    "div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > h1")
+                                     "div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > h1")
             if h1:
                 product_name = h1.get_text(strip=True)
 
@@ -64,7 +65,6 @@ def get_aliexpress_product_info(product_url):
                 img_url = meta_img["content"]
 
         if product_name:
-            import re
             product_name = re.sub(r'\s*-\s*AliExpress(\s+\d+)?$', '', product_name).strip()
             product_name = re.sub(r'-AliExpress(\s+\d+)?$', '', product_name).strip()
 
@@ -87,7 +87,7 @@ def check_bundle_deals(product_id):
     """
     bundle_url = (
         f"https://www.aliexpress.com/ssr/300000512/BundleDeals2"
-        f"?productIds={product_id}&disableNav=YES&pha_manifest=ssr&_immersiveMode=true"
+        f"?productIds={product_id}&disableNav=YES&_immersiveMode=true"
     )
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -95,30 +95,33 @@ def check_bundle_deals(product_id):
     }
     try:
         response = requests.get(bundle_url, headers=headers, timeout=10)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html.parser")
-
-        bundle_section = soup.find("div", class_="bundle-deals-list")
-        if bundle_section and len(bundle_section.find_all("div", class_="bundle-item")) > 0:
-            return True
-        else:
+        if response.status_code != 200:
+            print("Bundle page not reachable.")
             return False
+
+        # Vérification texte simple
+        if "bundle deals" in response.text.lower() or "Bundle price" in response.text:
+            return True
+
+        # Vérifie certaines balises avec texte
+        soup = BeautifulSoup(response.text, "html.parser")
+        if soup.find_all("div", string=lambda s: s and "Bundle price" in s):
+            return True
+
+        return False
     except Exception as e:
-        print(f"Error checking Bundle Deals: {e}")
+        print(f"Erreur check_bundle_deals: {e}")
         return False
 
-def generate_bundle_deal_link(product_id, aff_id="75485d61d54048c3acf04a553cf50699-1747403194481-07402-_omZaJR5"):
+def generate_bundle_deal_link(product_id, tracking_id="default"):
     """
-    Generate a Bundle Deals URL with affiliate ID for a product
+    Génère un lien bundle deal avec tracking_id
     """
-    base = "https://www.aliexpress.com/ssr/300000512/BundleDeals2"
-    params = (
-        f"?productIds={product_id}"
-        "&disableNav=YES&pha_manifest=ssr&_immersiveMode=true"
-        f"&aff_fcid={aff_id}"
-        "&afSmartRedirect=y"
+    return (
+        f"https://www.aliexpress.com/ssr/300000512/BundleDeals2"
+        f"?productIds={product_id}&disableNav=YES&_immersiveMode=true"
+        f"&aff_short_key={tracking_id}&afSmartRedirect=y"
     )
-    return base + params
 
 # Exemple d’utilisation
 if __name__ == "__main__":
@@ -127,10 +130,7 @@ if __name__ == "__main__":
     has_bundle = check_bundle_deals(product_id)
     bundle_link = generate_bundle_deal_link(product_id) if has_bundle else None
 
-    print("Nom du produit:", name)
-    print("Image URL:", img)
+    print("Nom du produit:", name or "Non trouvé")
+    print("Image URL:", img or "Non trouvée")
     print("Bundle Deals disponibles:", has_bundle)
-    if bundle_link:
-        print("Lien Bundle Deal:", bundle_link)
-    else:
-        print("Pas de Bundle Deal disponible.")
+    print("Lien Bundle Deal:", bundle_link or "Aucun bundle disponible")
