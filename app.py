@@ -52,8 +52,6 @@ except Exception as e:
     logger.exception(f"Error initializing AliExpress API client: {e}")
     exit()
 
-
-
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
 URL_REGEX = re.compile(r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*', re.IGNORECASE)
@@ -199,589 +197,101 @@ def clean_aliexpress_url(url: str, product_id: str) -> str | None:
     try:
         parsed_url = urlparse(url)
         path_segment = f'/item/{product_id}.html'
-        base_url = urlunparse((
-            parsed_url.scheme or 'https',
+
+        if not parsed_url.path or product_id not in parsed_url.path:
+            logger.warning(f"URL path does not contain product ID: {url}")
+            return None
+
+        new_url = urlunparse((
+            parsed_url.scheme,
             parsed_url.netloc,
             path_segment,
             '', '', ''
         ))
-        return base_url
-    except ValueError:
-        logger.warning(f"Could not parse or reconstruct URL: {url}")
+
+        logger.debug(f"Cleaned AliExpress URL: {new_url}")
+        return new_url
+    except Exception as e:
+        logger.error(f"Error cleaning AliExpress URL {url}: {e}")
         return None
 
-def build_url_with_offer_params(base_url: str, params_to_add: dict) -> str | None:
-    if not params_to_add:
-        return base_url
-
+def build_url_with_offer_params(base_url: str, offer_params: dict) -> str | None:
     try:
         parsed_url = urlparse(base_url)
-        netloc = parsed_url.netloc
-        if '.' in netloc and netloc.count('.') > 1:
-            parts = netloc.split('.')
-            if len(parts) >= 2 and 'aliexpress' in parts[-2]:
-                netloc = f"aliexpress.{parts[-1]}"
+        query = dict(re.findall(r'([^&=?]+)=([^&]+)', parsed_url.query))
+        query.update(offer_params)
+        query['aff_fcid'] = ALIEXPRESS_TRACKING_ID
+        query['aff_platform'] = 'portals-tool'
+        query['sk'] = ''
+        query['aff_trace_key'] = ''
+        query['terminal_id'] = ''
+        query['dp'] = 'false'
 
-        if 'sourceType' in params_to_add and '%26' in params_to_add['sourceType']:
-            new_query_string = '&'.join([f"{k}={v}" for k, v in params_to_add.items() if k != 'channel' and '%26channel=' in params_to_add['sourceType']])
-        else:
-            new_query_string = urlencode(params_to_add)
-
-        reconstructed_url = urlunparse((
+        query_string = urlencode(query)
+        full_url = urlunparse((
             parsed_url.scheme,
-            netloc,
+            parsed_url.netloc,
             parsed_url.path,
-            '',
-            new_query_string,
-            ''
+            parsed_url.params,
+            query_string,
+            parsed_url.fragment
         ))
-        return f"https://star.aliexpress.com/share/share.htm?platform=AE&businessType=ProductDetail&redirectUrl={reconstructed_url}"
-    except ValueError:
-        logger.error(f"Error building URL with params for base: {base_url}")
-        return base_url # Return original on error? Or None? Returning base for now.
-
-async def periodic_cache_cleanup(context: ContextTypes.DEFAULT_TYPE):
-    try:
-        product_expired = await product_cache.clear_expired()
-        link_expired = await link_cache.clear_expired()
-        resolved_expired = await resolved_url_cache.clear_expired()
-        logger.info(f"Cache cleanup: Removed {product_expired} product, {link_expired} link, {resolved_expired} resolved URL items.")
-        logger.info(f"Cache stats: {len(product_cache.cache)} products, {len(link_cache.cache)} links, {len(resolved_url_cache.cache)} resolved URLs in cache.")
+        return full_url
     except Exception as e:
-        logger.error(f"Error in periodic cache cleanup job: {e}")
-
-async def fetch_product_details_v2(product_id: str) -> dict | None:
-    cached_data = await product_cache.get(product_id)
-    if cached_data:
-        logger.info(f"Cache hit for product ID: {product_id}")
-        return cached_data
-
-    logger.info(f"Fetching product details for ID: {product_id}")
-
-    def _execute_api_call():
-        try:
-            request = iop.IopRequest('aliexpress.affiliate.productdetail.get')
-            request.add_api_param('fields', QUERY_FIELDS)
-            request.add_api_param('product_ids', product_id)
-            request.add_api_param('target_currency', TARGET_CURRENCY)
-            request.add_api_param('target_language', TARGET_LANGUAGE)
-            request.add_api_param('tracking_id', ALIEXPRESS_TRACKING_ID)
-            request.add_api_param('country', QUERY_COUNTRY)
-            return aliexpress_client.execute(request)
-        except Exception as e:
-            logger.error(f"Error in API call thread for product {product_id}: {e}")
-            return None
-
-    loop = asyncio.get_event_loop()
-    response = await loop.run_in_executor(executor, _execute_api_call)
-
-    if not response or not response.body:
-        logger.error(f"Product detail API call failed or returned empty body for ID: {product_id}")
+        logger.error(f"Error building offer URL from base {base_url} with params {offer_params}: {e}")
         return None
 
-    try:
-        response_data = response.body
-        if isinstance(response_data, str):
-            try:
-                response_data = json.loads(response_data)
-            except json.JSONDecodeError as json_err:
-                logger.error(f"Failed to decode JSON response for product {product_id}: {json_err}. Response: {response_data[:500]}")
-                return None
+def generate_offer_links(original_url: str) -> list[str]:
+    product_id = extract_product_id(original_url)
+    if not product_id:
+        return []
 
-        if 'error_response' in response_data:
-            error_details = response_data.get('error_response', {})
-            logger.error(f"API Error for Product ID {product_id}: Code={error_details.get('code', 'N/A')}, Msg={error_details.get('msg', 'Unknown API error')}")
-            return None
+    clean_url = clean_aliexpress_url(original_url, product_id)
+    if not clean_url:
+        return []
 
-        detail_response = response_data.get('aliexpress_affiliate_productdetail_get_response')
-        if not detail_response:
-            logger.error(f"Missing 'aliexpress_affiliate_productdetail_get_response' key for ID {product_id}. Response: {response_data}")
-            return None
-
-        resp_result = detail_response.get('resp_result')
-        if not resp_result:
-             logger.error(f"Missing 'resp_result' key for ID {product_id}. Response: {detail_response}")
-             return None
-
-        resp_code = resp_result.get('resp_code')
-        if resp_code != 200:
-             logger.error(f"API response code not 200 for ID {product_id}. Code: {resp_code}, Msg: {resp_result.get('resp_msg', 'Unknown')}")
-             return None
-
-        result = resp_result.get('result', {})
-        products = result.get('products', {}).get('product', [])
-
-        if not products:
-            logger.warning(f"No products found in API response for ID {product_id}")
-            return None
-
-        product_data = products[0]
-        product_info = {
-            'image_url': product_data.get('product_main_image_url'),
-            'price': product_data.get('target_sale_price'), 
-            'currency': product_data.get('target_sale_price_currency', TARGET_CURRENCY),
-            'title': product_data.get('product_title', f'Product {product_id}')
-        }
-
-        await product_cache.set(product_id, product_info)
-        expiry_date = datetime.now() + timedelta(days=CACHE_EXPIRY_DAYS)
-        logger.info(f"Cached product {product_id} until {expiry_date.strftime('%Y-%m-%d %H:%M:%S')}")
-        return product_info
-
-    except Exception as e:
-        logger.exception(f"Error parsing product details response for ID {product_id}: {e}")
-        return None
-
-async def generate_affiliate_links_batch(target_urls: list[str]) -> dict[str, str | None]:
-    results_dict = {}
-    uncached_urls = []
-
-    for url in target_urls:
-        cached_link = await link_cache.get(url)
-        if cached_link:
-            logger.info(f"Cache hit for affiliate link: {url}")
-            results_dict[url] = cached_link
-        else:
-            logger.debug(f"Cache miss for affiliate link: {url}")
-            results_dict[url] = None
-            uncached_urls.append(url)
-
-    if not uncached_urls:
-        logger.info("All affiliate links retrieved from cache.")
-        return results_dict
-
-    logger.info(f"Generating affiliate links for {len(uncached_urls)} uncached URLs...")
-
-    prefixed_urls = []
-    for url in uncached_urls:
-        if "star.aliexpress.com/share/share.htm" not in url:
-            prefixed_urls.append(f"https://star.aliexpress.com/share/share.htm?platform=AE&businessType=ProductDetail&redirectUrl={url}")
-        else:
-            prefixed_urls.append(url)
-    source_values_str = ",".join(prefixed_urls)
-
-    def _execute_batch_link_api():
-        try:
-            request = iop.IopRequest('aliexpress.affiliate.link.generate')
-            request.add_api_param('promotion_link_type', '0')
-            request.add_api_param('source_values', source_values_str)
-            request.add_api_param('tracking_id', ALIEXPRESS_TRACKING_ID)
-            return aliexpress_client.execute(request)
-        except Exception as e:
-            logger.error(f"Error in batch link API call thread for URLs: {e}")
-            return None
-
-    loop = asyncio.get_event_loop()
-    response = await loop.run_in_executor(executor, _execute_batch_link_api)
-
-    if not response or not response.body:
-        logger.error(f"Batch link generation API call failed or returned empty body for {len(uncached_urls)} URLs.")
-        return results_dict
-
-    try:
-        response_data = response.body
-        if isinstance(response_data, str):
-            try:
-                response_data = json.loads(response_data)
-            except json.JSONDecodeError as json_err:
-                logger.error(f"Failed to decode JSON response for batch link generation: {json_err}. Response: {response_data[:500]}")
-                return results_dict
-
-        if 'error_response' in response_data:
-            error_details = response_data.get('error_response', {})
-            logger.error(f"API Error for Batch Link Generation: Code={error_details.get('code', 'N/A')}, Msg={error_details.get('msg', 'Unknown')}")
-            return results_dict
-
-        generate_response = response_data.get('aliexpress_affiliate_link_generate_response')
-        if not generate_response:
-            logger.error(f"Missing 'aliexpress_affiliate_link_generate_response' key. Response: {response_data}")
-            return results_dict
-
-        resp_result_outer = generate_response.get('resp_result')
-        if not resp_result_outer:
-            logger.error(f"Missing 'resp_result' key. Response: {generate_response}")
-            return results_dict
-
-        resp_code = resp_result_outer.get('resp_code')
-        if resp_code != 200:
-            logger.error(f"API response code not 200 for batch link generation. Code: {resp_code}, Msg: {resp_result_outer.get('resp_msg', 'Unknown')}")
-            return results_dict
-
-        result = resp_result_outer.get('result', {})
-        if not result:
-            logger.error(f"Missing 'result' key. Response: {resp_result_outer}")
-            return results_dict
-
-        links_data = result.get('promotion_links', {}).get('promotion_link', [])
-        if not links_data or not isinstance(links_data, list):
-            logger.warning(f"No 'promotion_links' found or not a list. Response: {result}")
-            return results_dict
-
-        expiry_date = datetime.now() + timedelta(days=CACHE_EXPIRY_DAYS)
-        logger.info(f"Processing {len(links_data)} links from batch API response.")
-        for link_info in links_data:
-            if isinstance(link_info, dict):
-                source_url = link_info.get('source_value')
-                promo_link = link_info.get('promotion_link')
-
-                if source_url and promo_link:
-                    # Find the original uncached URL that corresponds to this source_value
-                    # This assumes the API returns source_value exactly as sent
-                    original_target_url = None
-                    for target in uncached_urls:
-                        # Check if the source_url (which has the star prefix) contains the original target url
-                        if f"redirectUrl={target}" in source_url or target == source_url:
-                             original_target_url = target
-                             break
-                        # Fallback check if the source_url itself matches an original target (less likely)
-                        elif source_url == target:
-                             original_target_url = target
-                             break
-
-                    if original_target_url and original_target_url in results_dict:
-                        results_dict[original_target_url] = promo_link
-                        await link_cache.set(original_target_url, promo_link)
-                        logger.debug(f"Cached affiliate link for {original_target_url} until {expiry_date.strftime('%Y-%m-%d %H:%M:%S')}")
-                    else:
-                        logger.warning(f"Received link for unexpected or unmatchable source_value: {source_url}")
-                else:
-                    logger.warning(f"Missing 'source_value' or 'promotion_link' in batch response item: {link_info}")
-            else:
-                logger.warning(f"Promotion link data item is not a dictionary: {link_info}")
-
-        for url in uncached_urls:
-            if results_dict.get(url) is None:
-                logger.warning(f"No affiliate link returned or processed for requested URL: {url}")
-
-        return results_dict
-
-    except Exception as e:
-        logger.exception(f"Error parsing batch link generation response: {e}")
-        return results_dict
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_html(
-        "👋 Welcome to the AliExpress Discount Bot! 🛍️\n\n"
-        "👋 مرحبًا بك في بوت خصومات علي إكسبريس! 🛍️\n\n"
-        "🔍 <b>How to use:</b>\n"
-        "🔍 <b>كيفية الاستخدام:</b>\n"
-        "1️⃣ Copy an AliExpress product link 📋\n"
-        "1️⃣ انسخ رابط منتج من علي إكسبريس 📋\n"
-        "2️⃣ Send the link here 📤\n"
-        "2️⃣ أرسل الرابط هنا 📤\n"
-        "3️⃣ Get links back ✨\n\n"
-        "3️⃣ ستحصل على روابط باقل الاسعار ✨\n\n"
-        "🔗 Supports regular & short links.\n"
-        "🔗 يدعم الروابط الطويلة والقصيرة.\n"
-        "🚀 Send a link to start! 🎁"
-          "🚀 أرسل رابطًا للبدء! 🎁"
-    )
-async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
-    product_details = await fetch_product_details_v2(product_id)
-    details_source = "None"
-
-    if product_details:
-        details_source = "API"
-        logger.info(f"Successfully fetched details via API for product ID: {product_id}")
-        return product_details, details_source
-    else:
-        logger.warning(f"API failed for product ID: {product_id}. Attempting scraping fallback.")
-        try:
-            loop = asyncio.get_event_loop()
-            scraped_name, scraped_image = await loop.run_in_executor(
-                executor, get_product_details_by_id, product_id
-            )
-            if scraped_name:
-                details_source = "Scraped"
-                logger.info(f"Successfully scraped details for product ID: {product_id}")
-                return {'title': scraped_name, 'image_url': scraped_image, 'price': None, 'currency': None}, details_source
-            else:
-                logger.warning(f"Scraping also failed for product ID: {product_id}")
-                return {'title': f"Product {product_id}", 'image_url': None, 'price': None, 'currency': None}, details_source
-        except Exception as scrape_err:
-            logger.error(f"Error during scraping fallback for product ID {product_id}: {scrape_err}")
-            return {'title': f"Product {product_id}", 'image_url': None, 'price': None, 'currency': None}, details_source
-
-async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
-    target_urls_map = {}
-    urls_to_fetch = []
+    result_links = []
     for offer_key in OFFER_ORDER:
-        offer_info = OFFER_PARAMS[offer_key]
-        target_url = build_url_with_offer_params(base_url, offer_info["params"])
-        if target_url:
-            target_urls_map[offer_key] = target_url
-            urls_to_fetch.append(target_url)
-        else:
-            logger.warning(f"Could not build target URL for offer {offer_key} with base {base_url}")
+        offer = OFFER_PARAMS[offer_key]
+        offer_url = build_url_with_offer_params(clean_url, offer["params"])
+        if offer_url:
+            result_links.append(f"{offer['name']}\n{offer_url}")
 
-    if not urls_to_fetch:
-        return {}
+    return result_links
 
-    all_links_dict = await generate_affiliate_links_batch(urls_to_fetch)
-
-    generated_links = {}
-    for offer_key, target_url in target_urls_map.items():
-        promo_link = all_links_dict.get(target_url)
-        generated_links[offer_key] = promo_link
-        if not promo_link:
-            logger.warning(f"Failed to get affiliate link for offer {offer_key} (target: {target_url})")
-
-    return generated_links
-
-
-
-def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
-    message_lines = []
-    product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
-    decorated_title = f"✨⭐️ {product_title} ⭐️✨"
-    product_price = product_data.get('price')
-    product_currency = product_data.get('currency', '')
-    product_id = product_data.get('product_id')
-
-    # Ajout du titre
-    message_lines.append(f"<b>{decorated_title}</b>")
-
-    # Prix du produit
-    if details_source == "API" and product_price:
-        price_str = f"{product_price} {product_currency}".strip()
-        message_lines.append(f"\n💰 <b>السعر بدون تخفيض:</b> {price_str}\n")
-    elif details_source == "Scraped":
-        message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
-    else:
-        message_lines.append("\n❌ <b>Product details unavailable</b>\n")
-
-    # 🔹 Coin link
-    coin_link = generated_links.get("coin")
-    if coin_link:
-        message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
-        message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
-    
-    # 🔹 Bundle link (redirige vers page Bundle avec produit en premier)
-    if product_id:
-        bundle_link = f"https://www.aliexpress.com/ssr/300000512/BundleDeals2?productIds={product_id}&aff_fcid=xxx&aff_fsk=xxx&aff_platform=portals-tool&sk=xxx&aff_trace_key=xxx&terminal_id=xxx"
-        message_lines.append(f"📦 <b>Bundle Deals – عروض مجمعة ⬇️</b> 👉: <b>{bundle_link}</b>")
-        message_lines.append("🛍️ عروض مجمعة قد تحتوي على تخفيضات إضافية عند شراء منتجات معًا.\n")
-    else:
-        message_lines.append("📦 Bundle Deals: ❌ غير متوفر")
-
-    # Fin
-    message_lines.append("──────────────")
-    message_lines.append("🔔 <b>تابعنا:</b>")
-    message_lines.append("📱 Telegram: @RayanCoupon")
-
-    return "\n".join(message_lines)
-
-
-def _build_reply_markup() -> InlineKeyboardMarkup:
-     keyboard = [
-        [
-            InlineKeyboardButton("🎯 Choice Day", url="https://s.click.aliexpress.com/e/_omRiewZ"),
-            InlineKeyboardButton("🔥 Best Deals", url="https://s.click.aliexpress.com/e/_olUPW8V")
-        ],
-        [
-            InlineKeyboardButton("📱 Channel", url="https://t.me/RayanCoupon")
-        ],
-        [
-            InlineKeyboardButton("☕ Support Me", url="https://moneyexpress.fun")
-        ]
-    ]
-     return InlineKeyboardMarkup(keyboard)
-
-async def _send_telegram_response(context: ContextTypes.DEFAULT_TYPE, chat_id: int, product_data: dict, message_text: str, reply_markup: InlineKeyboardMarkup):
-    product_image = product_data.get('image_url')
-    product_id = product_data.get('id', 'N/A') 
-
-    try:
-        if product_image and "couldn't find an offer" not in message_text: 
-            await context.bot.send_photo(
-                chat_id=chat_id,
-                photo=product_image,
-                caption=message_text,
-                parse_mode=ParseMode.HTML,
-                reply_markup=reply_markup
-            )
-        else:
-            await context.bot.send_message(
-                chat_id=chat_id,
-                text=message_text,
-                parse_mode=ParseMode.HTML,
-                disable_web_page_preview=True,
-                reply_markup=reply_markup
-            )
-    except Exception as send_error:
-        logger.error(f"Failed to send message for product {product_id} to chat {chat_id}: {send_error}")
-        # Fallback message if sending fails
-        try:
-            await context.bot.send_message(
-                chat_id=chat_id,
-                text=f"⚠️ Error displaying product {product_id}. Please try again or check the logs.",
-                reply_markup=reply_markup # Still provide buttons if possible
-            )
-        except Exception as fallback_error:
-             logger.error(f"Failed to send fallback error message for product {product_id} to chat {chat_id}: {fallback_error}")
-
-
-async def process_product_telegram(product_id: str, base_url: str, update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.effective_chat.id
-    logger.info(f"Processing Product ID: {product_id} for chat {chat_id}")
-
-    try:
-        product_data, details_source = await _get_product_data(product_id)
-        if not product_data:
-             # Should not happen with current _get_product_data logic, but handle defensively
-             logger.error(f"Failed to get any product data (API or Scraped) for {product_id}")
-             await context.bot.send_message(chat_id=chat_id, text=f"Could not retrieve data for product ID {product_id}.")
-             return
-
-        product_data['id'] = product_id # Add ID for logging in send function
-
-        generated_links = await _generate_offer_links(base_url)
-
-        response_text = _build_response_message(product_data, generated_links, details_source)
-        reply_markup = _build_reply_markup()
-
-        await _send_telegram_response(context, chat_id, product_data, response_text, reply_markup)
-
-    except Exception as e:
-        logger.exception(f"Unhandled error processing product {product_id} in chat {chat_id}: {e}")
-        try:
-            await context.bot.send_message(
-                chat_id=chat_id,
-                text=f"An unexpected error occurred while processing product ID {product_id}. Sorry!"
-            )
-        except Exception:
-            logger.error(f"Failed to send error message for product {product_id} to chat {chat_id}")
-
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not update.message or not update.message.text:
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text or ""
+    urls = extract_potential_aliexpress_urls(text)
+    if not urls:
         return
 
-    message_text = update.message.text
-    user = update.effective_user
-    chat_id = update.effective_chat.id
-    logger.info(f"Received message from {user.username or user.id} in chat {chat_id}")
+    # Pour simplifier, on prend le premier lien trouvé
+    original_url = urls[0]
 
-    potential_urls = extract_potential_aliexpress_urls(message_text)
-    if not potential_urls:
-        await context.bot.send_message(
-            chat_id=chat_id,
-            text="❌ No AliExpress links found. Please send a valid AliExpress product link."
-        )
+    # Si c'est un lien court, on résout l'URL complète
+    if SHORT_LINK_DOMAIN_REGEX.match(original_url):
+        async with aiohttp.ClientSession() as session:
+            resolved_url = await resolve_short_link(original_url, session)
+            if resolved_url:
+                original_url = resolved_url
+            else:
+                await update.message.reply_text("Impossible de résoudre le lien court AliExpress.")
+                return
+
+    offer_links = generate_offer_links(original_url)
+    if not offer_links:
+        await update.message.reply_text("Lien AliExpress non valide ou produit introuvable.")
         return
 
-    logger.info(f"Found {len(potential_urls)} potential URLs in message from {user.username or user.id}")
+    response_text = "\n\n".join(offer_links)
+    await update.message.reply_text(response_text, parse_mode=ParseMode.HTML)
 
-    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-    loading_sticker_msg = None
-    try:
-        loading_sticker_msg = await context.bot.send_sticker(chat_id, "CAACAgIAAxkBAAIU1GYOk5jWvCvtykd7TZkeiFFZRdUYAAIjAAMoD2oUJ1El54wgpAY0BA")
-    except Exception as sticker_err:
-        logger.warning(f"Could not send loading sticker: {sticker_err}")
+def main():
+    app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
+    logger.info("Bot démarré.")
+    app.run_polling()
 
-    processed_product_ids = set()
-    tasks = []
-    async with aiohttp.ClientSession() as session:
-        for url in potential_urls:
-            original_url = url
-            product_id = None
-            base_url = None
-
-            if not url.startswith(('http://', 'https://')):
-                 if COMBINED_DOMAIN_REGEX.search(url): # Use combined regex here
-                    logger.debug(f"Prepending https:// to potential URL: {url}")
-                    url = f"https://{url}"
-                 else:
-                    logger.debug(f"Skipping potential URL without scheme or known AE domain: {original_url}")
-                    continue
-
-            if STANDARD_ALIEXPRESS_DOMAIN_REGEX.match(url):
-                product_id = extract_product_id(url)
-                if product_id:
-                    base_url = clean_aliexpress_url(url, product_id)
-                    logger.debug(f"Standard URL: {url} -> ID: {product_id}, Base: {base_url}")
-
-            elif SHORT_LINK_DOMAIN_REGEX.match(url):
-                logger.debug(f"Potential short link: {url}")
-                final_url = await resolve_short_link(url, session)
-                if final_url:
-                    product_id = extract_product_id(final_url)
-                    if product_id:
-                        base_url = clean_aliexpress_url(final_url, product_id)
-                        logger.debug(f"Resolved short link: {url} -> {final_url} -> ID: {product_id}, Base: {base_url}")
-                else:
-                     logger.warning(f"Could not resolve or extract ID from short link: {original_url}")
-
-            if product_id and base_url and product_id not in processed_product_ids:
-                processed_product_ids.add(product_id)
-                tasks.append(process_product_telegram(product_id, base_url, update, context))
-            elif product_id and product_id in processed_product_ids:
-                 logger.debug(f"Skipping duplicate product ID: {product_id}")
-
-    if not tasks:
-        logger.info(f"No processable AliExpress product links found after filtering/resolution.")
-        await context.bot.send_message(
-            chat_id=chat_id,
-            text="❌ We couldn't find any valid AliExpress product links in your message."
-        )
-    else:
-        if len(tasks) > 1:
-            await context.bot.send_message(
-                chat_id=chat_id,
-                text=f"⏳ Processing {len(tasks)} AliExpress products. Please wait..."
-            )
-        logger.info(f"Processing {len(tasks)} unique AliExpress products for chat {chat_id}")
-        await asyncio.gather(*tasks)
-
-    if loading_sticker_msg:
-        try:
-            await context.bot.delete_message(chat_id, loading_sticker_msg.message_id)
-        except Exception as delete_err:
-            logger.warning(f"Could not delete loading sticker: {delete_err}")
-
-
-def main() -> None:
-    application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
-
-    application.add_handler(CommandHandler("start", start))
-
-    application.add_handler(MessageHandler(
-        filters.TEXT & ~filters.COMMAND & filters.Regex(COMBINED_DOMAIN_REGEX),
-        handle_message
-    ))
-
-    application.add_handler(MessageHandler(
-        filters.FORWARDED & filters.TEXT & filters.Regex(COMBINED_DOMAIN_REGEX),
-        handle_message
-    ))
-
-    application.add_handler(MessageHandler(
-        filters.TEXT & ~filters.COMMAND & ~filters.Regex(COMBINED_DOMAIN_REGEX),
-        lambda update, context: context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text="Please send an AliExpress product link to generate affiliate links."
-        )
-    ))
-
-    job_queue = application.job_queue
-    job_queue.run_once(periodic_cache_cleanup, 60)
-    job_queue.run_repeating(periodic_cache_cleanup, interval=timedelta(days=1), first=timedelta(days=1))
-
-    logger.info("Starting Telegram bot polling...")
-    logger.info(f"Using AliExpress Key: {ALIEXPRESS_APP_KEY[:4]}...")
-    logger.info(f"Using Tracking ID: {ALIEXPRESS_TRACKING_ID}")
-    logger.info(f"Settings: Currency={TARGET_CURRENCY}, Lang={TARGET_LANGUAGE}, Country={QUERY_COUNTRY}")
-    logger.info(f"Cache expiry: {CACHE_EXPIRY_DAYS} days")
-    offer_names = [v['name'] for k, v in OFFER_PARAMS.items()]
-    logger.info(f"Offers: {', '.join(offer_names)}")
-    logger.info("Bot is ready and listening...")
-
-    application.run_polling()
-
-    logger.info("Shutting down thread pool...")
-    executor.shutdown(wait=True)
-    logger.info("Bot stopped.")
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
