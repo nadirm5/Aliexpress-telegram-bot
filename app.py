@@ -62,33 +62,54 @@ STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://(?!a\.|s\.click\.)([\w-
 SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
 COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
 
-OFFER_PARAMS = {
-    "coin": {
-        "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
-        "params": {
-            "sourceType": "620%26channel=coin",
-            "afSmartRedirect": "y"
-        }
-    },
-
-    "link": {
-        "name": "🚀 <b>🔗 رابط المنتوج بالتخفيض</b>",
-        "params": {
-            "sourceType": "620%26channel=coin",
-            "afSmartRedirect": "y"
-    
-        }
-    },
-
-
-    
-    "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562", "channel": "sd", "afSmartRedirect": "y"}},
-    "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers", "afSmartRedirect": "y"}},
-    "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680", "channel": "bigSave", "afSmartRedirect": "y"}},
+OFFER_PARAMS = { 
+  "coin": { 
+    "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉", 
+    "params": { 
+      "sourceType": "620%26channel=coin", 
+      "afSmartRedirect": "y" 
+    } 
+  }, 
+  "link": { 
+    "name": "🚀 <b>🔗 رابط المنتوج بالتخفيض</b>", 
+    "params": { 
+      "sourceType": "620%26channel=coin", 
+      "afSmartRedirect": "y" 
+    } 
+  }, 
+  "super": { 
+    "name": "🔥 Super Deals", 
+    "params": { 
+      "sourceType": "562", 
+      "channel": "sd", 
+      "afSmartRedirect": "y" 
+    } 
+  }, 
+  "limited": { 
+    "name": "⏳ Limited Offers", 
+    "params": { 
+      "sourceType": "561", 
+      "channel": "limitedoffers", 
+      "afSmartRedirect": "y" 
+    } 
+  }, 
+  "bigsave": { 
+    "name": "💰 Big Save", 
+    "params": { 
+      "sourceType": "680", 
+      "channel": "bigSave", 
+      "afSmartRedirect": "y" 
+    } 
+  }, 
+  "bundle": { 
+    "name": "📦 <b>Bundle Deals – عروض التجميع</b> ⬇️ 👉", 
+    "params": { 
+      "sourceType": "681", 
+      "channel": "bundledeals", 
+      "afSmartRedirect": "y" 
+    } 
+  } 
 }
-
-OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
-
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
