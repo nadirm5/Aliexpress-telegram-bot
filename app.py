@@ -560,12 +560,14 @@ def _build_reply_markup() -> InlineKeyboardMarkup:
             InlineKeyboardButton("🔥 عرض اليوم | Deal of the Day", url="https://s.click.aliexpress.com/e/_omRiewZ")
         ],
         [
+            InlineKeyboardButton("🛍️ صفقات الباقات | Bundle Deals", url="https://s.click.aliexpress.com/e/_oE0GKJ9")
+        ],
+        [
             InlineKeyboardButton("📢 اشترك في القناة | Join VIP Channel", url="https://t.me/RayanCoupon"),
             InlineKeyboardButton("❤️ ادعمني | Support Me", url="https://moneyexpress.fun")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
-
 async def _send_telegram_response(context: ContextTypes.DEFAULT_TYPE, chat_id: int, product_data: dict, message_text: str, reply_markup: InlineKeyboardMarkup):
     product_image = product_data.get('image_url')
     product_id = product_data.get('id', 'N/A') 
