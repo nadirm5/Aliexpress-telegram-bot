@@ -554,6 +554,12 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         message_lines.append(f"▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ 👉: <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
+    # Lien bundle (en gras)
+    bundle_link = generated_links.get("bundle")
+    if bundle_link:
+        message_lines.append(f"▫️ 🛍️ 📦 Bundle Deals – صفقات الباقات ⬇️ 👉: <b>{bundle_link}</b>")
+        message_lines.append("✨ وفر أكثر عند شراء المنتجات معاً\n")
+
     # Fin
     message_lines.append("🔔 <b>تابعنا لأفضل العروض كل يوم!</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
