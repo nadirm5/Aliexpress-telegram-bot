@@ -64,15 +64,21 @@ COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a
 
 OFFER_PARAMS = {
     "coin": {
-        "name": "🪙 <b>🎯 Coins-العملات</b> – <b>🔥⚡️%الرابط بالتخفيض ⬇️ ⚡️🔥أقل سعر هنا خصم حتى 70 💸</b>",
+        "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
             "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
         }
+    },
+    "bundle": {
+        "name": "📦 <b>🛍️ Bundle Deals</b> – <b>صفقات الباقات ⬇️</b> 👉",
+        "params": {
+            "sourceType": "650%26channel=bundle",
+            "afSmartRedirect": "y"
+        }
     }
 }
-
-OFFER_ORDER = ["coin"]
+OFFER_ORDER = ["coin", "bundle"]
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
