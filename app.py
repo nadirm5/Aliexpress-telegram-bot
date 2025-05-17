@@ -62,7 +62,7 @@ STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://(?!a\.|s\.click\.)([\w-
 SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
 COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
 
-OFFER_PARAMS = {
+
 OFFER_PARAMS = {
     "coin": {
         "name": "\ud83e\ude99 <b>\ud83c\udfaf Coins</b> – <b>\u0627\u0644\u0631\u0627\u0628\u0637 \u0628\u0627\u0644\u062a\u062e\u0641\u064a\u0636 \u2b07\ufe0f \u0623\u0642\u0644 \u0633\u0639\u0631 \u0628\u0627\u0644\u0639\u0645\u0644\u0627\u062a \ud83d\udcb8</b> \ud83d\udc49",
