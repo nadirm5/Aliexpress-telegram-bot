@@ -62,33 +62,54 @@ STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://(?!a\.|s\.click\.)([\w-
 SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
 COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
 
-OFFER_PARAMS = {
-    "coin": {
-        "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
-        "params": {
-            "sourceType": "620%26channel=coin",
-            "afSmartRedirect": "y"
-        }
-    },
-
-    "link": {
-        "name": "🚀 <b>🔗 رابط المنتوج بالتخفيض</b>",
-        "params": {
-            "sourceType": "620%26channel=coin",
-            "afSmartRedirect": "y"
-    
-        }
-    },
-
-
-    
-    "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562", "channel": "sd", "afSmartRedirect": "y"}},
-    "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers", "afSmartRedirect": "y"}},
-    "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680", "channel": "bigSave", "afSmartRedirect": "y"}},
+OFFER_PARAMS = { 
+  "coin": { 
+    "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉", 
+    "params": { 
+      "sourceType": "620%26channel=coin", 
+      "afSmartRedirect": "y" 
+    } 
+  }, 
+  "link": { 
+    "name": "🚀 <b>🔗 رابط المنتوج بالتخفيض</b>", 
+    "params": { 
+      "sourceType": "620%26channel=coin", 
+      "afSmartRedirect": "y" 
+    } 
+  }, 
+  "super": { 
+    "name": "🔥 Super Deals", 
+    "params": { 
+      "sourceType": "562", 
+      "channel": "sd", 
+      "afSmartRedirect": "y" 
+    } 
+  }, 
+  "limited": { 
+    "name": "⏳ Limited Offers", 
+    "params": { 
+      "sourceType": "561", 
+      "channel": "limitedoffers", 
+      "afSmartRedirect": "y" 
+    } 
+  }, 
+  "bigsave": { 
+    "name": "💰 Big Save", 
+    "params": { 
+      "sourceType": "680", 
+      "channel": "bigSave", 
+      "afSmartRedirect": "y" 
+    } 
+  }, 
+  "bundle": { 
+    "name": "📦 <b>Bundle Deals – عروض التجميع</b> ⬇️ 👉", 
+    "params": { 
+      "sourceType": "681", 
+      "channel": "bundledeals", 
+      "afSmartRedirect": "y" 
+    } 
+  } 
 }
-
-OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
-
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
@@ -539,11 +560,9 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
-
     # Titre du produit décoré avec émojis
     product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
     decorated_title = f"✨⭐️ {product_title} ⭐️✨"
-
     product_price = product_data.get('price')
     product_currency = product_data.get('currency', '')
 
@@ -563,35 +582,34 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     else:
         message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    # Lien "coin" en gras
+    # Lien "coin" affiché en premier avec description spéciale
     coin_link = generated_links.get("coin")
     if coin_link:
         message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
-    # Ajouter les offres spéciales disponibles
-    message_lines.append("🎁 <b> Offers:</b>")
-    message_lines.append("──────────────\n")
-
+    # Section des autres offres disponibles
+    message_lines.append("🎁 <b>Offers:</b>")
+    message_lines.append("──────────────")
     offers_available = False
     for offer_key in OFFER_ORDER:
-        if offer_key == "coin":  # Skip the coin link as it's already added
+        if offer_key == "coin":  # Déjà affiché
             continue
         link = generated_links.get(offer_key)
         offer_name = OFFER_PARAMS[offer_key]["name"]
         if link:
-            message_lines.append(f'▫️ <b>{offer_name}:</b> {link}\n')
+            message_lines.append(f"▫️ <b>{offer_name}:</b> {link}")
             offers_available = True
         else:
-            message_lines.append(f"▫️ {offer_name}: ❌ Not Available\n")
+            message_lines.append(f"▫️ {offer_name}: ❌ Not Available")
 
-    # Si aucune offre n'est disponible, afficher un message de défaut
+    # Aucun lien trouvé
     if not offers_available and not coin_link:
-        return f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."
+        return f"<b>{product_title[:250]}</b>\n\n❌ We couldn't find any offer for this product."
 
-    # Ajouter la fin du message avec l'invitation à suivre sur Telegram
-    message_lines.append("──────────────\n")
-    message_lines.append("🔔 <b>  Follow Us:</b>")
+    # Fin du message
+    message_lines.append("──────────────")
+    message_lines.append("🔔 <b>Follow Us:</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
