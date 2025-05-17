@@ -64,31 +64,15 @@ COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a
 
 OFFER_PARAMS = {
     "coin": {
-        "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
+        "name": "🪙 <b>🎯 Coins-العملات</b> – <b>🔥⚡️%الرابط بالتخفيض ⬇️ ⚡️🔥أقل سعر هنا خصم حتى 70 💸</b>",
         "params": {
             "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
         }
-    },
-
-    "link": {
-        "name": "🚀 <b>🔗 رابط المنتوج بالتخفيض</b>",
-        "params": {
-            "sourceType": "620%26channel=coin",
-            "afSmartRedirect": "y"
-    
-        }
-    },
-
-
-    
-    "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562", "channel": "sd", "afSmartRedirect": "y"}},
-    "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers", "afSmartRedirect": "y"}},
-    "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680", "channel": "bigSave", "afSmartRedirect": "y"}},
+    }
 }
 
-OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
-
+OFFER_ORDER = ["coin"]
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
@@ -540,21 +524,21 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
 
-    # Titre du produit décoré avec émojis
+    # Titre du produit avec émojis
     product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
     decorated_title = f"✨⭐️ {product_title} ⭐️✨"
-
     product_price = product_data.get('price')
     product_currency = product_data.get('currency', '')
 
+    # Debug (facultatif)
     print(f"Product Title: {product_title}")
     print(f"Product Price: {product_price} {product_currency}")
     print(f"Generated Links: {generated_links}")
 
-    # Ajout du titre
+    # Titre
     message_lines.append(f"<b>{decorated_title}</b>")
 
-    # Prix du produit
+    # Prix
     if details_source == "API" and product_price:
         price_str = f"{product_price} {product_currency}".strip()
         message_lines.append(f"\n💰 <b>Price $السعر بدون تخفيض:</b> {price_str}\n")
@@ -563,35 +547,25 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     else:
         message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    # Lien "coin" en gras
+    # Lien coin (lien en gras)
     coin_link = generated_links.get("coin")
     if coin_link:
-        message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
+        message_lines.append(f"▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ 👉: <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
-    # Ajouter les offres spéciales disponibles
-    message_lines.append("🎁 <b> Offers:</b>")
+    # Autres liens (non en gras)
     message_lines.append("──────────────\n")
+    message_lines.append("🎁 <b>Offers</b>:")
 
-    offers_available = False
-    for offer_key in OFFER_ORDER:
-        if offer_key == "coin":  # Skip the coin link as it's already added
-            continue
-        link = generated_links.get(offer_key)
-        offer_name = OFFER_PARAMS[offer_key]["name"]
-        if link:
-            message_lines.append(f'▫️ <b>{offer_name}:</b> {link}\n')
-            offers_available = True
-        else:
-            message_lines.append(f"▫️ {offer_name}: ❌ Not Available\n")
+    for offer_key in ["super_deals", "limited_offers", "big_save"]:
+        offer_link = generated_links.get(offer_key)
+        if offer_link:
+            offer_name = offer_key.replace('_', ' ').title()
+            message_lines.append(f"▫️ {offer_name}: {offer_link}")
 
-    # Si aucune offre n'est disponible, afficher un message de défaut
-    if not offers_available and not coin_link:
-        return f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."
-
-    # Ajouter la fin du message avec l'invitation à suivre sur Telegram
+    # Fin
     message_lines.append("──────────────\n")
-    message_lines.append("🔔 <b>  Follow Us:</b>")
+    message_lines.append("🔔 <b>تابعنا لأفضل العروض كل يوم!</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
