@@ -554,29 +554,25 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     else:
         message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    # Lien "coin" affiché en premier avec description spéciale
+    offers_available = False
+
+    # Coin
     coin_link = generated_links.get("coin")
     if coin_link:
         message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
+        offers_available = True
 
-    # Section des autres offres disponibles
-    message_lines.append("🎁 <b>Offers:</b>")
-    message_lines.append("──────────────")
-    offers_available = False
-    for offer_key in OFFER_ORDER:
-        if offer_key == "coin":  # Déjà affiché
-            continue
-        link = generated_links.get(offer_key)
-        offer_name = OFFER_PARAMS[offer_key]["name"]
-        if link:
-            message_lines.append(f"▫️ <b>{offer_name}:</b> {link}")
-            offers_available = True
-        else:
-            message_lines.append(f"▫️ {offer_name}: ❌ Not Available")
+    # Bundle
+    bundle_link = generated_links.get("bundle")
+    if bundle_link:
+        message_lines.append("🎁 <b>Bundle Deal:</b>")
+        message_lines.append("──────────────")
+        message_lines.append(f"▫️ <b>{OFFER_PARAMS['bundle']['name']}:</b> {bundle_link}")
+        offers_available = True
 
     # Aucun lien trouvé
-    if not offers_available and not coin_link:
+    if not offers_available:
         return f"<b>{product_title[:250]}</b>\n\n❌ We couldn't find any offer for this product."
 
     # Fin du message
@@ -585,6 +581,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
+
 def _build_reply_markup() -> InlineKeyboardMarkup:
      keyboard = [
         [
