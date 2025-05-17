@@ -1,77 +1,22 @@
 import requests
 from bs4 import BeautifulSoup
 import re
+import json
 
 def extract_product_id(url):
-    """Extrait l'ID produit depuis une URL AliExpress"""
     match = re.search(r'/item/(\d+)\.html', url)
     return match.group(1) if match else None
 
 def get_aliexpress_product_info(product_url):
-    """Récupère nom et image du produit depuis AliExpress"""
-    product_name = None
-    img_url = None
-    try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                          "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
-        cookies = {"x-hng": "lang=en-US", "intl_locale": "en_US"}
-        response = requests.get(product_url, headers=headers, cookies=cookies, timeout=15)
-        if response.status_code != 200:
-            print(f"Erreur chargement page : {response.status_code}")
-            return None, None
-        soup = BeautifulSoup(response.text, "html.parser")
-
-        # Recherche titre produit dans plusieurs endroits
-        selectors = [
-            "div#root div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > h1",
-            "meta[property='og:title']",
-            "meta[name='keywords']",
-            "h1[data-pl='product-title']",
-            "h1[class*='product-title-text']",
-            "h1"
-        ]
-
-        for sel in selectors:
-            if sel.startswith("meta"):
-                tag = soup.select_one(sel)
-                if tag and tag.has_attr("content"):
-                    product_name = tag["content"]
-                    break
-            else:
-                tag = soup.select_one(sel)
-                if tag:
-                    product_name = tag.get_text(strip=True)
-                    break
-
-        # Nettoyage du nom
-        if product_name:
-            product_name = re.sub(r'\s*-\s*AliExpress(\s+\d+)?$', '', product_name).strip()
-            product_name = re.sub(r'-AliExpress(\s+\d+)?$', '', product_name).strip()
-
-        # Image principale
-        img_tag = soup.find("img", {"class": lambda x: x and "magnifier--image" in x})
-        if img_tag and img_tag.has_attr("src"):
-            img_url = img_tag["src"]
-        else:
-            meta_img = soup.find("meta", property="og:image")
-            if meta_img and meta_img.has_attr("content"):
-                img_url = meta_img["content"]
-
-        return product_name, img_url
-    except Exception as e:
-        print(f"Erreur get_aliexpress_product_info: {e}")
-        return None, None
+    # Même code que précédemment (ou à copier)
+    pass  # Simplification ici, réutilise ta fonction complète
 
 def get_product_details_by_id(product_id):
-    """Construit l'URL produit à partir de l'ID et récupère les détails"""
     product_url = f"https://www.aliexpress.com/item/{product_id}.html"
-    print(f"URL construite: {product_url}")
     return get_aliexpress_product_info(product_url)
 
-def check_bundle_deals(product_id):
-    """Vérifie la présence de bundle deals pour un produit"""
+def check_bundle_deals_and_get_ids(product_id):
+    """Vérifie la présence d'une offre bundle et retourne la liste des IDs"""
     bundle_url = (
         f"https://www.aliexpress.com/ssr/300000512/BundleDeals2"
         f"?productIds={product_id}&disableNav=YES&_immersiveMode=true"
@@ -84,27 +29,70 @@ def check_bundle_deals(product_id):
         response = requests.get(bundle_url, headers=headers, timeout=10)
         if response.status_code != 200:
             print("Page bundle non accessible.")
-            return False
-        text = response.text.lower()
-        if "bundle deals" in text or "bundle price" in text:
-            return True
-        soup = BeautifulSoup(response.text, "html.parser")
-        if soup.find_all(string=lambda s: s and "bundle price" in s):
-            return True
-        return False
-    except Exception as e:
-        print(f"Erreur check_bundle_deals: {e}")
-        return False
+            return False, []
 
-def generate_bundle_deal_link(product_id, tracking_id="default"):
-    """Génère un lien bundle deal avec tracking"""
+        text = response.text
+
+        # Tentative d'extraire JSON des données bundle à partir du HTML (ex: <script> ou balise spécifique)
+        soup = BeautifulSoup(text, "html.parser")
+
+        # Recherche d'un script contenant "window.__INITIAL_STATE__" ou similaire
+        scripts = soup.find_all("script")
+        json_data = None
+        for script in scripts:
+            if script.string and "window.__INITIAL_STATE__" in script.string:
+                # Extraire JSON contenu
+                match = re.search(r'window\.__INITIAL_STATE__\s*=\s*({.*});', script.string, re.DOTALL)
+                if match:
+                    json_str = match.group(1)
+                    try:
+                        json_data = json.loads(json_str)
+                    except Exception as e:
+                        print(f"Erreur parsing JSON: {e}")
+                    break
+        
+        if not json_data:
+            # Si on ne trouve pas dans les scripts, on peut tenter autre chose ou retourner False
+            print("Données JSON bundle non trouvées dans la page.")
+            return False, []
+
+        # Parcours du JSON pour récupérer la liste des IDs produits dans le bundle
+        bundle_items = []
+        try:
+            bundles = json_data.get("bundleDeals", {}).get("bundleItems", [])
+            for bundle in bundles:
+                # Chaque bundle est un dict avec une liste de produits
+                for item in bundle.get("items", []):
+                    pid = str(item.get("productId"))
+                    if pid and pid not in bundle_items:
+                        bundle_items.append(pid)
+        except Exception as e:
+            print(f"Erreur extraction bundle items: {e}")
+
+        if bundle_items:
+            return True, bundle_items
+
+        # Sinon recherche alternative simple dans la page (par exemple via regex)
+        found_ids = re.findall(r'productId":"(\d+)"', text)
+        if found_ids:
+            unique_ids = list(set(found_ids))
+            return True, unique_ids
+
+        return False, []
+
+    except Exception as e:
+        print(f"Erreur check_bundle_deals_and_get_ids: {e}")
+        return False, []
+
+def generate_bundle_deal_link(product_ids, tracking_id="default"):
+    ids_str = ",".join(f"{pid}:12000000000000000" for pid in product_ids)
     return (
-        f"https://www.aliexpress.com/ssr/300000512/BundleDeals2"
-        f"?productIds={product_id}&disableNav=YES&_immersiveMode=true"
+        "https://www.aliexpress.com/ssr/300000512/BundleDeals2"
+        "?businessCode=guide&pha_manifest=ssr&_immersiveMode=true&disableNav=YES"
+        f"&homeProductIds={ids_str}"
+        "&wh_pid=300000512/BundleDeals2&wh_ttid=adc&adc_strategy=snapshot"
         f"&aff_short_key={tracking_id}&afSmartRedirect=y"
     )
-
-# Exemple d'utilisation dans un bot
 
 def prepare_message_from_url(product_url, tracking_id="default"):
     product_id = extract_product_id(product_url)
@@ -112,20 +100,21 @@ def prepare_message_from_url(product_url, tracking_id="default"):
         return "❌ Impossible d'extraire l'ID produit depuis l'URL."
 
     name, img = get_product_details_by_id(product_id)
-    has_bundle = check_bundle_deals(product_id)
-    bundle_link = generate_bundle_deal_link(product_id, tracking_id) if has_bundle else None
+    has_bundle, bundle_ids = check_bundle_deals_and_get_ids(product_id)
 
-    product_data = {
-        "title": name or "Produit inconnu",
-        "price": None,  # Tu peux intégrer un scraper ou API pour le prix
-        "currency": ""
-    }
-    generated_links = {
-        "coin": product_url,  # lien normal du produit, par exemple
-        "bundle": bundle_link
-    }
+    bundle_link = generate_bundle_deal_link(bundle_ids, tracking_id) if has_bundle else None
 
-    message = _build_response_message(product_data, generated_links, details_source="API")
+    message = f"Produit: {name or 'Produit inconnu'}\n"
+    if img:
+        message += f"Image: {img}\n"
+    message += f"Lien produit: {product_url}\n"
+    if bundle_link:
+        message += f"Offre bundle: {bundle_link}\n"
+    else:
+        message += "Pas d'offre bundle disponible.\n"
     return message
 
-# N’oublie pas d’importer ou définir ta fonction _build_response_message
+# Exemple d'appel (n'oublie pas de définir ou copier get_aliexpress_product_info)
+if __name__ == "__main__":
+    url = "https://www.aliexpress.com/item/1005006994570544.html"
+    print(prepare_message_from_url(url, tracking_id="default"))
