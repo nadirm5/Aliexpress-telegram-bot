@@ -530,11 +530,6 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     product_price = product_data.get('price')
     product_currency = product_data.get('currency', '')
 
-    # Debug (facultatif)
-    print(f"Product Title: {product_title}")
-    print(f"Product Price: {product_price} {product_currency}")
-    print(f"Generated Links: {generated_links}")
-
     # Titre
     message_lines.append(f"<b>{decorated_title}</b>")
 
@@ -547,24 +542,13 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     else:
         message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    # Lien coin (lien en gras)
+    # Lien coin (en gras)
     coin_link = generated_links.get("coin")
     if coin_link:
         message_lines.append(f"▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ 👉: <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
-    # Autres liens (non en gras)
-    message_lines.append("──────────────\n")
-    message_lines.append("🎁 <b>Offers</b>:")
-
-    for offer_key in ["super_deals", "limited_offers", "big_save"]:
-        offer_link = generated_links.get(offer_key)
-        if offer_link:
-            offer_name = offer_key.replace('_', ' ').title()
-            message_lines.append(f"▫️ {offer_name}: {offer_link}")
-
     # Fin
-    message_lines.append("──────────────\n")
     message_lines.append("🔔 <b>تابعنا لأفضل العروض كل يوم!</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
 
