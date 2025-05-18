@@ -305,7 +305,7 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
             logger.warning(f"No products found in API response for ID {product_id}")
             return None
 
-       product_data = products[0]
+        product_data = products[0]
         product_info = {
             'image_url': product_data.get('product_main_image_url'),
             'price': product_data.get('target_sale_price'), 
@@ -321,7 +321,6 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
     except Exception as e:
         logger.exception(f"Error parsing product details response for ID {product_id}: {e}")
         return None
-
 
 async def generate_affiliate_links_batch(target_urls: list[str]) -> dict[str, str | None]:
     results_dict = {}
@@ -351,7 +350,35 @@ async def generate_affiliate_links_batch(target_urls: list[str]) -> dict[str, st
             prefixed_urls.append(url)
     source_values_str = ",".join(prefixed_urls)
 
-                error_details = response_data.get('error_response', {})
+    def _execute_batch_link_api():
+        try:
+            request = iop.IopRequest('aliexpress.affiliate.link.generate')
+            request.add_api_param('promotion_link_type', '0')
+            request.add_api_param('source_values', source_values_str)
+            request.add_api_param('tracking_id', ALIEXPRESS_TRACKING_ID)
+            return aliexpress_client.execute(request)
+        except Exception as e:
+            logger.error(f"Error in batch link API call thread for URLs: {e}")
+            return None
+
+    loop = asyncio.get_event_loop()
+    response = await loop.run_in_executor(executor, _execute_batch_link_api)
+
+    if not response or not response.body:
+        logger.error(f"Batch link generation API call failed or returned empty body for {len(uncached_urls)} URLs.")
+        return results_dict
+
+    try:
+        response_data = response.body
+        if isinstance(response_data, str):
+            try:
+                response_data = json.loads(response_data)
+            except json.JSONDecodeError as json_err:
+                logger.error(f"Failed to decode JSON response for batch link generation: {json_err}. Response: {response_data[:500]}")
+                return results_dict
+
+        if 'error_response' in response_data:
+            error_details = response_data.get('error_response', {})
             logger.error(f"API Error for Batch Link Generation: Code={error_details.get('code', 'N/A')}, Msg={error_details.get('msg', 'Unknown')}")
             return results_dict
 
