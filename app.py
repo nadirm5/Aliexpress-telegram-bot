@@ -540,13 +540,14 @@ else:
     message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
 coin_link = generated_links.get("coin")
-if coin_link:
-    message_lines.append(f"▫️ 🪙🔥 أقل سعر على الرابط ⬇️\n<b>{coin_link}</b>")
-    message_lines.append("💥 خصم يصل حتى <b>70%</b> – العرض محدود، ألحق\n")
-    message_lines.append("🔔 <b>تابعنا</b>")
-    message_lines.append("📱 Telegram: @RayanCoupon")
+    if coin_link:
+        message_lines.append(f"▫️ 🪙🔥 أقل سعر على الرابط ⬇️\n<b>{coin_link}</b>")
+        message_lines.append("💥 خصم يصل حتى <b>70%</b> – العرض محدود، ألحق\n")
+        message_lines.append("🔔 <b>تابعنا</b>")
+        message_lines.append("📱 Telegram: @RayanCoupon")
 
-    return "\n".join(message_lines)  # <-- ce return doit rester dans le bloc "if" si voulu
+    return "\n".join(message_lines)
+
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
