@@ -56,34 +56,45 @@ except Exception as e:
 
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
-URL_REGEX = re.compile(r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*', re.IGNORECASE)
-PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html')
-STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id\.aliexpress\.com|th\.aliexpress\.com|ar\.aliexpress\.com)(\.([\w-]+))?(/.*)?', re.IGNORECASE)
-SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
-COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
+URL_REGEX = re.compile(
+    r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*',
+    re.IGNORECASE
+)
 
+# Correction ici : accepte /item/ID.html ou /i/ID.html
+PRODUCT_ID_REGEX = re.compile(r'/(?:item|i)/(\d+)\.html', re.IGNORECASE)
 
+STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(
+    r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?(/.*)?',
+    re.IGNORECASE
+)
+
+SHORT_LINK_DOMAIN_REGEX = re.compile(
+    r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?',
+    re.IGNORECASE
+)
+
+COMBINED_DOMAIN_REGEX = re.compile(
+    r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com',
+    re.IGNORECASE
+)
 OFFER_PARAMS = {
     "coin": {
-        "name": "Coin Offers",
+        "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
-            "sourceType": "620",
-            "channel": "coin",
+            "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
         }
     },
     "bundle": {
-        "name": "Bundle Deals",
+        "name": "📦 <b>🛍️ Bundle Deals</b> – <b>صفقات الباقات ⬇️</b> 👉",
         "params": {
-            "sourceType": "890",
-            "channel": "bundle",
+            "sourceType": "650%26channel=bundle",
             "afSmartRedirect": "y"
         }
     }
 }
-
 OFFER_ORDER = ["coin", "bundle"]
-
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
@@ -532,35 +543,6 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 
 
 
-def generate_offer_link(product_id: str, source_type: str) -> str:
-    """
-    Génère une URL de type bundle ou coin selon source_type.
-    """
-    base_url = "https://www.aliexpress.com/ssr/300000512/BundleDeals2"
-    params = {
-        "disableNav": "YES",
-        "pha_manifest": "ssr",
-        "_immersiveMode": "true",
-        "productIds": product_id,
-        "_launchTID": "7413021c-3458-43f8-95d3-ab6111934dc8",
-        "aff_fcid": "75485d61d54048c3acf04a553cf50699-1747403194481-07402-_omZaJR5",
-        "aff_fsk": "_omZaJR5",
-        "nr": "n",
-        "wh_pid": f"300000512/BundleDeals2",
-        "wh_ttid": "adc",
-        "adc_strategy": "snapshot",
-        "aff_platform": "portals-tool",
-        "sk": "_ooyqC0b",
-        "aff_trace_key": "85d06898737243da8a71d1a8fd0513ca-1747418002278-02475-_ooyqC0b",
-        "terminal_id": "6cf1dfd4012842c5b1ff4acc4981d4cb",
-        "sourceType": source_type
-    }
-    # Construction simple de l'URL avec params
-    from urllib.parse import urlencode
-    url = f"{base_url}?{urlencode(params)}"
-    return url
-
-
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
 
@@ -585,30 +567,32 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     # Lien coin (en gras)
     coin_link = generated_links.get("coin")
     if coin_link:
-        message_lines.append(f"▫️ 🪙 🎯 السعر أقل على الرابط – احصل عليها الآن بسعر خرافي ⬇️ <b>{coin_link}</b>")
-        message_lines.append("💥 خصم حتى 70% العرض لفترة محدودة فقط – اضغط الآن وشوف الفرق\n")
+        message_lines.append(f"▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ 👉: <b>{coin_link}</b>")
+        message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
+
+    # Lien bundle (en gras)
+    bundle_link = generated_links.get("bundle")
+    if bundle_link:
+        message_lines.append(f"▫️ 🛍️ 📦 Bundle Deals – صفقات الباقات ⬇️ 👉: <b>{bundle_link}</b>")
+        message_lines.append("✨ وفر أكثر عند شراء المنتجات معاً\n")
 
     # Fin
-    message_lines.append("🔔 <b>Follow Us</b>")
+    message_lines.append("🔔 <b>تابعنا لأفضل العروض كل يوم!</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
-
-
-
-
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
         [
-            InlineKeyboardButton("🎫 Coupons", url="https://s.click.aliexpress.com/e/_oDyxC8f"),
-            InlineKeyboardButton("🔥 Deal of the Day", url="https://s.click.aliexpress.com/e/_omRiewZ")
+            InlineKeyboardButton("🎫 كوبونات حصرية | Exclusive Coupons", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
+            InlineKeyboardButton("🔥 عرض اليوم | Deal of the Day", url="https://s.click.aliexpress.com/e/_omRiewZ")
         ],
         [
-            InlineKeyboardButton("🛍️ Bundle Deals", url="https://s.click.aliexpress.com/e/_oE0GKJ9")
+            InlineKeyboardButton("🛍️ صفقات الباقات | Bundle Deals", url="https://s.click.aliexpress.com/e/_oE0GKJ9")
         ],
         [
-            InlineKeyboardButton("📢 Join VIP Channel", url="https://t.me/RayanCoupon"),
-            InlineKeyboardButton("❤️ Support Me", url="https://moneyexpress.fun")
+            InlineKeyboardButton("📢 اشترك في القناة | Join VIP Channel", url="https://t.me/RayanCoupon"),
+            InlineKeyboardButton("❤️ ادعمني | Support Me", url="https://moneyexpress.fun")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
