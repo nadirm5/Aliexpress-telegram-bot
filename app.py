@@ -531,23 +531,22 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     message_lines.append(f"<b>{decorated_title}</b>")
 
-    if details_source == "API" and product_price:
-        price_str = f"{product_price} {product_currency}".strip()
-        message_lines.append(f"\n💰 <b>Price $السعر بدون تخفيض:</b> {price_str}\n")
-    elif details_source == "Scraped":
-        message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
-    else:
-        message_lines.append("\n❌ <b>Product details unavailable</b>\n")
+if details_source == "API" and product_price:
+    price_str = f"{product_price} {product_currency}".strip()
+    message_lines.append(f"\n💰 <b>Price $السعر بدون تخفيض:</b> {price_str}\n")
+elif details_source == "Scraped":
+    message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
+else:
+    message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    
-    coin_link = generated_links.get("coin")
+coin_link = generated_links.get("coin")
 if coin_link:
     message_lines.append(f"▫️ 🪙🔥 أقل سعر على الرابط ⬇️\n<b>{coin_link}</b>")
     message_lines.append("💥 خصم يصل حتى <b>70%</b> – العرض محدود، ألحق\n")
     message_lines.append("🔔 <b>تابعنا</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
 
-    return "\n".join(message_lines)
+return "\n".join(message_lines)
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
         [
