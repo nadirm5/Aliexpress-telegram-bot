@@ -546,7 +546,8 @@ if coin_link:
     message_lines.append("🔔 <b>تابعنا</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
 
-return "\n".join(message_lines)
+    return "\n".join(message_lines)  # <-- ce return doit rester dans le bloc "if" si voulu
+
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
         [
