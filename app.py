@@ -65,16 +65,25 @@ COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a
 
 OFFER_PARAMS = {
     "coin": {
-        "name": "...",
+        "name": "Coin Offers",
         "params": {
             "sourceType": "620",
             "channel": "coin",
             "afSmartRedirect": "y"
         }
+    },
+    "bundle": {
+        "name": "Bundle Deals",
+        "params": {
+            "sourceType": "890",
+            "channel": "bundle",
+            "afSmartRedirect": "y"
+        }
     }
 }
 
-OFFER_ORDER = ["coin"]
+OFFER_ORDER = ["coin", "bundle"]
+
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
@@ -549,11 +558,19 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     if coin_link:
         message_lines.append(f"▫️ 🪙 🎯 السعر أقل على الرابط – احصل عليها الآن بسعر خرافي ⬇️ <b>{coin_link}</b>")
         message_lines.append("💥 خصم حتى 70% العرض لفترة محدودة فقط – اضغط الآن وشوف الفرق\n")
+
+    # Lien bundle (en gras aussi)
+    bundle_link = generated_links.get("bundle")
+    if bundle_link:
+        message_lines.append(f"▫️ 📦 🔥 عروض الباقة – أفضل الأسعار للمنتجات المجمعة ⬇️ <b>{bundle_link}</b>")
+        message_lines.append("⚡️ اغتنم الفرصة قبل نفاد العرض\n")
+
     # Fin
     message_lines.append("🔔 <b>Follow Us</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
+
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
         [
