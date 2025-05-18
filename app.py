@@ -313,8 +313,6 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
             'title': product_data.get('product_title', f'Product {product_id}')
         }
 
-print(product_info["img_link"])
-
         await product_cache.set(product_id, product_info)
         expiry_date = datetime.now() + timedelta(days=CACHE_EXPIRY_DAYS)
         logger.info(f"Cached product {product_id} until {expiry_date.strftime('%Y-%m-%d %H:%M:%S')}")
