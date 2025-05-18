@@ -306,12 +306,14 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
             return None
 
         product_data = products[0]
-        product_info = {
-            price_pro = img_link[0].target.sale_price
-      title_link = img_link[0].product_title
-      img_link = img_link[0].product_main_image_url
-      print(img_link)
-        }
+
+product_info = {
+    "price_pro": img_link[0].target.sale_price,
+    "title_link": img_link[0].product_title,
+    "img_link": img_link[0].product_main_image_url
+}
+
+print(product_info["img_link"])
 
         await product_cache.set(product_id, product_info)
         expiry_date = datetime.now() + timedelta(days=CACHE_EXPIRY_DAYS)
