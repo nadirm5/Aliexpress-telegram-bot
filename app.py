@@ -539,8 +539,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     else:
         message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    coin_link = generated_links.get("coin")
-    if coin_link:
+    
     coin_link = generated_links.get("coin")
 if coin_link:
     message_lines.append(f"▫️ 🪙🔥 أقل سعر على الرابط ⬇️\n<b>{coin_link}</b>")
