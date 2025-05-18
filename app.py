@@ -306,23 +306,21 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
             return None
 
         try:
+    prodtry:
     product_info = {
         'image_url': product_data.get('product_main_image_url'),
         'price': product_data.get('target_sale_price'),
         'currency': product_data.get('target_sale_price_currency', TARGET_CURRENCY),
         'title': product_data.get('product_title', f'Product {product_id}')
     }
-except Exception as e:
-    # Gérer l'erreur ici (au minimum passer)
-    product_info = None
-await product_cache.set(product_id, product_info)
-expiry_date = datetime.now() + timedelta(days=CACHE_EXPIRY_DAYS)
-logger.info(f"Cached product {product_id} until {expiry_date.strftime('%Y-%m-%d %H:%M:%S')}")
-return product_info
+    await product_cache.set(product_id, product_info)
+    expiry_date = datetime.now() + timedelta(days=CACHE_EXPIRY_DAYS)
+    logger.info(f"Cached product {product_id} until {expiry_date.strftime('%Y-%m-%d %H:%M:%S')}")
+    return product_info
 
-    except Exception as e:
-        logger.exception(f"Error parsing product details response for ID {product_id}: {e}")
-        return None
+except Exception as e:
+    logger.exception(f"Error parsing product details response for ID {product_id}: {e}")
+    return None
 
 async def generate_affiliate_links_batch(target_urls: list[str]) -> dict[str, str | None]:
     results_dict = {}
