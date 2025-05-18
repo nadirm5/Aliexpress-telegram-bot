@@ -547,9 +547,8 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     # Lien coin (en gras)
     coin_link = generated_links.get("coin")
     if coin_link:
-        message_lines.append(f"▫️ 🪙 🎯 Coins – الرابط بالتخفيض⬇️ : <b>{coin_link}</b>")
-        message_lines.append("💥  70% أقل سعر على الرابط مع تخفيض يصل حتى \n")
-
+        message_lines.append(f"▫️ 🪙 🎯 السعر أقل على الرابط – احصل عليها الآن بسعر خرافي ⬇️ <b>{coin_link}</b>")
+        message_lines.append("💥 خصم حتى 70% العرض لفترة محدودة فقط – اضغط الآن وشوف الفرق\n")
     # Fin
     message_lines.append("🔔 <b>Follow Us</b>")
     message_lines.append("📱 Telegram: @RayanCoupon")
