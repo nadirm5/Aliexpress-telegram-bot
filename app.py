@@ -601,27 +601,6 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     return "\n".join(message_lines)
 
 
-# Exemple d'utilisation
-
-product_data_example = {
-    "title": "Redmi Note 13 Pro - Smartphone 5G",
-    "price": "299.99",
-    "currency": "USD"
-}
-
-product_id = "1005005706713011"
-
-generated_links = {
-    "coin": generate_offer_link(product_id, "620"),
-    "bundle": generate_offer_link(product_id, "890"),
-}
-
-details_source = "API"
-
-message = _build_response_message(product_data_example, generated_links, details_source)
-
-print(message)
-
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
