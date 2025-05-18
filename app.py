@@ -532,6 +532,35 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 
 
 
+def generate_offer_link(product_id: str, source_type: str) -> str:
+    """
+    Génère une URL de type bundle ou coin selon source_type.
+    """
+    base_url = "https://www.aliexpress.com/ssr/300000512/BundleDeals2"
+    params = {
+        "disableNav": "YES",
+        "pha_manifest": "ssr",
+        "_immersiveMode": "true",
+        "productIds": product_id,
+        "_launchTID": "7413021c-3458-43f8-95d3-ab6111934dc8",
+        "aff_fcid": "75485d61d54048c3acf04a553cf50699-1747403194481-07402-_omZaJR5",
+        "aff_fsk": "_omZaJR5",
+        "nr": "n",
+        "wh_pid": f"300000512/BundleDeals2",
+        "wh_ttid": "adc",
+        "adc_strategy": "snapshot",
+        "aff_platform": "portals-tool",
+        "sk": "_ooyqC0b",
+        "aff_trace_key": "85d06898737243da8a71d1a8fd0513ca-1747418002278-02475-_ooyqC0b",
+        "terminal_id": "6cf1dfd4012842c5b1ff4acc4981d4cb",
+        "sourceType": source_type
+    }
+    # Construction simple de l'URL avec params
+    from urllib.parse import urlencode
+    url = f"{base_url}?{urlencode(params)}"
+    return url
+
+
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
 
@@ -570,6 +599,29 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
+
+
+# Exemple d'utilisation
+
+product_data_example = {
+    "title": "Redmi Note 13 Pro - Smartphone 5G",
+    "price": "299.99",
+    "currency": "USD"
+}
+
+product_id = "1005005706713011"
+
+generated_links = {
+    "coin": generate_offer_link(product_id, "620"),
+    "bundle": generate_offer_link(product_id, "890"),
+}
+
+details_source = "API"
+
+message = _build_response_message(product_data_example, generated_links, details_source)
+
+print(message)
+
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
