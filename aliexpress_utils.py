@@ -1,137 +1,99 @@
 import requests
 from bs4 import BeautifulSoup
-import re
-import json
 
-# Extraction ID produit depuis URL
-def extract_product_id(url):
-    match = re.search(r'/item/(\d+)\.html', url)
-    return match.group(1) if match else None
 
-# Exemple simple de récupération nom + image produit (à adapter selon besoin)
 def get_aliexpress_product_info(product_url):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                      "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
+    """
+    Extract product name from AliExpress without Selenium
+    Args:
+        product_url (str): AliExpress product page URL
+    Returns:
+        str: product name
+    """
+    product_name = None # Initialize product_name
+    img_url = None # Initialize img_url
     try:
-        response = requests.get(product_url, headers=headers, timeout=10)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        cookies = {"x-hng": "lang=en-US", "intl_locale": "en_US"}
+        response = requests.get(product_url, headers=headers, cookies=cookies, timeout=15)
         if response.status_code != 200:
-            return None, None
+            print(f"Failed to load page: {response.status_code}")
+            return None, None # Return None for both if page fails
         soup = BeautifulSoup(response.text, "html.parser")
+        
+        # Try finding the specific h1 tag first
+        root_div = soup.find("div", id="root")
+        if root_div:
+            h1 = root_div.select_one("div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > h1")
+            if h1:
+                product_name = h1.get_text(strip=True)
 
-        # Titre produit
-        title_tag = soup.find("h1", {"class": "product-title-text"})
-        title = title_tag.text.strip() if title_tag else None
+        # Fallback to og:title meta tag
+        if not product_name:
+            meta_title = soup.find("meta", property="og:title")
+            if meta_title and meta_title.has_attr("content"):
+                product_name = meta_title["content"]
 
-        # Image principale
-        img_tag = soup.find("img", {"class": "magnifier-image"})
-        img = img_tag["src"] if img_tag and img_tag.has_attr("src") else None
+        # Fallback to keywords meta tag
+        if not product_name:
+            meta_name = soup.find("meta", attrs={"name": "keywords"})
+            if meta_name and meta_name.has_attr("content"):
+                # Take the first keyword as a potential name
+                product_name = meta_name["content"].split(",")[0].strip()
 
-        return title, img
+        # Fallback to h1 with data-pl attribute
+        if not product_name:
+            h1 = soup.find("h1", {"data-pl": "product-title"})
+            if h1:
+                product_name = h1.get_text(strip=True)
+
+        # Fallback to h1 with specific class names
+        if not product_name:
+            h1 = soup.find("h1", {"class": lambda x: x and ("product-title-text" in x or "product-title" in x)})
+            if h1:
+                product_name = h1.get_text(strip=True)
+
+        # Generic h1 fallback (last resort for name)
+        if not product_name:
+            h1 = soup.find("h1")
+            if h1:
+                product_name = h1.get_text(strip=True)
+
+        # --- Image Extraction ---
+        img_tag = soup.find("img", {"class": lambda x: x and "magnifier--image" in x})
+        if img_tag and img_tag.has_attr("src"):
+            img_url = img_tag["src"]
+        else:
+            # Fallback to og:image meta tag
+            meta_img = soup.find("meta", property="og:image")
+            if meta_img and meta_img.has_attr("content"):
+                img_url = meta_img["content"]
+
+        # --- Clean up Product Name ---
+        if product_name:
+            # Remove common AliExpress suffixes, potentially followed by numbers
+            import re
+            # Regex: " - AliExpress" optionally followed by space and digits, at the end of the string
+            product_name = re.sub(r'\s*-\s*AliExpress(\s+\d+)?$', '', product_name).strip()
+            # Also handle case without leading space before hyphen
+            product_name = re.sub(r'-AliExpress(\s+\d+)?$', '', product_name).strip()
+
+
+        return product_name, img_url
     except Exception as e:
-        print(f"Erreur get_aliexpress_product_info: {e}")
-        return None, None
+        print(f"An error occurred in get_aliexpress_product_info: {str(e)}") # Added function name for clarity
+        return None, None # Return None for both on error
 
-# Vérifie la présence d'offre bundle et extrait IDs des produits
-def check_bundle_deals_and_get_ids(product_id):
-    bundle_url = (
-        f"https://www.aliexpress.com/ssr/300000512/BundleDeals2"
-        f"?productIds={product_id}&disableNav=YES&_immersiveMode=true"
-    )
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                      "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
-    try:
-        response = requests.get(bundle_url, headers=headers, timeout=10)
-        if response.status_code != 200:
-            print("Page bundle non accessible.")
-            return False, []
-
-        text = response.text
-        soup = BeautifulSoup(text, "html.parser")
-        scripts = soup.find_all("script")
-        json_data = None
-        for script in scripts:
-            if script.string and "window.__INITIAL_STATE__" in script.string:
-                match = re.search(r'window\.__INITIAL_STATE__\s*=\s*({.*});', script.string, re.DOTALL)
-                if match:
-                    try:
-                        json_data = json.loads(match.group(1))
-                    except Exception as e:
-                        print(f"Erreur parsing JSON: {e}")
-                    break
-
-        if not json_data:
-            print("Données JSON bundle non trouvées dans la page.")
-            return False, []
-
-        bundle_items = []
-        try:
-            bundles = json_data.get("bundleDeals", {}).get("bundleItems", [])
-            for bundle in bundles:
-                for item in bundle.get("items", []):
-                    pid = str(item.get("productId"))
-                    if pid and pid not in bundle_items:
-                        bundle_items.append(pid)
-        except Exception as e:
-            print(f"Erreur extraction bundle items: {e}")
-
-        if bundle_items:
-            return True, bundle_items
-
-        # Alternative fallback
-        found_ids = re.findall(r'productId":"(\d+)"', text)
-        if found_ids:
-            unique_ids = list(set(found_ids))
-            return True, unique_ids
-
-        return False, []
-
-    except Exception as e:
-        print(f"Erreur check_bundle_deals_and_get_ids: {e}")
-        return False, []
-
-# Génère lien bundle avec IDs et tracking
-def generate_bundle_deal_link(product_ids, tracking_id="default"):
-    ids_str = ",".join(f"{pid}:12000000000000000" for pid in product_ids)
-    return (
-        "https://www.aliexpress.com/ssr/300000512/BundleDeals2"
-        "?businessCode=guide&pha_manifest=ssr&_immersiveMode=true&disableNav=YES"
-        f"&homeProductIds={ids_str}"
-        "&wh_pid=300000512/BundleDeals2&wh_ttid=adc&adc_strategy=snapshot"
-        f"&aff_short_key={tracking_id}&afSmartRedirect=y"
-    )
-
-# Prépare le message final pour l’utilisateur
-def prepare_message_from_url(product_url, tracking_id="default"):
-    product_id = extract_product_id(product_url)
-    if not product_id:
-        return "❌ Impossible d'extraire l'ID produit depuis l'URL."
-
-    name, img = get_product_details_by_id(product_id)
-    has_bundle, bundle_ids = check_bundle_deals_and_get_ids(product_id)
-
-    bundle_link = generate_bundle_deal_link(bundle_ids, tracking_id) if has_bundle else None
-
-    message = f"Produit: {name or 'Produit inconnu'}\n"
-    if img:
-        message += f"Image: {img}\n"
-    message += f"Lien produit: {product_url}\n"
-    
-    if bundle_link:
-        message += f"Offre bundle: {bundle_link}\n"
-    else:
-        message += "Pas d'offre bundle disponible.\n"
-    return message
-
-# Wrapper get_product_details_by_id pour compatibilité
 def get_product_details_by_id(product_id):
-    product_url = f"https://www.aliexpress.com/item/{product_id}.html"
+    """
+    Constructs URL from product ID and fetches product details.
+    Args:
+        product_id (str or int): The AliExpress product ID.
+    Returns:
+        tuple: (product_name, img_url) or (None, None) if failed.
+    """
+    product_url = f"https://vi.aliexpress.com/item/{product_id}.html"
+    print(f"Constructed URL: {product_url}")
     return get_aliexpress_product_info(product_url)
-
-# Test rapide
-if __name__ == "__main__":
-    test_url = "https://www.aliexpress.com/item/1005006994570544.html"
-    print(prepare_message_from_url(test_url, tracking_id="default"))
