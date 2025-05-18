@@ -306,12 +306,12 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
             return None
 
         product_data = products[0]
-
-product_info = {
-    "price_pro": img_link[0].target.sale_price,
-    "title_link": img_link[0].product_title,
-    "img_link": img_link[0].product_main_image_url
-}
+        product_info = {
+            'image_url': product_data.get('product_main_image_url'),
+            'price': product_data.get('target_sale_price'), 
+            'currency': product_data.get('target_sale_price_currency', TARGET_CURRENCY),
+            'title': product_data.get('product_title', f'Product {product_id}')
+        }
 
 print(product_info["img_link"])
 
