@@ -269,75 +269,84 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
         logger.error(f"Product detail API call failed or returned empty body for ID: {product_id}")
         return None
 
-    try:
-        response_data = response.body
-        if isinstance(response_data, str):
-            try:
-                response_data = json.loads(response_data)
-            except json.JSONDecodeError as json_err:
-                logger.error(f"Failed to decode JSON response for product {product_id}: {json_err}. Response: {response_data[:500]}")
-                return None
-
-        if 'error_response' in response_data:
-            error_details = response_data.get('error_response', {})
-            logger.error(f"API Error for Product ID {product_id}: Code={error_details.get('code', 'N/A')}, Msg={error_details.get('msg', 'Unknown API error')}")
-            return None
-
-        detail_response = response_data.get('aliexpress_affiliate_productdetail_get_response')
-        if not detail_response:
-            logger.error(f"Missing 'aliexpress_affiliate_productdetail_get_response' key for ID {product_id}. Response: {response_data}")
-            return None
-
-        resp_result = detail_response.get('resp_result')
-        if not resp_result:
-             logger.error(f"Missing 'resp_result' key for ID {product_id}. Response: {detail_response}")
-             return None
-
-        resp_code = resp_result.get('resp_code')
-        if resp_code != 200:
-             logger.error(f"API response code not 200 for ID {product_id}. Code: {resp_code}, Msg: {resp_result.get('resp_msg', 'Unknown')}")
-             return None
-
-        result = resp_result.get('result', {})
-        products = result.get('products', {}).get('product', [])
-
-        if not products:
-            logger.warning(f"No products found in API response for ID {product_id}")
-            return None
 try:
-    product_data = products[0]
+    response_data = response.body
+    if isinstance(response_data, str):
+        try:
+            response_data = json.loads(response_data)
+        except json.JSONDecodeError as json_err:
+            logger.error(f"Failed to decode JSON response for product {product_id}: {json_err}. Response: {response_data[:500]}")
+            return None
+
+    if 'error_response' in response_data:
+        error_details = response_data.get('error_response', {})
+        logger.error(f"API Error for Product ID {product_id}: Code={error_details.get('code', 'N/A')}, Msg={error_details.get('msg', 'Unknown API error')}")
+        return None
+
+    detail_response = response_data.get('aliexpress_affiliate_productdetail_get_response')
+    if not detail_response:
+        logger.error(f"Missing 'aliexpress_affiliate_productdetail_get_response' key for ID {product_id}. Response: {response_data}")
+        return None
+
+    resp_result = detail_response.get('resp_result')
+    if not resp_result:
+        logger.error(f"Missing 'resp_result' key for ID {product_id}. Response: {detail_response}")
+        return None
+
+    resp_code = resp_result.get('resp_code')
+    if resp_code != 200:
+        logger.error(f"API response code not 200 for ID {product_id}. Code: {resp_code}, Msg: {resp_result.get('resp_msg', 'Unknown')}")
+        return None
+
+    result = resp_result.get('result', {})
+    products = result.get('products', {}).get('product', [])
+
+    if not products:
+        logger.warning(f"No products found in API response for ID {product_id}")
+        return None
 
     try:
-        original = float(product_data.get('original_price', product_data.get('target_sale_price')))
-    except (TypeError, ValueError):
-        original = 0.0
+        product_data = products[0]
 
-    try:
-        sale = float(product_data.get('target_sale_price'))
-    except (TypeError, ValueError):
-        sale = 0.0
+        try:
+            original = float(product_data.get('original_price', product_data.get('target_sale_price')))
+        except (TypeError, ValueError):
+            original = 0.0
 
-    discount_percent = int(round((original - sale) / original * 100)) if original > sale else 0
+        try:
+            sale = float(product_data.get('target_sale_price'))
+        except (TypeError, ValueError):
+            sale = 0.0
 
-    product_info = {
-        'image_url': product_data.get('product_main_image_url'),
-        'price': sale,
-        'currency': product_data.get('target_sale_price_currency', TARGET_CURRENCY),
-        'title': product_data.get('product_title', f'Product {product_id}'),
-        'original_price': original,
-        'discount_percent': discount_percent
-    }
+        discount_percent = int(round((original - sale) / original * 100)) if original > sale else 0
 
-except (IndexError, TypeError):
-    # Cas où products est vide ou mal formé
-    product_info = {
-        'image_url': '',
-        'price': 0.0,
-        'currency': TARGET_CURRENCY,
-        'title': f'Product {product_id}',
-        'original_price': 0.0,
-        'discount_percent': 0
-    }
+        product_info = {
+            'image_url': product_data.get('product_main_image_url'),
+            'price': sale,
+            'currency': product_data.get('target_sale_price_currency', TARGET_CURRENCY),
+            'title': product_data.get('product_title', f'Product {product_id}'),
+            'original_price': original,
+            'discount_percent': discount_percent
+        }
+
+    except (IndexError, TypeError):
+        product_info = {
+            'image_url': '',
+            'price': 0.0,
+            'currency': TARGET_CURRENCY,
+            'title': f'Product {product_id}',
+            'original_price': 0.0,
+            'discount_percent': 0
+        }
+
+    await product_cache.set(product_id, product_info)
+    expiry_date = datetime.now() + timedelta(days=CACHE_EXPIRY_DAYS)
+    logger.info(f"Cached product {product_id} until {expiry_date.strftime('%Y-%m-%d %H:%M:%S')}")
+    return product_info
+
+except Exception as e:
+    logger.exception(f"Error parsing product details response for ID {product_id}: {e}")
+    return None
 
         await product_cache.set(product_id, product_info)
         expiry_date = datetime.now() + timedelta(days=CACHE_EXPIRY_DAYS)
