@@ -539,16 +539,16 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     coin_link = generated_links.get("coin")
     if coin_link:
-        message_lines.append(f"✨⭐️ {product_info['title']} ⭐️✨\n")
-message_lines.append(f"💰 السعر بدون تخفيض: <b>{product_info['original_price']:.2f} {product_info['currency']}</b>")
-message_lines.append(f"💸 السعر بعد التخفيض: <b>{product_info['price']:.2f} {product_info['currency']}</b>")
-message_lines.append(f"🎯 نسبة التخفيض: <b>{product_info['discount_percent']}٪</b>\n")
-message_lines.append(f"▫️ 🪙🔥 أقل سعر على الرابط ⬇️\n<b>{coin_link}</b>")
-message_lines.append("💥 خصم يصل حتى <b>70%</b> – العرض محدود، ألحق\n")
-message_lines.append("🔔 <b>تابعنا</b>")
-message_lines.append("📱 Telegram: @RayanCoupon")
+      message_lines.append(f"✨⭐️ {product_info['title']} ⭐️✨\n")
+      message_lines.append(f"💰 السعر بدون تخفيض: <b>{product_info['original_price']:.2f} {product_info['currency']}</b>")
+      message_lines.append(f"💸 السعر بعد التخفيض: <b>{product_info['price']:.2f} {product_info['currency']}</b>")
+      message_lines.append(f"🎯 نسبة التخفيض: <b>{product_info['discount_percent']}٪</b>\n")
+      message_lines.append(f"▫️ 🪙🔥 أقل سعر على الرابط ⬇️\n<b>{coin_link}</b>")
+      message_lines.append("💥 خصم يصل حتى <b>70%</b> – العرض محدود، ألحق\n")
+      message_lines.append("🔔 <b>تابعنا</b>")
+      message_lines.append("📱 Telegram: @RayanCoupon")
 
-return "\n".join(message_lines)
+      return "\n".join(message_lines)
 
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
