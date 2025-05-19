@@ -56,16 +56,18 @@ except Exception as e:
 
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
-# Détection des URLs AliExpress, y compris star.aliexpress.com
 URL_REGEX = re.compile(
-    r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.|star\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*',
+    r'https?://(?:www\.)?(?:'
+    r'(?:s\.click\.aliexpress\.com/e/[a-zA-Z0-9_-]+)'
+    r'|(?:a\.aliexpress\.com/_[a-zA-Z0-9_-]+)'
+    r'|(?:star\.aliexpress\.com/share/[^?\s]+)'
+    r'|(?:aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*)'
+    r')',
     re.IGNORECASE
 )
 
-# Extraction ID produit
 PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html')
 
-# Domaine standard (exclut s.click, a. et star.)
 STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(
     r'https?://(?!a\.|s\.click\.|star\.)'
     r'([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)'
@@ -73,16 +75,15 @@ STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(
     re.IGNORECASE
 )
 
-# Liens courts
 SHORT_LINK_DOMAIN_REGEX = re.compile(
     r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?',
     re.IGNORECASE
 )
 
-# Combine tous les domaines
 COMBINED_DOMAIN_REGEX = re.compile(
     r'(?:https?://)?(?:www\.)?(?:aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com|star\.aliexpress\.com)',
     re.IGNORECASE
+)
 )
 OFFER_PARAMS = {
     "coin": {
