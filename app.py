@@ -314,6 +314,7 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
             'title': product_data.get('product_title', f'Product {product_id}')
         }
 
+                 
 
         await product_cache.set(product_id, product_info)
         expiry_date = datetime.now() + timedelta(days=CACHE_EXPIRY_DAYS)
