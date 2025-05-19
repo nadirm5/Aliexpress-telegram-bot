@@ -57,7 +57,10 @@ except Exception as e:
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
 URL_REGEX = re.compile(
-    r'https?://(?:[\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)'
+import re
+
+URL_REGEX = re.compile(
+    r'https?://(?:s\.click\.|a\.|star\.|[\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)'
     r'(?:\.[\w-]+)?/[^\s<>"]*',
     re.IGNORECASE
 )
@@ -77,7 +80,7 @@ SHORT_LINK_DOMAIN_REGEX = re.compile(
 )
 
 COMBINED_DOMAIN_REGEX = re.compile(
-    r'(?:https?://)?(?:[\w-]+\.)?(?:aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com|star\.aliexpress\.com)',
+    r'(?:https?://)?(?:s\.click\.|a\.|star\.|[\w-]+\.)?aliexpress\.com',
     re.IGNORECASE
 )
 OFFER_PARAMS = {
