@@ -57,21 +57,17 @@ except Exception as e:
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
 URL_REGEX = re.compile(
-    r'https?://(?:www\.)?(?:'
-    r'(?:s\.click\.aliexpress\.com/e/[a-zA-Z0-9_-]+)'
-    r'|(?:a\.aliexpress\.com/_[a-zA-Z0-9_-]+)'
-    r'|(?:star\.aliexpress\.com/share/[^?\s]+)'
-    r'|(?:aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*)'
-    r')',
+    r'https?://(?:[\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)'
+    r'(?:\.[\w-]+)?/[^\s<>"]*',
     re.IGNORECASE
 )
 
 PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html')
 
 STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(
-    r'https?://(?!a\.|s\.click\.|star\.)'
-    r'([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)'
-    r'(\.[\w-]+)?(/[^\s<>"]*)?',
+    r'https?://(?!s\.click\.|a\.|star\.)'
+    r'(?:[\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)'
+    r'(?:\.[\w-]+)?(/[^\s<>"]*)?',
     re.IGNORECASE
 )
 
@@ -81,7 +77,7 @@ SHORT_LINK_DOMAIN_REGEX = re.compile(
 )
 
 COMBINED_DOMAIN_REGEX = re.compile(
-    r'(?:https?://)?(?:www\.)?(?:aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com|star\.aliexpress\.com)',
+    r'(?:https?://)?(?:[\w-]+\.)?(?:aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com|star\.aliexpress\.com)',
     re.IGNORECASE
 )
 OFFER_PARAMS = {
