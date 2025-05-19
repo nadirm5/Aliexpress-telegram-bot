@@ -307,8 +307,9 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
 
         product_data = products[0]
 
-     try:
-    original_price = float(product_data.get('original_price', product_data.get('target_sale_price')))
+# Gestion du prix original
+try:
+    original_price = float(product_data.get('original_price') or product_data.get('target_sale_price'))
 except (TypeError, ValueError):
     original_price = 0.0
 
