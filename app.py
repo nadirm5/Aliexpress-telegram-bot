@@ -304,11 +304,18 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
         if not products:
             logger.warning(f"No products found in API response for ID {product_id}")
             return None
+product_data = products[0]
 
-        product_data = products[0]
+try:
+    original = float(product_data.get('original_price', product_data.get('target_sale_price')))
+except (TypeError, ValueError):
+    original = 0.0
 
-original = float(product_data.get('original_price', product_data.get('target_sale_price')))
-sale = float(product_data.get('target_sale_price'))
+try:
+    sale = float(product_data.get('target_sale_price'))
+except (TypeError, ValueError):
+    sale = 0.0
+
 discount_percent = int(round((original - sale) / original * 100)) if original > sale else 0
 
 product_info = {
