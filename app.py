@@ -1,4 +1,3 @@
-
 import logging
 import os
 import re
@@ -344,15 +343,6 @@ await product_cache.set(product_id, product_info)
 expiry_date = datetime.now() + timedelta(days=CACHE_EXPIRY_DAYS)
 logger.info(f"Cached product {product_id} until {expiry_date.strftime('%Y-%m-%d %H:%M:%S')}")
 return product_info
-
-except Exception as e:
-    logger.exception(f"Error parsing product details response for ID {product_id}: {e}")
-    return None
-
-        await product_cache.set(product_id, product_info)
-        expiry_date = datetime.now() + timedelta(days=CACHE_EXPIRY_DAYS)
-        logger.info(f"Cached product {product_id} until {expiry_date.strftime('%Y-%m-%d %H:%M:%S')}")
-        return product_info
 
     except Exception as e:
         logger.exception(f"Error parsing product details response for ID {product_id}: {e}")
