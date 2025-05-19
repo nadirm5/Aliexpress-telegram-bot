@@ -84,7 +84,6 @@ COMBINED_DOMAIN_REGEX = re.compile(
     r'(?:https?://)?(?:www\.)?(?:aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com|star\.aliexpress\.com)',
     re.IGNORECASE
 )
-)
 OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
