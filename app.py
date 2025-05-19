@@ -301,37 +301,19 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
         result = resp_result.get('result', {})
         products = result.get('products', {}).get('product', [])
 
+        
         if not products:
-    logger.warning(f"No products found in API response for ID {product_id}")
-    return None
+            logger.warning(f"No products found in API response for ID {product_id}")
+            return None
 
         product_data = products[0]
+        product_info = {
+            'image_url': product_data.get('product_main_image_url'),
+            'price': product_data.get('target_sale_price'), 
+            'currency': product_data.get('target_sale_price_currency', TARGET_CURRENCY),
+            'title': product_data.get('product_title', f'Product {product_id}')
+        }
 
-# Gestion du prix original
-try:
-    original_price = float(product_data.get('original_price') or product_data.get('target_sale_price'))
-except (TypeError, ValueError):
-    original_price = 0.0
-
-# Gestion du prix réduit
-try:
-    discounted_price = float(product_data.get('target_sale_price'))
-except (TypeError, ValueError):
-    discounted_price = 0.0
-
-# Calcul du pourcentage de réduction
-discount_percent = 0
-if original_price > 0 and discounted_price < original_price:
-    discount_percent = round((original_price - discounted_price) / original_price * 100)
-
-product_info = {
-    'image_url': product_data.get('product_main_image_url'),
-    'price': discounted_price,
-    'original_price': original_price,
-    'discount_percent': discount_percent,
-    'currency': product_data.get('target_sale_price_currency', TARGET_CURRENCY),
-    'title': product_data.get('product_title', f'Product {product_id}')
-}
 
         await product_cache.set(product_id, product_info)
         expiry_date = datetime.now() + timedelta(days=CACHE_EXPIRY_DAYS)
