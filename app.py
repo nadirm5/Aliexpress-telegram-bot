@@ -57,9 +57,6 @@ except Exception as e:
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
 URL_REGEX = re.compile(
-import re
-
-URL_REGEX = re.compile(
     r'https?://(?:s\.click\.|a\.|star\.|[\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)'
     r'(?:\.[\w-]+)?/[^\s<>"]*',
     re.IGNORECASE
