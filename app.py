@@ -304,28 +304,40 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
         if not products:
             logger.warning(f"No products found in API response for ID {product_id}")
             return None
-product_data = products[0]
-
 try:
-    original = float(product_data.get('original_price', product_data.get('target_sale_price')))
-except (TypeError, ValueError):
-    original = 0.0
+    product_data = products[0]
 
-try:
-    sale = float(product_data.get('target_sale_price'))
-except (TypeError, ValueError):
-    sale = 0.0
+    try:
+        original = float(product_data.get('original_price', product_data.get('target_sale_price')))
+    except (TypeError, ValueError):
+        original = 0.0
 
-discount_percent = int(round((original - sale) / original * 100)) if original > sale else 0
+    try:
+        sale = float(product_data.get('target_sale_price'))
+    except (TypeError, ValueError):
+        sale = 0.0
 
-product_info = {
-    'image_url': product_data.get('product_main_image_url'),
-    'price': sale,
-    'currency': product_data.get('target_sale_price_currency', TARGET_CURRENCY),
-    'title': product_data.get('product_title', f'Product {product_id}'),
-    'original_price': original,
-    'discount_percent': discount_percent
-}
+    discount_percent = int(round((original - sale) / original * 100)) if original > sale else 0
+
+    product_info = {
+        'image_url': product_data.get('product_main_image_url'),
+        'price': sale,
+        'currency': product_data.get('target_sale_price_currency', TARGET_CURRENCY),
+        'title': product_data.get('product_title', f'Product {product_id}'),
+        'original_price': original,
+        'discount_percent': discount_percent
+    }
+
+except (IndexError, TypeError):
+    # Cas où products est vide ou mal formé
+    product_info = {
+        'image_url': '',
+        'price': 0.0,
+        'currency': TARGET_CURRENCY,
+        'title': f'Product {product_id}',
+        'original_price': 0.0,
+        'discount_percent': 0
+    }
 
         await product_cache.set(product_id, product_info)
         expiry_date = datetime.now() + timedelta(days=CACHE_EXPIRY_DAYS)
