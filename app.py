@@ -56,11 +56,34 @@ except Exception as e:
 
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
-URL_REGEX = re.compile(r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*', re.IGNORECASE)
+# Détection des URLs AliExpress, y compris star.aliexpress.com
+URL_REGEX = re.compile(
+    r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.|star\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*',
+    re.IGNORECASE
+)
+
+# Extraction ID produit
 PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html')
-STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(\.[\w-]+)?(/[^\s<>"]*)?', re.IGNORECASE)
-SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
-COMBINED_DOMAIN_REGEX = re.compile(r'(?:https?://)?(?:www\.)?(?:aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com)', re.IGNORECASE)
+
+# Domaine standard (exclut s.click, a. et star.)
+STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(
+    r'https?://(?!a\.|s\.click\.|star\.)'
+    r'([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)'
+    r'(\.[\w-]+)?(/[^\s<>"]*)?',
+    re.IGNORECASE
+)
+
+# Liens courts
+SHORT_LINK_DOMAIN_REGEX = re.compile(
+    r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?',
+    re.IGNORECASE
+)
+
+# Combine tous les domaines
+COMBINED_DOMAIN_REGEX = re.compile(
+    r'(?:https?://)?(?:www\.)?(?:aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com|star\.aliexpress\.com)',
+    re.IGNORECASE
+)
 OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
