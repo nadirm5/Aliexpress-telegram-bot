@@ -22,9 +22,9 @@ load_dotenv()
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 ALIEXPRESS_APP_KEY = os.getenv('ALIEXPRESS_APP_KEY')
 ALIEXPRESS_APP_SECRET = os.getenv('ALIEXPRESS_APP_SECRET')
-TARGET_CURRENCY = os.getenv('TARGET_CURRENCY', 'us')
+TARGET_CURRENCY = os.getenv('TARGET_CURRENCY', '')
 TARGET_LANGUAGE = os.getenv('TARGET_LANGUAGE', 'en')
-QUERY_COUNTRY = os.getenv('QUERY_COUNTRY', 'us')
+QUERY_COUNTRY = os.getenv('QUERY_COUNTRY', 'US')
 ALIEXPRESS_TRACKING_ID = os.getenv('ALIEXPRESS_TRACKING_ID', 'default')
 ALIEXPRESS_API_URL = 'https://api-sg.aliexpress.com/sync'
 QUERY_FIELDS = 'product_main_image_url,target_sale_price,product_title,target_sale_price_currency'
