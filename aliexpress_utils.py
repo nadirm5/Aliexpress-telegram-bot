@@ -1,5 +1,5 @@
 import aiohttp
-from bs4 import BeautifulSoup
+import re
 import asyncio
 
 async def get_product_details_by_id(url):
@@ -10,19 +10,14 @@ async def get_product_details_by_id(url):
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers) as resp:
             if resp.status != 200:
-                print(f"Erreur HTTP: {resp.status}")
-                return "Prix non trouvé", "Livraison non trouvée"
+                return "Erreur HTTP", "Erreur HTTP"
             html = await resp.text()
 
-            soup = BeautifulSoup(html, 'html.parser')
+            # Prix réduit via JSON ou texte brut
+            price_match = re.search(r'"salePrice":"(.*?)"', html) or re.search(r'"price":"(.*?)"', html)
+            shipping_match = re.search(r'"shippingFee":"(.*?)"', html)
 
-            price_elem = soup.select_one('div.product-price-current span')
-            if not price_elem:
-                price_elem = soup.select_one('span.product-price-value')
-
-            shipping_elem = soup.find(lambda tag: tag.name in ['span', 'div'] and 'shipping' in (tag.get('class') or []))
-
-            price = price_elem.get_text(strip=True) if price_elem else "Prix non trouvé"
-            shipping = shipping_elem.get_text(strip=True) if shipping_elem else "Livraison non trouvée"
+            price = price_match.group(1) + " USD" if price_match else "Prix non trouvé"
+            shipping = shipping_match.group(1) + " USD" if shipping_match else "Livraison non trouvée"
 
             return price, shipping
