@@ -65,12 +65,10 @@ OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
-            "sourceType": "620%26channel=coin",
-            "afSmartRedirect": "y"
+            "sourceType": "200000042"
         }
     }
 }
-
 OFFER_ORDER = ["coin"]
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
@@ -309,7 +307,7 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
 product_data = products[0]
         product_info = {
             'image_url': product_data.get('product_main_image_url'),
-             'price': product_data.get('checkout_order_total'), 
+             'price': product_data.get('target_sale_price'), 
             'currency': product_data.get('target_sale_price_currency', TARGET_CURRENCY),
             'title': product_data.get('product_title', f'Product {product_id}')
         }
