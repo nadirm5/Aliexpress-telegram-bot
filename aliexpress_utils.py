@@ -3,15 +3,16 @@ from bs4 import BeautifulSoup
 import re
 import json
 
-def get_price_after_discount(product_id):
+def get_price_after_discount_kr(product_id):
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9"
     }
     cookies = {
         "intl_locale": "en_US",    # Langue anglaise
         "aep_usuc_f": "region=DZ", # Livraison Algérie
         "x-locale": "en_US",
-        "x-country": "DZ"
+        "x-country": "KR"          # Pays affiché : Corée
     }
     
     url = f"https://www.aliexpress.com/item/{product_id}.html"
@@ -48,5 +49,5 @@ def get_price_after_discount(product_id):
 
 # Exemple d’utilisation
 product_id = "1005006070804083"  # Remplace par ton ID produit
-prix_final = get_price_after_discount(product_id)
-print("Prix après réduction :", prix_final)
+prix_final = get_price_after_discount_kr(product_id)
+print("Prix après réduction (en KRW):", prix_final)
