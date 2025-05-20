@@ -1,50 +1,100 @@
+
 import requests
 from bs4 import BeautifulSoup
-import re
-import json
 
-def get_price_after_discount_kr(product_id):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept-Language": "en-US,en;q=0.9"
-    }
-    cookies = {
-        "intl_locale": "en_US",
-        "aep_usuc_f": "region=DZ",  # Livraison en Algérie
-        "x-locale": "en_US",
-        "x-country": "KR"  # Pays Corée pour afficher prix en KRW
-    }
-    
-    url = f"https://www.aliexpress.com/item/{product_id}.html"
-    response = requests.get(url, headers=headers, cookies=cookies, timeout=15)
-    if response.status_code != 200:
-        print(f"Erreur chargement page: {response.status_code}")
-        return None
 
-    soup = BeautifulSoup(response.text, "html.parser")
+def get_aliexpress_product_info(product_url):
+    """
+    Extract product name from AliExpress without Selenium
+    Args:
+        product_url (str): AliExpress product page URL
+    Returns:
+        str: product name
+    """
+    product_name = None # Initialize product_name
+    img_url = None # Initialize img_url
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        cookies = {"x-hng": "lang=en-US", "intl_locale": "en_US"}
+        response = requests.get(product_url, headers=headers, cookies=cookies, timeout=15)
+        if response.status_code != 200:
+            print(f"Failed to load page: {response.status_code}")
+            return None, None # Return None for both if page fails
+        soup = BeautifulSoup(response.text, "html.parser")
+        
+        # Try finding the specific h1 tag first
+        root_div = soup.find("div", id="root")
+        if root_div:
+            h1 = root_div.select_one("div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > h1")
+            if h1:
+                product_name = h1.get_text(strip=True)
 
-    price_after_discount = None
+        # Fallback to og:title meta tag
+        if not product_name:
+            meta_title = soup.find("meta", property="og:title")
+            if meta_title and meta_title.has_attr("content"):
+                product_name = meta_title["content"]
 
-    # Chercher le prix visible sur la page (classe possible)
-    price_tag = soup.find("span", class_=lambda x: x and ("product-price-value" in x or "product-price-current" in x))
-    if price_tag:
-        price_after_discount = price_tag.get_text(strip=True)
+        # Fallback to keywords meta tag
+        if not product_name:
+            meta_name = soup.find("meta", attrs={"name": "keywords"})
+            if meta_name and meta_name.has_attr("content"):
+                # Take the first keyword as a potential name
+                product_name = meta_name["content"].split(",")[0].strip()
 
-    # Si pas trouvé, chercher dans les scripts JS la variable window.runParams
-    if not price_after_discount:
-        scripts = soup.find_all("script")
-        for script in scripts:
-            if script.string and "window.runParams" in script.string:
-                m = re.search(r'window\.runParams\s*=\s*(\{.*?\});', script.string, re.DOTALL)
-                if m:
-                    try:
-                        data = json.loads(m.group(1))
-                        price_after_discount = data['data']['priceModule']['formatedActivityPrice']
-                    except Exception as e:
-                        print("Erreur extraction prix JSON:", e)
-                break
+        # Fallback to h1 with data-pl attribute
+        if not product_name:
+            h1 = soup.find("h1", {"data-pl": "product-title"})
+            if h1:
+                product_name = h1.get_text(strip=True)
 
-    return price_after_discount
+        # Fallback to h1 with specific class names
+        if not product_name:
+            h1 = soup.find("h1", {"class": lambda x: x and ("product-title-text" in x or "product-title" in x)})
+            if h1:
+                product_name = h1.get_text(strip=True)
+
+        # Generic h1 fallback (last resort for name)
+        if not product_name:
+            h1 = soup.find("h1")
+            if h1:
+                product_name = h1.get_text(strip=True)
+
+        # --- Image Extraction ---
+        img_tag = soup.find("img", {"class": lambda x: x and "magnifier--image" in x})
+        if img_tag and img_tag.has_attr("src"):
+            img_url = img_tag["src"]
+        else:
+            # Fallback to og:image meta tag
+            meta_img = soup.find("meta", property="og:image")
+            if meta_img and meta_img.has_attr("content"):
+                img_url = meta_img["content"]
+
+        # --- Clean up Product Name ---
+        if product_name:
+            # Remove common AliExpress suffixes, potentially followed by numbers
+            import re
+            # Regex: " - AliExpress" optionally followed by space and digits, at the end of the string
+            product_name = re.sub(r'\s*-\s*AliExpress(\s+\d+)?$', '', product_name).strip()
+            # Also handle case without leading space before hyphen
+            product_name = re.sub(r'-AliExpress(\s+\d+)?$', '', product_name).strip()
+
+
+        return product_name, img_url
+    except Exception as e:
+        print(f"An error occurred in get_aliexpress_product_info: {str(e)}") # Added function name for clarity
+        return None, None # Return None for both on error
 
 def get_product_details_by_id(product_id):
-    return get_price_after_discount_kr(product_id)
+    """
+    Constructs URL from product ID and fetches product details.
+    Args:
+        product_id (str or int): The AliExpress product ID.
+    Returns:
+        tuple: (product_name, img_url) or (None, None) if failed.
+    """
+    product_url = f"https://vi.aliexpress.com/item/{product_id}.html"
+    print(f"Constructed URL: {product_url}")
+    return get_aliexpress_product_info(product_url)
