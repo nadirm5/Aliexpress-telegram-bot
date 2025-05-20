@@ -1,23 +1,38 @@
-import aiohttp
-import re
-import asyncio
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+import time
 
-async def get_product_details_by_id(url):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
-    }
+def get_aliexpress_price(url):
+    options = Options()
+    options.add_argument('--headless')  # Ne pas afficher le navigateur
+    options.add_argument('--disable-gpu')
+    options.add_argument('--no-sandbox')
+    driver = webdriver.Chrome(options=options)
 
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers) as resp:
-            if resp.status != 200:
-                return "Erreur HTTP", "Erreur HTTP"
-            html = await resp.text()
+    try:
+        driver.get(url)
+        time.sleep(8)  # Attendre que les prix chargent
 
-            # Prix réduit via JSON ou texte brut
-            price_match = re.search(r'"salePrice":"(.*?)"', html) or re.search(r'"price":"(.*?)"', html)
-            shipping_match = re.search(r'"shippingFee":"(.*?)"', html)
+        # Récupérer le prix réduit
+        try:
+            price = driver.find_element(By.CSS_SELECTOR, 'div.product-price-current span').text
+        except:
+            price = "Prix non trouvé"
 
-            price = price_match.group(1) + " USD" if price_match else "Prix non trouvé"
-            shipping = shipping_match.group(1) + " USD" if shipping_match else "Livraison non trouvée"
+        # Récupérer la livraison
+        try:
+            shipping = driver.find_element(By.XPATH, '//div[contains(text(),"Shipping") or contains(text(),"Livraison")]').text
+        except:
+            shipping = "Livraison non trouvée"
 
-            return price, shipping
+        print(f"Prix: {price}")
+        print(f"Livraison: {shipping}")
+        return price, shipping
+
+    finally:
+        driver.quit()
+
+# Exemple
+url = "https://s.click.aliexpress.com/e/_EvszySa"
+get_aliexpress_price(url)
