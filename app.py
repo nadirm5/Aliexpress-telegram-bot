@@ -65,11 +65,12 @@ OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
-            "sourceType": "200000042"
+            "sourceType": "200000042",
             "afSmartRedirect": "y"
         }
     }
 }
+
 OFFER_ORDER = ["coin"]
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
