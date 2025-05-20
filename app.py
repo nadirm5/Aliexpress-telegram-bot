@@ -27,7 +27,7 @@ TARGET_LANGUAGE = os.getenv('TARGET_LANGUAGE', 'en')
 QUERY_COUNTRY = os.getenv('QUERY_COUNTRY', 'FR')
 ALIEXPRESS_TRACKING_ID = os.getenv('ALIEXPRESS_TRACKING_ID', 'default')
 ALIEXPRESS_API_URL = 'https://api-sg.aliexpress.com/sync'
-QUERY_FIELDS = 'product_main_image_url,total_price,product_title,target_sale_price_currency'
+QUERY_FIELDS = 'product_main_image_url,target_sale_price,product_title,target_sale_price_currency'
 CACHE_EXPIRY_DAYS = 1
 CACHE_EXPIRY_SECONDS = CACHE_EXPIRY_DAYS * 24 * 60 * 60
 MAX_WORKERS = 10
@@ -308,7 +308,7 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
         product_data = products[0]
         product_info = {
             'image_url': product_data.get('product_main_image_url'),
-             'price': product_data.get('total_price'), 
+             'price': product_data.get('target_sale_price'), 
             'currency': product_data.get('target_sale_price_currency', TARGET_CURRENCY),
             'title': product_data.get('product_title', f'Product {product_id}')
         }
