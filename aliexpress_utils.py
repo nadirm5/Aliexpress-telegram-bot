@@ -1,100 +1,74 @@
-
 import requests
 from bs4 import BeautifulSoup
+import re
 
 
 def get_aliexpress_product_info(product_url):
     """
-    Extract product name from AliExpress without Selenium
+    Extrait le nom, l'image et le prix réduit du produit AliExpress (version mobile).
     Args:
-        product_url (str): AliExpress product page URL
+        product_url (str): L'URL du produit AliExpress (version mobile).
     Returns:
-        str: product name
+        tuple: (product_name, img_url, price) ou (None, None, None) en cas d'erreur.
     """
-    product_name = None # Initialize product_name
-    img_url = None # Initialize img_url
+    product_name = None
+    img_url = None
+    price = None
     try:
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            "User-Agent": "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
         }
-        cookies = {"x-hng": "lang=en-US", "intl_locale": "en_US"}
-        response = requests.get(product_url, headers=headers, cookies=cookies, timeout=15)
+        response = requests.get(product_url, headers=headers, timeout=15)
         if response.status_code != 200:
-            print(f"Failed to load page: {response.status_code}")
-            return None, None # Return None for both if page fails
+            print(f"Échec du chargement de la page: {response.status_code}")
+            return None, None, None
+
         soup = BeautifulSoup(response.text, "html.parser")
-        
-        # Try finding the specific h1 tag first
-        root_div = soup.find("div", id="root")
-        if root_div:
-            h1 = root_div.select_one("div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > h1")
-            if h1:
-                product_name = h1.get_text(strip=True)
 
-        # Fallback to og:title meta tag
+        # Nom du produit
+        h1 = soup.find("h1")
+        if h1:
+            product_name = h1.get_text(strip=True)
         if not product_name:
-            meta_title = soup.find("meta", property="og:title")
-            if meta_title and meta_title.has_attr("content"):
-                product_name = meta_title["content"]
+            title_tag = soup.find("title")
+            if title_tag:
+                product_name = title_tag.get_text(strip=True)
 
-        # Fallback to keywords meta tag
-        if not product_name:
-            meta_name = soup.find("meta", attrs={"name": "keywords"})
-            if meta_name and meta_name.has_attr("content"):
-                # Take the first keyword as a potential name
-                product_name = meta_name["content"].split(",")[0].strip()
-
-        # Fallback to h1 with data-pl attribute
-        if not product_name:
-            h1 = soup.find("h1", {"data-pl": "product-title"})
-            if h1:
-                product_name = h1.get_text(strip=True)
-
-        # Fallback to h1 with specific class names
-        if not product_name:
-            h1 = soup.find("h1", {"class": lambda x: x and ("product-title-text" in x or "product-title" in x)})
-            if h1:
-                product_name = h1.get_text(strip=True)
-
-        # Generic h1 fallback (last resort for name)
-        if not product_name:
-            h1 = soup.find("h1")
-            if h1:
-                product_name = h1.get_text(strip=True)
-
-        # --- Image Extraction ---
-        img_tag = soup.find("img", {"class": lambda x: x and "magnifier--image" in x})
-        if img_tag and img_tag.has_attr("src"):
-            img_url = img_tag["src"]
-        else:
-            # Fallback to og:image meta tag
-            meta_img = soup.find("meta", property="og:image")
-            if meta_img and meta_img.has_attr("content"):
-                img_url = meta_img["content"]
-
-        # --- Clean up Product Name ---
+        # Nettoyage du nom
         if product_name:
-            # Remove common AliExpress suffixes, potentially followed by numbers
-            import re
-            # Regex: " - AliExpress" optionally followed by space and digits, at the end of the string
             product_name = re.sub(r'\s*-\s*AliExpress(\s+\d+)?$', '', product_name).strip()
-            # Also handle case without leading space before hyphen
             product_name = re.sub(r'-AliExpress(\s+\d+)?$', '', product_name).strip()
 
+        # Image du produit
+        img_tag = soup.find("img")
+        if img_tag and img_tag.has_attr("src"):
+            img_url = img_tag["src"]
 
-        return product_name, img_url
+        # Prix réduit
+        price_span = soup.find("span", {"class": lambda x: x and "product-price-value" in x})
+        if price_span:
+            price = price_span.get_text(strip=True)
+        else:
+            # Fallback to meta tag
+            meta_price = soup.find("meta", {"property": "og:product:price:amount"})
+            if meta_price and meta_price.has_attr("content"):
+                price = meta_price["content"]
+
+        return product_name, img_url, price
+
     except Exception as e:
-        print(f"An error occurred in get_aliexpress_product_info: {str(e)}") # Added function name for clarity
-        return None, None # Return None for both on error
+        print(f"Erreur dans get_aliexpress_product_info: {str(e)}")
+        return None, None, None
+
 
 def get_product_details_by_id(product_id):
     """
-    Constructs URL from product ID and fetches product details.
+    Construit l'URL mobile à partir de l'ID produit et récupère les détails.
     Args:
-        product_id (str or int): The AliExpress product ID.
+        product_id (str or int): L'identifiant du produit AliExpress.
     Returns:
-        tuple: (product_name, img_url) or (None, None) if failed.
+        tuple: (product_name, img_url, price) ou (None, None, None).
     """
-    product_url = f"https://vi.aliexpress.com/item/{product_id}.html"
-    print(f"Constructed URL: {product_url}")
+    product_url = f"https://m.aliexpress.com/item/{product_id}.html"
+    print(f"URL construite : {product_url}")
     return get_aliexpress_product_info(product_url)
