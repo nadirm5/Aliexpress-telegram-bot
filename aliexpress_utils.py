@@ -1,66 +1,52 @@
 import requests
 from bs4 import BeautifulSoup
 import re
+import json
 
-def get_aliexpress_product_info(product_id):
-    """
-    Tente d'extraire les infos produit depuis la version mobile (plus simple), puis desktop si nécessaire.
-    Retourne nom, image, prix
-    """
+def get_price_after_discount(product_id):
     headers = {
-        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
+    cookies = {
+        "intl_locale": "en_US",    # Langue anglaise
+        "aep_usuc_f": "region=DZ", # Livraison Algérie
+        "x-locale": "en_US",
+        "x-country": "DZ"
+    }
+    
+    url = f"https://www.aliexpress.com/item/{product_id}.html"
+    response = requests.get(url, headers=headers, cookies=cookies)
+    if response.status_code != 200:
+        print("Failed to load page")
+        return None
 
-    # 1. VERSION MOBILE
-    mobile_url = f"https://m.aliexpress.com/item/{product_id}.html"
-    try:
-        r = requests.get(mobile_url, headers=headers, timeout=10)
-        soup = BeautifulSoup(r.text, "html.parser")
+    soup = BeautifulSoup(response.text, "html.parser")
 
-        # Nom
-        name_tag = soup.find("h1")
-        product_name = name_tag.get_text(strip=True) if name_tag else None
+    # Chercher prix affiché (après réduction)
+    price_after_discount = None
 
-        # Image
-        img_tag = soup.find("img")
-        img_url = img_tag["src"] if img_tag and img_tag.has_attr("src") else None
+    # Exemple classes communes pour prix réduit
+    price_tag = soup.find("span", class_=lambda x: x and ("product-price-value" in x or "product-price-current" in x))
+    if price_tag:
+        price_after_discount = price_tag.get_text(strip=True)
 
-        # Prix
-        price_tag = soup.find("span", class_=lambda x: x and "product-price-value" in x)
-        if not price_tag:
-            price_tag = soup.find("span", class_=lambda x: x and "price" in x)
-        product_price = price_tag.get_text(strip=True) if price_tag else None
+    # Si pas trouvé, essayer dans le script JSON intégré
+    if not price_after_discount:
+        scripts = soup.find_all("script")
+        for script in scripts:
+            if script.string and "window.runParams" in script.string:
+                m = re.search(r'window\.runParams\s*=\s*(\{.*?\});', script.string, re.DOTALL)
+                if m:
+                    data = json.loads(m.group(1))
+                    try:
+                        price_after_discount = data['data']['priceModule']['formatedActivityPrice']
+                    except:
+                        pass
+                break
 
-        # Si les infos sont trouvées, retourne
-        if product_name and product_price:
-            return product_name, img_url, product_price
-    except Exception as e:
-        print(f"[Mobile] Erreur: {e}")
+    return price_after_discount
 
-    # 2. VERSION DESKTOP si mobile échoue
-    try:
-        desktop_url = f"https://vi.aliexpress.com/item/{product_id}.html"
-        r = requests.get(desktop_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=15)
-        soup = BeautifulSoup(r.text, "html.parser")
-
-        # Nom
-        h1 = soup.find("h1")
-        product_name = h1.get_text(strip=True) if h1 else None
-
-        # Image
-        meta_img = soup.find("meta", property="og:image")
-        img_url = meta_img["content"] if meta_img and meta_img.has_attr("content") else None
-
-        # Prix depuis script JSON
-        product_price = None
-        for script in soup.find_all("script"):
-            if script.string and "discountPrice" in script.string:
-                match = re.search(r'"discountPrice"\s*:\s*"([\d.,\sDA$€]+)"', script.string)
-                if match:
-                    product_price = match.group(1).strip()
-                    break
-
-        return product_name, img_url, product_price
-    except Exception as e:
-        print(f"[Desktop] Erreur: {e}")
-        return None, None, None
+# Exemple d’utilisation
+product_id = "1005006070804083"  # Remplace par ton ID produit
+prix_final = get_price_after_discount(product_id)
+print("Prix après réduction :", prix_final)
