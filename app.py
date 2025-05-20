@@ -308,7 +308,7 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
         product_data = products[0]
         product_info = {
             'image_url': product_data.get('product_main_image_url'),
-             'price': int(product_data.get('BEFORE_PAYMENT_PROMOTION_ORDER_PAYCAS_CENT', 0)) / 100,), 
+             'price': int(product_data.get('BEFORE_PAYMENT_PROMOTION_ORDER_PAYCAS_CENT', 0)) / 100'), 
             'currency': product_data.get('target_sale_price_currency', TARGET_CURRENCY),
             'title': product_data.get('product_title', f'Product {product_id}')
         }
