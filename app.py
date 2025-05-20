@@ -135,13 +135,13 @@ class CacheWithExpiry:
             expired_keys = [k for k, (_, t) in self.cache.items()
                             if current_time - t >= self.expiry_seconds]
             count = 0
-            for key in expired_keys:
-                try:
-                    del self.cache[key]
-                    count += 1
-                except KeyError:
-                    pass
-            return count
+for key in expired_keys:
+    try:
+        del self.cache[key]
+        count += 1
+    except KeyError:
+        pass
+return count
 
 # Initialize caches
 product_cache = CacheWithExpiry(CACHE_EXPIRY_SECONDS)
