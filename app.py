@@ -26,19 +26,6 @@ formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-# Resolve the short link to the full AliExpress product URL
-async def resolve_short_link(url: str, session: aiohttp.ClientSession) -> str:
-    """Resolve the short link to the full AliExpress product URL."""
-    try:
-        async with session.head(url, allow_redirects=True) as response:
-            # Return the final URL after redirection
-            return str(response.url)
-    except Exception as e:
-        logger.error(f"Error resolving short link {url}: {e}")
-        return None
-
-# rest of the code follows...
-
 # --- Environment Variable Loading ---
 load_dotenv()
 
@@ -109,7 +96,6 @@ class CacheWithExpiry:
         self._lock = asyncio.Lock()
 
     async def get(self, key):
-        """Get item from cache if it exists and is not expired (async safe)"""
         async with self._lock:
             if key in self.cache:
                 item, timestamp = self.cache[key]
@@ -123,25 +109,23 @@ class CacheWithExpiry:
             return None
 
     async def set(self, key, value):
-        """Add item to cache with current timestamp (async safe)"""
         async with self._lock:
             self.cache[key] = (value, time.time())
             logger.debug(f"Cached value for key: {key}")
 
     async def clear_expired(self):
-        """Remove all expired items from cache (async safe)"""
         async with self._lock:
             current_time = time.time()
             expired_keys = [k for k, (_, t) in self.cache.items()
                             if current_time - t >= self.expiry_seconds]
             count = 0
-for key in expired_keys:
-    try:
-        del self.cache[key]
-        count += 1
-    except KeyError:
-        pass
-return count
+            for key in expired_keys:
+                try:
+                    del self.cache[key]
+                    count += 1
+                except KeyError:
+                    pass
+            return count
 
 # Initialize caches
 product_cache = CacheWithExpiry(CACHE_EXPIRY_SECONDS)
@@ -151,7 +135,6 @@ resolved_url_cache = CacheWithExpiry(CACHE_EXPIRY_SECONDS)
 # --- Helper Functions ---
 
 async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> str | None:
-    """Follows redirects for a short URL to find the final destination URL."""
     cached_final_url = await resolved_url_cache.get(short_url)
     if cached_final_url:
         logger.info(f"Cache hit for resolved short link: {short_url} -> {cached_final_url}")
@@ -169,13 +152,11 @@ async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> 
                     final_url = final_url.replace('.aliexpress.us', '.aliexpress.com')
                     logger.info(f"Converted URL: {final_url}")
                 
-                # Replace _randl_shipto=US with _randl_shipto=QUERY_COUNTRY
                 if '_randl_shipto=' in final_url:
                     logger.info(f"Found _randl_shipto parameter in URL, replacing with QUERY_COUNTRY value")
                     final_url = re.sub(r'_randl_shipto=[^&]+', f'_randl_shipto={QUERY_COUNTRY}', final_url)
                     logger.info(f"Updated URL with correct country: {final_url}")
                     
-                    # Re-fetch the URL with the updated country parameter to get the correct product ID
                     try:
                         logger.info(f"Re-fetching URL with updated country parameter: {final_url}")
                         async with session.get(final_url, allow_redirects=True, timeout=10) as country_response:
@@ -185,10 +166,8 @@ async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> 
                     except Exception as e:
                         logger.warning(f"Error re-fetching URL with updated country parameter: {e}")
                 
-                # Extract product ID after domain conversion to ensure we get the correct ID
                 product_id = extract_product_id(final_url)
                 if STANDARD_ALIEXPRESS_DOMAIN_REGEX.match(final_url) and product_id:
-                    # Re-fetch product details with the new product ID if domain was changed
                     logger.info(f"Using product ID {product_id} from converted URL")
                     await resolved_url_cache.set(short_url, final_url)
                     return final_url
@@ -205,240 +184,4 @@ async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> 
         logger.error(f"HTTP ClientError resolving short link {short_url}: {e}")
         return None
     except Exception as e:
-        logger.exception(f"Unexpected error resolving short link {short_url}: {e}")
-        return None
-
-
-def extract_product_id(url):
-    """Extracts the product ID from an AliExpress URL.
-    Handles different domain formats including .us domain.
-    """
-    # First, ensure we're working with a standardized URL format
-    # Convert .us domain to .com domain if needed
-    if '.aliexpress.us' in url:
-        url = url.replace('.aliexpress.us', '.aliexpress.com')
-        logger.info(f"Converted .us URL to .com format for product ID extraction: {url}")
-    
-    # Try standard product ID extraction
-    match = PRODUCT_ID_REGEX.search(url)
-    if match:
-        return match.group(1)
-    
-    # If standard extraction fails, try alternative patterns that might be used in different domains
-    # Some domains might use different URL structures
-    alt_patterns = [
-        r'/p/[^/]+/([0-9]+)\.html',  # Alternative pattern sometimes used
-        r'product/([0-9]+)'
-    ]
-    
-    for pattern in alt_patterns:
-        alt_match = re.search(pattern, url)
-        if alt_match:
-            product_id = alt_match.group(1)
-            logger.info(f"Extracted product ID {product_id} using alternative pattern {pattern}")
-            return product_id
-    
-    logger.warning(f"Could not extract product ID from URL: {url}")
-    return None
-
-# Renamed from extract_valid_aliexpress_urls_with_ids
-def extract_potential_aliexpress_urls(text):
-    """Finds potential AliExpress URLs (standard and short) in text using regex."""
-    return URL_REGEX.findall(text)
-
-
-def clean_aliexpress_url(url: str, product_id: str) -> str | None:
-    """Reconstructs a clean base URL (scheme, domain, path) for a given product ID."""
-    try:
-        parsed_url = urlparse(url)
-        # Ensure the path segment is correct for the product ID
-        path_segment = f'/item/{product_id}.html'
-        base_url = urlunparse((
-            parsed_url.scheme or 'https',
-            parsed_url.netloc,
-            path_segment,
-            '', '', ''
-        ))
-        return base_url
-    except ValueError:
-        logger.warning(f"Could not parse or reconstruct URL: {url}")
-        return None
-
-
-def build_url_with_offer_params(base_url, params_to_add):
-    """Adds offer parameters to a base URL."""
-    if not params_to_add:
-        return base_url
-
-    try:
-        parsed_url = urlparse(base_url)
-        
-        # Remove country subdomain (like 'ar.', 'es.', etc.) from netloc
-        netloc = parsed_url.netloc
-        if '.' in netloc and netloc.count('.') > 1:
-            # Extract domain parts
-            parts = netloc.split('.')
-            # Keep only the main domain (aliexpress.com)
-            if len(parts) >= 2 and 'aliexpress' in parts[-2]:
-                netloc = f"aliexpress.{parts[-1]}"
-        
-        # Special handling for sourceType parameter that contains encoded '&'
-        if 'sourceType' in params_to_add and '%26' in params_to_add['sourceType']:
-            # The parameter already contains encoded values, use it directly
-            new_query_string = '&'.join([f"{k}={v}" for k, v in params_to_add.items() if k != 'channel' and '%26channel=' in params_to_add['sourceType']])
-        else:
-            new_query_string = urlencode(params_to_add)
-            
-        # Reconstruct URL ensuring path is preserved correctly
-        reconstructed_url = urlunparse((
-            parsed_url.scheme,
-            netloc,
-            parsed_url.path,
-            '',
-            new_query_string,
-            ''
-        ))
-        # Add the star.aliexpress.com prefix to the reconstructed URL
-        reconstructed_url = f"https://star.aliexpress.com/share/share.htm?&redirectUrl={reconstructed_url}"
-        return reconstructed_url
-    except ValueError:
-        logger.error(f"Error building URL with params for base: {base_url}")
-        return base_url
-
-
-# --- Maintenance Task ---
-async def periodic_cache_cleanup(context: ContextTypes.DEFAULT_TYPE):
-    """Periodically clean up expired cache items (Job Queue callback)"""
-    try:
-        product_expired = await product_cache.clear_expired()
-        link_expired = await link_cache.clear_expired()
-        resolved_expired = await resolved_url_cache.clear_expired()
-        logger.info(f"Cache cleanup: Removed {product_expired} product, {link_expired} link, {resolved_expired} resolved URL items.")
-        logger.info(f"Cache stats: {len(product_cache.cache)} products, {len(link_cache.cache)} links, {len(resolved_url_cache.cache)} resolved URLs in cache.")
-    except Exception as e:
-        logger.error(f"Error in periodic cache cleanup job: {e}")
-def build_url_with_offer_params(base_url, params_to_add):
-    """Adds offer parameters to a base URL. Handles 'coin_page' offer type."""
-    if not params_to_add:
-        return base_url
-
-    try:
-        parsed_url = urlparse(base_url)
-        
-        # Special handling for coin page offer
-        if params_to_add.get('sourceType') == 'coin_page':
-            product_id = extract_product_id(base_url)
-            if not product_id:
-                logger.warning(f"Could not extract product ID for coin page from URL: {base_url}")
-                return None
-            
-            # Generate random parameters
-            random_fcid = generate_random_fcid()
-            random_trace_key = generate_random_trace_key()
-            terminal_id = generate_terminal_id()
-            
-            # Build the special coin page URL
-            coin_page_url = (
-                "https://m.aliexpress.com/p/coin-index/index.html"
-                "?_immersiveMode=true"
-                "&from=syicon"
-                f"&productIds={product_id}"
-                f"&aff_fcid={random_fcid}"
-                "&aff_fsk=_ooGaZvh"
-                "&aff_platform=api-new-link-generate"
-                "&sk=_ooGaZvh"
-                f"&aff_trace_key={random_trace_key}"
-                f"&terminal_id={terminal_id}"
-            )
-            logger.info(f"Generated coin page URL: {coin_page_url}")
-            return coin_page_url
-        
-        # Original handling for other offer types
-        netloc = parsed_url.netloc
-        if '.' in netloc and netloc.count('.') > 1:
-            parts = netloc.split('.')
-            if len(parts) >= 2 and 'aliexpress' in parts[-2]:
-                netloc = f"aliexpress.{parts[-1]}"
-        
-        if 'sourceType' in params_to_add and '%26' in params_to_add['sourceType']:
-            new_query_string = '&'.join([f"{k}={v}" for k, v in params_to_add.items() if k != 'channel' and '%26channel=' in params_to_add['sourceType']])
-        else:
-            new_query_string = urlencode(params_to_add)
-        
-        reconstructed_url = urlunparse((
-            parsed_url.scheme,
-            netloc,
-            parsed_url.path,
-            '',
-            new_query_string,
-            ''
-        ))
-        reconstructed_url = f"https://star.aliexpress.com/share/share.htm?&redirectUrl={reconstructed_url}"
-        return reconstructed_url
-    except ValueError:
-        logger.error(f"Error building URL with params for base: {base_url}")
-        return base_url
-# --- Maintenance Task ---
-async def periodic_cache_cleanup(context: ContextTypes.DEFAULT_TYPE):
-    """Periodically clean up expired cache items (Job Queue callback)"""
-    try:
-        product_expired = await product_cache.clear_expired()
-        link_expired = await link_cache.clear_expired()
-        resolved_expired = await resolved_url_cache.clear_expired()
-        logger.info(f"Cache cleanup: Removed {product_expired} product, {link_expired} link, {resolved_expired} resolved URL items.")
-        logger.info(f"Cache stats: {len(product_cache.cache)} products, {len(link_cache.cache)} links, {len(resolved_url_cache.cache)} resolved URLs in cache.")
-    except Exception as e:
-        logger.error(f"Error in periodic cache cleanup job: {e}")
-
-# --- API Call Functions (Adapted for Async Cache) ---
-
-async def fetch_product_details_v2(product_id):
-    """Fetches product details using aliexpress.affiliate.productdetail.get with async cache."""
-    cached_data = await product_cache.get(product_id)
-    if cached_data:
-        logger.info(f"Cache hit for product ID: {product_id}")
-        return cached_data
-
-    logger.info(f"Fetching product details for ID: {product_id}")
-
-    def _execute_api_call():
-        """Execute blocking API call in a thread pool."""
-        try:
-            request = iop.IopRequest('aliexpress.affiliate.productdetail.get')
-            request.add_api_param('fields', QUERY_FIELDS)
-            request.add_api_param('product_ids', product_id)
-            request.add_api_param('target_currency', TARGET_CURRENCY)
-            request.add_api_param('target_language', TARGET_LANGUAGE)
-            request.add_api_param('tracking_id', ALIEXPRESS_TRACKING_ID)
-            request.add_api_param('country', QUERY_COUNTRY)
-
-            return aliexpress_client.execute(request)
-        except Exception as e:
-            logger.error(f"Error in API call thread for product {product_id}: {e}")
-            return None
-
-    loop = asyncio.get_event_loop()
-    response = await loop.run_in_executor(executor, _execute_api_call)
-
-    if not response or not response.body:
-        logger.error(f"Product detail API call failed or returned empty body for ID: {product_id}")
-        return None
-
-    try:
-        response_data = response.body
-        # Handle potential non-JSON string response (though SDK should return structured)
-        if isinstance(response_data, str):
-            try:
-                response_data = json.loads(response_data)
-            except json.JSONDecodeError as json_err:
-                logger.error(f"Failed to decode JSON response for product {product_id}: {json_err}. Response: {response_data[:500]}")
-                return None
-
-        if 'error_response' in response_data:
-            error_details = response_data.get('error_response', {})
-            error_msg = error_details.get('msg', 'Unknown API error')
-            error_code = error_details.get('code', 'N/A')
-            logger.error(f"API Error for Product ID {product_id}: Code={error_code}, Msg={error_msg}")
-            return None
-
-        detail_response = response_data.get('aliexpress_affiliate_productde
+        logger.exception(f"Unexpected error resolving short link {short_url}:
