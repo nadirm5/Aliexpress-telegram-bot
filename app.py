@@ -65,8 +65,7 @@ OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
-            "sourceType": "620",
-            "channel": "coin",
+            "sourceType": "1201",  # changer ce code, exemple 1201, 0, ou ""
             "afSmartRedirect": "y"
         }
     }
