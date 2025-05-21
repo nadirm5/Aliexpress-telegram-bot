@@ -68,7 +68,7 @@ OFFER_PARAMS = {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
             "channel": "coin",
-            # extraParams doit être une chaîne JSON encodée
+            "afsmartredirect": "y",
             "extraParams": json.dumps({
                 "channelInfo": {
                     "sourceType": "620"
