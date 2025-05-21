@@ -78,7 +78,7 @@ OFFER_PARAMS = {
     }
 }
 
-OFFER_ORDER = ["coin"]
+OFFER_ORDER = list(OFFER_PARAMS.keys())  # ["coin"]
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
