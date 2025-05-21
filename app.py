@@ -122,7 +122,7 @@ async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> 
 
     logger.info(f"Resolving short link: {short_url}")
     try:
-        async with session.get(short_url, allow_redirects=True, timeout=10) as response:
+        async with session.get(short_url, allow_redirects=True, timeout=5) as response:
             if response.status == 200 and response.url:
                 final_url = str(response.url)
                 logger.info(f"Resolved {short_url} to {final_url}")
