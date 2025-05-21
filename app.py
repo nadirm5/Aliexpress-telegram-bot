@@ -549,7 +549,6 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     decorated_title = f"✨⭐️ {product_title} ⭐️✨"
     product_price = product_data.get('price')
     product_currency = product_data.get('currency', '')
-    product_id = product_data.get('product_id')  # Assure-toi que ce champ est bien défini
 
     # Titre
     message_lines.append(f"<b>{decorated_title}</b>")
@@ -567,15 +566,8 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     if coin_link:
         message_lines.append(f"▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ : <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
-
-    # Lien pour ouvrir dans l'application
-    if product_id:
-        message_lines.append(f"📱 <b>Ouvrir dans l'application :</b> aliexpress://product/{product_id}")
-        message_lines.append("⚠️ افتح الرابط داخل التطبيق للحصول على أفضل سعر.")
-
-    # Lien Telegram
-    message_lines.append("🔔 <b>Follow Us</b>")
-    message_lines.append("📱 Telegram: https://t.me/RayanCoupon")
+        message_lines.append("🔔 <b>Follow Us</b>")
+        message_lines.append("📱 Telegram: https://t.me/RayanCoupon")
 
     return "\n".join(message_lines)
 
