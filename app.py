@@ -61,11 +61,12 @@ PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html', re.IGNORECASE)
 STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?(/.*)?', re.IGNORECASE)
 SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
 COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
+
 OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
-            "sourceType": "1201",  # changer ce code, exemple 1201, 0, ou ""
+            "sourceType": "",  # laisser vide ou mettre "0" pour éviter bug de prix
             "afSmartRedirect": "y"
         }
     }
@@ -523,13 +524,13 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
 
-    # Titre du produit avec émojis
+    # Titre du produit
     product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
     decorated_title = f"✨⭐️ {product_title} ⭐️✨"
     product_price = product_data.get('price')
     product_currency = product_data.get('currency', '')
 
-    # Titre
+    # Titre formaté
     message_lines.append(f"<b>{decorated_title}</b>")
 
     # Prix
@@ -541,12 +542,21 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     else:
         message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
+    # Lien avec coins
     coin_link = generated_links.get("coin")
     if coin_link:
         message_lines.append(f"▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ : <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
-        message_lines.append("🔔 <b>Follow Us</b>")
-        message_lines.append("📱 Telegram: https://t.me/RayanCoupon")
+
+    # Lien pour ouvrir directement dans l'application
+    product_id = product_data.get("product_id")
+    if product_id:
+        deep_link = f"aliexpress://product/{product_id}"
+        message_lines.append(f"📱 <b>Ouvrir dans l'application :</b> <code>{deep_link}</code>\n")
+
+    # Canal Telegram
+    message_lines.append("🔔 <b>Follow Us</b>")
+    message_lines.append("📱 Telegram: https://t.me/RayanCoupon")
 
     return "\n".join(message_lines)
 
