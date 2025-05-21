@@ -61,24 +61,17 @@ PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html', re.IGNORECASE)
 STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?(/.*)?', re.IGNORECASE)
 SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
 COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
-import json
-
 OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
-            "channel": "coin",
-            "afsmartredirect": "y",
-            "extraParams": json.dumps({
-                "channelInfo": {
-                    "sourceType": "620"
-                }
-            }, separators=(',', ':'))
+            "sourceType": "620%26channel=coin",
+            "afSmartRedirect": "y"
         }
     }
 }
 
-OFFER_ORDER = list(OFFER_PARAMS.keys())  # ["coin"]
+OFFER_ORDER = ["coin"]
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
