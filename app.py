@@ -63,9 +63,9 @@ SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|
 COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
 OFFER_PARAMS = {
     "coin": {
-        "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
+        "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بدون رفع السعر ⬇️</b> 👉",
         "params": {
-            "sourceType": "",  # ← laisser vide ou mettre "0"
+            "sourceType": "",  # Supprime 1201 pour éviter les hausses de prix
             "afSmartRedirect": "y"
         }
     }
