@@ -61,6 +61,21 @@ PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html', re.IGNORECASE)
 STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?(/.*)?', re.IGNORECASE)
 SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
 COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
+
+def extract_product_id(text):
+    short_match = SHORT_LINK_DOMAIN_REGEX.search(text)
+    if short_match:
+        try:
+            final_url = requests.get(short_match.group(), timeout=10, allow_redirects=True).url
+            match = PRODUCT_ID_REGEX.search(final_url)
+            if match:
+                return match.group(1)
+        except:
+            return None
+    match = PRODUCT_ID_REGEX.search(text)
+    if match:
+        return match.group(1)
+    return None
 OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
