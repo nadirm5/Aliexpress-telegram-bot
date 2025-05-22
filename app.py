@@ -26,7 +26,7 @@ TARGET_CURRENCY = os.getenv('TARGET_CURRENCY', '')
 TARGET_LANGUAGE = os.getenv('TARGET_LANGUAGE', 'en')
 QUERY_COUNTRY = os.getenv('QUERY_COUNTRY', 'fr')
 ALIEXPRESS_TRACKING_ID = os.getenv('ALIEXPRESS_TRACKING_ID', 'default')
-https://api.aliexpress.com/openapi/param2/2/portals.open/aliexpress.affiliate.productdetail.get/506592
+ALIEXPRESS_API_URL = https://api.aliexpress.com/openapi/param2/2/portals.open/aliexpress.affiliate.productdetail.get/506592
 QUERY_FIELDS = 'product_main_image_url,target_sale_price,product_title,target_sale_price_currency'
 CACHE_EXPIRY_DAYS = 1
 CACHE_EXPIRY_SECONDS = CACHE_EXPIRY_DAYS * 24 * 60 * 60
