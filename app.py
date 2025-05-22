@@ -65,7 +65,7 @@ OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
-            "sourceType": "620",
+            "sourceType": "620&channel=coin",
             "afSmartRedirect": "y",
             "scm": "1007.54490.406276.0",
             "scm_id": "1007.54490.406276.0",
