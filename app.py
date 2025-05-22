@@ -146,7 +146,6 @@ async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> 
                     final_url = final_url.replace('.aliexpress.us', '.aliexpress.com')
                     logger.info(f"Converted US domain URL: {final_url}")
 
-if '_randl_shipto=' in final_url:
  if '_randl_shipto=' in final_url:
                     final_url = re.sub(r'_randl_shipto=[^&]+', f'_randl_shipto={QUERY_COUNTRY}', final_url)
                     logger.info(f"Updated URL with correct country: {final_url}")
