@@ -68,10 +68,21 @@ OFFER_PARAMS = {
             "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
         }
+    },
+    "bundle": {
+        "name": "📦 <b>Bundle Deals</b> – <b>خصومات على العروض المجمعة 💥</b> 👉",
+        "params": {
+            "sourceType": "570",
+            "scm": "1007.41618.435122.0",
+            "scm_id": "1007.41618.435122.0",
+            "scm-url": "1007.41618.435122.0",
+            "pvid": "1d6d5bee-18fd-4156-9306-d2d9325a2591",
+            "afSmartRedirect": "y"
+        }
     }
 }
 
-OFFER_ORDER = ["coin"]
+OFFER_ORDER = ["coin", "bundle"]
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
@@ -547,15 +558,17 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         message_lines.append(f"▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ : <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
+    # Lien avec Bundle Deals
+    bundle_link = generated_links.get("bundle")
+    if bundle_link:
+        message_lines.append(f"\n▫️ 📦 Bundle Deals – عروض مجمعة ⬇️ : <b>{bundle_link}</b>")
+        message_lines.append("🔥 عروض مميزة عند شراء أكثر من قطعة!\n")
+
     # Lien pour ouvrir directement dans l'application
     product_id = product_data.get("product_id")
     if product_id:
         deep_link = f"aliexpress://product/{product_id}"
-        message_lines.append(f"📱 <b>Ouvrir dans l'application :</b> <code>{deep_link}</code>\n")
-
-    # Canal Telegram
-    message_lines.append("🔔 <b>Follow Us</b>")
-    message_lines.append("📱 Telegram: https://t.me/RayanCoupon")
+        message_lines.append(f"\n📱 <b>Ouvrir dans l'application :</b> <code>{deep_link}</code>\n")
 
     return "\n".join(message_lines)
 
