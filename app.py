@@ -68,7 +68,7 @@ OFFER_PARAMS = {
             "sourceType": "620",
             "channel": "coin",
             "aecmd": "true",
-            "pdp_ext_f": '{"ship_from":"CN","signature":"05e880bdd8d66734","sku_id":"12000036239407109"}
+            "pdp_ext_f": '{"ship_from":"CN","signature":"05e880bdd8d66734","sku_id":"12000036239407109"}'
         }
     },
     "bundle": {
