@@ -147,34 +147,28 @@ async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> 
                     logger.info(f"Converted US domain URL: {final_url}")
 
 if '_randl_shipto=' in final_url:
-    final_url = re.sub(r'_randl_shipto=[^&]+', f'_randl_shipto={QUERY_COUNTRY}', final_url)
-    logger.info(f"Updated URL with correct country: {final_url}")
-    try:
-        logger.info(f"Re-fetching URL with updated country parameter: {final_url}")
-        async with session.get(final_url, allow_redirects=True, timeout=10) as country_response:
-            if country_response.status == 200 and country_response.url:
-                final_url = str(country_response.url)
-                logger.info(f"Re-fetched URL with correct country: {final_url}")
-    except Exception as e:
-        logger.warning(f"Error re-fetching URL with updated country parameter: {e}")
+ if '_randl_shipto=' in final_url:
+                    final_url = re.sub(r'_randl_shipto=[^&]+', f'_randl_shipto={QUERY_COUNTRY}', final_url)
+                    logger.info(f"Updated URL with correct country: {final_url}")
+                    try:
+                        logger.info(f"Re-fetching URL with updated country parameter: {final_url}")
+                        async with session.get(final_url, allow_redirects=True, timeout=10) as country_response:
+                            if country_response.status == 200 and country_response.url:
+                                final_url = str(country_response.url)
+                                logger.info(f"Re-fetched URL with correct country: {final_url}")
+                    except Exception as e:
+                        logger.warning(f"Error re-fetching URL with updated country parameter: {e}")
 
-from urllib.parse import quote_plus
-
-product_id = extract_product_id(final_url)
-if STANDARD_ALIEXPRESS_DOMAIN_REGEX.match(final_url) and product_id:
-    # Crée le lien affilié HTML normal
-    tracking_id = "default"
-    affiliate_url = f"https://www.aliexpress.com/item/{product_id}.html?aff_fcid={tracking_id}"
-    
-    # Crée le lien pour l'app
-    app_link = f"aliexpress://webview?url={quote_plus(affiliate_url)}"
-    logger.info(f"Generated app link with affiliation: {app_link}")
-
-    await resolved_url_cache.set(short_url, app_link)
-    return app_link
-else:
-    logger.error(f"Failed to resolve short link {short_url}. Status: {response.status}")
-    return None
+                product_id = extract_product_id(final_url)
+                if STANDARD_ALIEXPRESS_DOMAIN_REGEX.match(final_url) and product_id:
+                    await resolved_url_cache.set(short_url, final_url)
+                    return final_url
+                else:
+                    logger.warning(f"Resolved URL {final_url} doesn't look like a valid AliExpress product page.")
+                    return None
+            else:
+                logger.error(f"Failed to resolve short link {short_url}. Status: {response.status}")
+                return None
     except asyncio.TimeoutError:
         logger.error(f"Timeout resolving short link: {short_url}")
         return None
