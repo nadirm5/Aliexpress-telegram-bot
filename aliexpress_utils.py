@@ -71,33 +71,38 @@ def get_aliexpress_product_info(product_url):
         print(f"An error occurred in get_aliexpress_product_info: {str(e)}")
         return None, None
 
-def generate_affiliate_app_links(product_id, affiliate_id="xman-t"):
+def generate_affiliate_app_link_only(product_id, affiliate_id="xman-t", platform="android"):
     """
-    Génère des liens AliExpress avec redirection vers app iOS, Android, sinon navigateur.
+    Génère uniquement le lien d'affiliation AliExpress pour ouvrir dans l'application
+    platform: 'android' ou 'ios'
     """
-    web_link = f"https://s.click.aliexpress.com/e/_d{product_id}?aff_platform=portals-tool&aff_trace_key={affiliate_id}"
-    ios_link = f"aliexpress://product/{product_id}?aff_platform=portals-tool&aff_trace_key={affiliate_id}"
-    android_link = (
-        f"intent://product/{product_id}#Intent;"
-        f"scheme=aliexpress;package=com.alibaba.aliexpresshd;S.aff_platform=portals-tool;"
-        f"S.aff_trace_key={affiliate_id};end"
-    )
-    return {
-        "ios": ios_link,
-        "android": android_link,
-        "web": web_link
-    }
+    if platform == "ios":
+        return f"aliexpress://product/{product_id}?aff_platform=portals-tool&aff_trace_key={affiliate_id}"
+    elif platform == "android":
+        return (
+            f"intent://product/{product_id}#Intent;"
+            f"scheme=aliexpress;package=com.alibaba.aliexpresshd;S.aff_platform=portals-tool;"
+            f"S.aff_trace_key={affiliate_id};end"
+        )
+    else:
+        raise ValueError("Platform must be 'ios' or 'android'")
 
-def get_product_details_by_id(product_id, affiliate_id="xman-t"):
+def get_product_details_by_id(product_id, affiliate_id="xman-t", platform="android"):
     """
-    Récupère nom, image, et liens d'affiliation app/web du produit.
+    Récupère nom, image, et lien d'affiliation app du produit (uniquement lien app)
     """
     product_url = f"https://vi.aliexpress.com/item/{product_id}.html"
     print(f"Constructed URL: {product_url}")
     product_name, img_url = get_aliexpress_product_info(product_url)
-    links = generate_affiliate_app_links(product_id, affiliate_id)
+    app_link = generate_affiliate_app_link_only(product_id, affiliate_id, platform)
     return {
         "product_name": product_name,
         "image_url": img_url,
-        "affiliate_links": links
+        "affiliate_app_link": app_link
     }
+
+# Exemple d'utilisation
+if __name__ == "__main__":
+    product_id = "1005001234567890"  # Remplace par un vrai product_id
+    details = get_product_details_by_id(product_id, platform="android")
+    print(details)
