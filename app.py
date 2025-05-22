@@ -65,16 +65,20 @@ OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
-            "sourceType": "620",
-            "channel": "coin",
-            "afSmartRedirect": "y",
+            "aff_fcid": "a7d6f418a5de483abf33c66727e8b27e-1747923101862-08350-_ol44nkB",
+            "tt": "CPS_NORMAL",
+            "aff_fsk": "_ol44nkB",
+            "nr": "n",
+            "spm": "a1z65.httpdispatcheractiv.0.0",
+            "statusBarHeight": "101",
+            "_dognoseId": "WXRieW50TFBkMHNEQUcwc1d3VkMwN0IBikrsTqVhbGlleHByZQAAABgR",
+            "aff_platform": "portals-tool",
+            "sk": "_ol44nkB",
+            "aff_trace_key": "a7d6f418a5de483abf33c66727e8b27e-1747923101862-08350-_ol44nkB",
+            "terminal_id": "e22b1bfe1f644209b7fd906bc005f01a",
             "fromApp": "true",
-            "currency": "DZD",
+            "currency": "USD",
             "country": "DZ",
-            "scm": "1007.54490.406276.0",
-            "scm_id": "1007.54490.406276.0",
-            "scm-url": "1007.54490.406276.0",
-            "pvid": "9e4d75a0-fd0a-4eed-94d7-deb73bce909f"
         }
     },
     "bundle": {
