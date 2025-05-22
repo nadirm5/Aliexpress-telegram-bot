@@ -65,20 +65,13 @@ OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
-            "aff_fcid": "a7d6f418a5de483abf33c66727e8b27e-1747923101862-08350-_ol44nkB",
-            "tt": "CPS_NORMAL",
-            "aff_fsk": "_ol44nkB",
-            "nr": "n",
-            "spm": "a1z65.httpdispatcheractiv.0.0",
-            "statusBarHeight": "101",
-            "_dognoseId": "WXRieW50TFBkMHNEQUcwc1d3VkMwN0IBikrsTqVhbGlleHByZQAAABgR",
-            "aff_platform": "portals-tool",
-            "sk": "_ol44nkB",
-            "aff_trace_key": "a7d6f418a5de483abf33c66727e8b27e-1747923101862-08350-_ol44nkB",
-            "terminal_id": "e22b1bfe1f644209b7fd906bc005f01a",
-            "fromApp": "true",
-            "currency": "USD",
-            "country": "DZ",
+            "sourceType": "620",
+            "channel": "coin",
+            "scm": "1007.37449.376406.0",
+            "scm_id": "1007.37449.376406.0",
+            "scm-url": "1007.37449.376406.0",
+            "pvid": "dacf0b0e-ebfe-4f24-aba0-85b8499d0ae7",
+            "utparam": "%7B%22x_object_type%22%3A%22product%22%2C%22pvid%22%3A%22dacf0b0e-ebfe-4f24-aba0-85b8499d0ae7%22%2C%22belongs%22%3A%5B%7B%22floor_id%22%3A%2220161082889%22%2C%22type%22%3A%22dataset%22%7D%5D%2C%22pageSize%22%3A%2220%22%2C%22language%22%3A%22fr%22%2C%22scm%22%3A%221007.37449.376406.0%22%2C%22countryId%22%3A%22FR%22%2C%22tpp_buckets%22%3A%2227449%230%23376406%230_27449%2316820%23463273%233_27449%2313948%23464132%239_27449%2315046%23507814%2319%22%2C%22x_object_id%22%3A%2210005006200066468%22%7D"
         }
     },
     "bundle": {
