@@ -574,9 +574,8 @@ if product_id:
     deep_link = f"aliexpress://product/{product_id}"
     message_lines.append(f"\n📱 <b>Ouvrir dans l'application :</b> <code>{deep_link}</code>")
     message_lines.append(f"🔗 <a href='{deep_link}'>Cliquez ici pour ouvrir directement dans l'application AliExpress</a>\n")
-    
-    return "\n".join(message_lines)
 
+return "\n".join(message_lines)
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
