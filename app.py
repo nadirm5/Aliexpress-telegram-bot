@@ -159,12 +159,16 @@ async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> 
                         logger.warning(f"Error re-fetching URL with updated country parameter: {e}")
 
                 product_id = extract_product_id(final_url)
-                if STANDARD_ALIEXPRESS_DOMAIN_REGEX.match(final_url) and product_id:
-                    await resolved_url_cache.set(short_url, final_url)
-                    return final_url
-                else:
-                    logger.warning(f"Resolved URL {final_url} doesn't look like a valid AliExpress product page.")
-                    return None
+if STANDARD_ALIEXPRESS_DOMAIN_REGEX.match(final_url) and product_id:
+    # Ajout du lien pour app
+    app_link = f"aliexpress://productdetail?productId={product_id}"
+    logger.info(f"Generated app link: {app_link}")
+
+    await resolved_url_cache.set(short_url, final_url)
+    return final_url  # Ou tu peux faire : return final_url, app_link si tu veux utiliser les deux
+else:
+    logger.warning(f"Resolved URL {final_url} doesn't look like a valid AliExpress product page.")
+    return None
             else:
                 logger.error(f"Failed to resolve short link {short_url}. Status: {response.status}")
                 return None
