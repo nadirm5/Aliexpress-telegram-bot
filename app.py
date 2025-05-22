@@ -556,7 +556,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     else:
         message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    # Lien avec coins
+    # Lien avec Coins
     coin_link = generated_links.get("coin")
     if coin_link:
         message_lines.append(f"▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ : <b>{coin_link}</b>")
@@ -569,13 +569,13 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         message_lines.append("🔥 عروض مميزة عند شراء أكثر من قطعة!\n")
 
     # Lien pour ouvrir directement dans l'application
-product_id = product_data.get("product_id")
-if product_id:
-    deep_link = f"aliexpress://product/{product_id}"
-    message_lines.append(f"\n📱 <b>Ouvrir dans l'application :</b> <code>{deep_link}</code>")
-    message_lines.append(f"🔗 <a href='{deep_link}'>Cliquez ici pour ouvrir directement dans l'application AliExpress</a>\n")
+    product_id = product_data.get("product_id")
+    if product_id:
+        deep_link = f"aliexpress://product/{product_id}"
+        message_lines.append(f"\n📱 <b>Ouvrir dans l'application :</b> <code>{deep_link}</code>")
+        message_lines.append(f"🔗 <a href='{deep_link}'>Cliquez ici pour ouvrir directement dans l'application AliExpress</a>\n")
 
-return "\n".join(message_lines)
+    return "\n".join(message_lines)
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
