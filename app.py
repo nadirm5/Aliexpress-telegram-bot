@@ -65,12 +65,10 @@ OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
-            "sourceType": "620&channel=coin",
-            "afSmartRedirect": "y",
-            "scm": "1007.54490.406276.0",
-            "scm_id": "1007.54490.406276.0",
-            "scm-url": "1007.54490.406276.0",
-            "pvid": "9e4d75a0-fd0a-4eed-94d7-deb73bce909f"
+            "sourceType": "620",
+            "channel": "coin",
+            "aecmd": "true",
+            "pdp_ext_f": '{"ship_from":"CN","signature":"05e880bdd8d66734","sku_id":"12000036239407109"}
         }
     },
     "bundle": {
