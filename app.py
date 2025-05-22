@@ -75,8 +75,9 @@ OFFER_PARAMS = {
             "app": {
                 "ios": "app=ios&platform=iphone",
                 "android": "app=android&platform=android"
-        }
-    },
+            }  # <-- fermeture de "app"
+        }  # <-- fermeture de "params" coin
+    },  # <-- fermeture de "coin"
     "bundle": {
         "name": "📦 <b>Bundle Deals</b> – <b>خصومات على العروض المجمعة 💥</b> 👉",
         "params": {
