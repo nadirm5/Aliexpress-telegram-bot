@@ -65,13 +65,12 @@ OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
-            "sourceType": "620",
-            "channel": "coin",
-            "scm": "1007.37449.376406.0",
-            "scm_id": "1007.37449.376406.0",
-            "scm-url": "1007.37449.376406.0",
-            "pvid": "dacf0b0e-ebfe-4f24-aba0-85b8499d0ae7",
-            "utparam": "%7B%22x_object_type%22%3A%22product%22%2C%22pvid%22%3A%22dacf0b0e-ebfe-4f24-aba0-85b8499d0ae7%22%2C%22belongs%22%3A%5B%7B%22floor_id%22%3A%2220161082889%22%2C%22type%22%3A%22dataset%22%7D%5D%2C%22pageSize%22%3A%2220%22%2C%22language%22%3A%22fr%22%2C%22scm%22%3A%221007.37449.376406.0%22%2C%22countryId%22%3A%22FR%22%2C%22tpp_buckets%22%3A%2227449%230%23376406%230_27449%2316820%23463273%233_27449%2313948%23464132%239_27449%2315046%23507814%2319%22%2C%22x_object_id%22%3A%2210005006200066468%22%7D"
+            "sourceType": "620&channel=coin",
+            "afSmartRedirect": "y",
+            "scm": "1007.54490.406276.0",
+            "scm_id": "1007.54490.406276.0",
+            "scm-url": "1007.54490.406276.0",
+            "pvid": "9e4d75a0-fd0a-4eed-94d7-deb73bce909f"
         }
     },
     "bundle": {
