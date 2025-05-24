@@ -568,15 +568,14 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     return "\n".join(message_lines)
 
-def _build_reply_markup(coin_link: str, bundle_link: str) -> InlineKeyboardMarkup:
+def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
         [
-            InlineKeyboardButton("🔗 Coin Deal", url=coin_link),
-            InlineKeyboardButton("🛍️ Bundle Deals", url=bundle_link)
+            InlineKeyboardButton("🎫 كوبونات  |  Coupons", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
+            InlineKeyboardButton("🔥 Deal of the Day", url="https://s.click.aliexpress.com/e/_omRiewZ")
         ],
         [
-            InlineKeyboardButton("🎫 كوبونات | Coupons", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
-            InlineKeyboardButton("🔥 Deal of the Day", url="https://s.click.aliexpress.com/e/_omRiewZ")
+            InlineKeyboardButton("🛍️ Bundle Deals", url="https://s.click.aliexpress.com/e/_oE0GKJ9")
         ],
         [
             InlineKeyboardButton("📢 Join VIP Channel", url="https://t.me/RayanCoupon"),
