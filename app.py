@@ -634,25 +634,37 @@ async def _send_telegram_response(context: ContextTypes.DEFAULT_TYPE, chat_id: i
                 reply_markup=reply_markup
             )
         else:
-            sent_message = await context.bot.send_message(
-    chat_id=chat_id,
-    text=message_text,
-    parse_mode=ParseMode.HTML,
-    disable_web_page_preview=True,
-    reply_markup=reply_markup
-)
-context.chat_data["last_message_id"] = sent_message.message_id
-    except Exception as send_error:
-        logger.error(f"Failed to send message for product {product_id} to chat {chat_id}: {send_error}")
-        # Fallback message if sending fails
-        try:
-            await context.bot.send_message(
-                chat_id=chat_id,
-                text=f"⚠️ Error displaying product {product_id}. Please try again or check the logs.",
-                reply_markup=reply_markup # Still provide buttons if possible
-            )
-        except Exception as fallback_error:
-             logger.error(f"Failed to send fallback error message for product {product_id} to chat {chat_id}: {fallback_error}")
+            try:
+    if product_image and "couldn't find an offer" not in message_text: 
+        sent_message = await context.bot.send_photo(
+            chat_id=chat_id,
+            photo=product_image,
+            caption=message_text,
+            parse_mode=ParseMode.HTML,
+            reply_markup=reply_markup
+        )
+    else:
+        sent_message = await context.bot.send_message(
+            chat_id=chat_id,
+            text=message_text,
+            parse_mode=ParseMode.HTML,
+            disable_web_page_preview=True,
+            reply_markup=reply_markup
+        )
+
+    context.chat_data["last_message_id"] = sent_message.message_id
+
+except Exception as send_error:
+    logger.error(f"Failed to send message for product {product_id} to chat {chat_id}: {send_error}")
+    # Fallback message if sending fails
+    try:
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text=f"⚠️ Error displaying product {product_id}. Please try again or check the logs.",
+            reply_markup=reply_markup  # Still provide buttons if possible
+        )
+    except Exception as fallback_error:
+        logger.error(f"Failed to send fallback error message for product {product_id} to chat {chat_id}: {fallback_error}")
 
 
 async def process_product_telegram(product_id: str, base_url: str, update: Update, context: ContextTypes.DEFAULT_TYPE):
