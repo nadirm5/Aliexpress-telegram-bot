@@ -482,10 +482,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "🔗 Supports regular & short links.\n"
         "🔗 يدعم الروابط الطويلة والقصيرة.\n"
         "🚀 Send a link to start! 🎁"
-        "🚀 أرسل رابطًا للبدء! 🎁"
+          "🚀 أرسل رابطًا للبدء! 🎁"
     )
-
-        async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
+async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
     product_details = await fetch_product_details_v2(product_id)
     details_source = "None"
 
