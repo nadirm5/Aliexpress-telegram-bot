@@ -541,34 +541,34 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     # Titre de l’offre avec emoji
     message_lines.append("🚨 عرض محدود 🔝\n")
 
-    # Titre produit avec emojis (limité à 100 caractères)
+    # Titre produit avec emojis (limité à 50 caractères)
     product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:50]
     decorated_title = f"🌟 {product_title} 🌟"
     message_lines.append(decorated_title + "\n")
 
-    # Prix avec label, prix en gras
+    # Prix avec label, prix sans gras
     product_price = product_data.get('discounted_price') or product_data.get('price')
     if product_price:
-        message_lines.append(f"💸 السعر | Price: **{product_price}**\n")
+        message_lines.append(f"💸 السعر | Price: {product_price}\n")
     else:
         message_lines.append("❌ السعر غير متوفر | Price unavailable\n")
 
-    # Liens générés (coin et bundle) en gras uniquement pour les URLs, séparés du titre
+    # Liens générés (coin et bundle), séparés du titre, sans gras
     coin_link = generated_links.get("coin") or product_data.get('coin_link')
     bundle_link = generated_links.get("bundle") or product_data.get('bundle_link')
 
     if coin_link:
-        message_lines.append(f"🚀 الرابط بالعملات | Coin:\n**{coin_link}**\n")
+        message_lines.append(f"🚀 الرابط بالعملات | Coin:\n{coin_link}\n")
     if bundle_link:
-        message_lines.append(f"📦 رابط عروض Bundle Deals:\n**{bundle_link}**\n")
+        message_lines.append(f"📦 رابط عروض Bundle Deals:\n{bundle_link}\n")
 
     # Séparateur visuel
     message_lines.append("────────────────────\n")
 
-    # Phrase d’accroche avec bot
+    # Phrase d’accroche avec bot sans gras
     bot_link = "@Rayanaliexpress_bot"
     message_lines.append("🔥 احصل على أفضل سعر الآن باستخدام البوت!👇 | Use the bot:\n")
-    message_lines.append(f"🤖 **{bot_link}**")
+    message_lines.append(f"🤖 {bot_link}")
 
     # Retourne le message complet
     return "\n".join(message_lines)
