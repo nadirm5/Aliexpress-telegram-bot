@@ -596,7 +596,7 @@ async def _send_telegram_response(context: ContextTypes.DEFAULT_TYPE, chat_id: i
     product_image = product_data.get('image_url')
     product_id = product_data.get('id', 'N/A') 
 
-   try:
+    try:
         if product_image and "couldn't find an offer" not in message_text: 
             await context.bot.send_photo(
                 chat_id=chat_id,
