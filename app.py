@@ -486,12 +486,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 async def modprix_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Vérifie qu'un message précédent est stocké
     if "last_message_id" not in context.chat_data:
         await update.message.reply_text("❌ Aucun message précédent à modifier.")
         return
 
-    # Vérifie que l'utilisateur a donné un argument (prix)
     if not context.args:
         await update.message.reply_text("❌ Veuillez spécifier un prix. Exemple : /modprix 5.99")
         return
@@ -499,17 +497,17 @@ async def modprix_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         new_price = context.args[0]
 
-        # Récupère les données sauvegardées du produit et les liens générés
+        # Récupère les données sauvegardées
         product_data = context.chat_data.get("last_product_data", {})
         generated_links = context.chat_data.get("generated_links", {})
 
-        # Met à jour le prix dans les données
+        # Met à jour le prix
         product_data['discounted_price'] = new_price
 
-        # Crée le nouveau texte à afficher (tu dois avoir cette fonction dans ton code)
+        # Recrée le message à afficher
         new_text = _build_response_message(product_data, generated_links, "mod")
 
-        # Modifie le message précédemment envoyé avec le nouveau texte
+        # Modifie le message précédent
         await context.bot.edit_message_text(
             chat_id=update.effective_chat.id,
             message_id=context.chat_data["last_message_id"],
@@ -517,13 +515,12 @@ async def modprix_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode='HTML'
         )
 
-        # Confirme à l'utilisateur que le prix a bien été modifié
         await update.message.reply_text("✅ Le prix a été modifié avec succès.")
 
     except Exception as e:
-    await update.message.reply_text(f"❌ Une erreur est survenue : {e}")
-    import traceback
-    traceback.print_exc()
+        await update.message.reply_text(f"❌ Une erreur est survenue : {e}")
+        import traceback
+        traceback.print_exc()
 
 async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
     product_details = await fetch_product_details_v2(product_id)
