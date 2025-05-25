@@ -539,32 +539,35 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
 
-    product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
-    decorated_title = f"✨⭐️ {product_title} ⭐️✨"
-    product_price = product_data.get('price')
-    # product_currency est récupéré mais pas utilisé pour ne pas afficher la monnaie
-    product_currency = product_data.get('currency', '')
+    # Titre principal "Offre exclusive"
+    message_lines.append("**🚨 عرض حصري 🔝**")
 
-    message_lines.append(f"<b>{decorated_title}</b>")
+    product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
+    decorated_title = f"**<b>🌟📱 {product_title} 📱🌟</b>**"
+    product_price = product_data.get('discounted_price') or product_data.get('price')
+
+    message_lines.append(decorated_title)
 
     if details_source == "API" and product_price:
-        # Affiche seulement le prix sans la devise
         price_str = f"{product_price}"
-        message_lines.append(f"\n💰 <b>Price $السعر بدون تخفيض:</b> {price_str}\n")
+        message_lines.append(f"\n**💸 السعر | Price:** {price_str}\n")
     elif details_source == "Scraped":
-        message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
+        message_lines.append("\n💸 السعر | Price: غير متوفر (Scraped)\n")
     else:
-        message_lines.append("\n❌ <b>Product details unavailable</b>\n")
+        message_lines.append("\n❌ تفاصيل المنتج غير متوفرة\n")
 
-    coin_link = generated_links.get("coin")
+    coin_link = generated_links.get("coin") or product_data.get('coin_link')
+    bundle_link = generated_links.get("bundle") or product_data.get('bundle_link')
+    bot_link = "@Rayanaliexpress_bot"
+
     if coin_link:
-        message_lines.append(f"▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ : <b>{coin_link}</b>")
-        message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
-
-    bundle_link = generated_links.get("bundle")
+        message_lines.append(f"🎯 الرابط بالعملات | Coin: **{coin_link}**")
     if bundle_link:
-        message_lines.append(f"\n▫️ 📦 Bundle Deals – عروض مجمعة ⬇️ : <b>{bundle_link}</b>")
-        message_lines.append("🔥 عروض مميزة عند شراء أكثر من قطعة!\n")
+        message_lines.append(f"📦 رابط عروض Bundle Deals: **{bundle_link}**")
+
+    message_lines.append("\n**────────────────────**\n")
+    message_lines.append("🔥 احصل على أفضل سعر الآن باستخدام البوت!👇 | Use the bot:")
+    message_lines.append(f"🤖 **{bot_link}**")
 
     return "\n".join(message_lines)
 
