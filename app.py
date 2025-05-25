@@ -486,41 +486,43 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 from telegram.constants import ChatAction
+from telegram import Update
+from telegram.ext import ContextTypes
+import re
 
 async def modprix_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if "last_message_id" not in context.chat_data or "last_product_data" not in context.chat_data:
+        await update.message.reply_text("❌ Aucun produit récent à modifier.")
+        return
+
     if not context.args:
         await update.message.reply_text("❌ Veuillez spécifier un prix. Exemple : /modprix 5.99")
         return
 
     new_price = context.args[0]
-
     try:
-        # Récupérer l'historique des messages
-        messages = await context.bot.get_chat(update.effective_chat.id).get_history(limit=5)
+        # Met à jour le prix dans les données du produit
+        context.chat_data["last_product_data"]["discounted_price"] = new_price
 
-        # Chercher le dernier message du bot avec du HTML
-        for message in messages:
-            if message.from_user and message.from_user.is_bot and message.text and "<b>" in message.text:
-                old_text = message.text
+        # Génère le nouveau texte à afficher
+        new_text = _build_response_message(
+            context.chat_data["last_product_data"],
+            context.chat_data.get("generated_links", {}),
+            mode="mod"
+        )
 
-                # Remplacer le prix par le nouveau
-                import re
-                new_text = re.sub(r"<b>[\d.]+ ?\$</b>", f"<b>{new_price} $</b>", old_text)
+        # Modifie le message existant
+        await context.bot.edit_message_text(
+            chat_id=update.effective_chat.id,
+            message_id=context.chat_data["last_message_id"],
+            text=new_text,
+            parse_mode='HTML'
+        )
 
-                await context.bot.edit_message_text(
-                    chat_id=update.effective_chat.id,
-                    message_id=message.message_id,
-                    text=new_text,
-                    parse_mode='HTML'
-                )
-
-                await update.message.reply_text("✅ Prix modifié avec succès.")
-                return
-
-        await update.message.reply_text("❌ Aucun message du bot à modifier trouvé.")
+        await update.message.reply_text("✅ Prix mis à jour avec succès.")
 
     except Exception as e:
-        await update.message.reply_text(f"❌ Erreur : {e}")
+        await update.message.reply_text(f"❌ Une erreur est survenue : {e}")
 
 async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
     product_details = await fetch_product_details_v2(product_id)
