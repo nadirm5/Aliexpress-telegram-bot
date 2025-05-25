@@ -634,13 +634,14 @@ async def _send_telegram_response(context: ContextTypes.DEFAULT_TYPE, chat_id: i
                 reply_markup=reply_markup
             )
         else:
-            await context.bot.send_message(
-                chat_id=chat_id,
-                text=message_text,
-                parse_mode=ParseMode.HTML,
-                disable_web_page_preview=True,
-                reply_markup=reply_markup
-            )
+            sent_message = await context.bot.send_message(
+    chat_id=chat_id,
+    text=message_text,
+    parse_mode=ParseMode.HTML,
+    disable_web_page_preview=True,
+    reply_markup=reply_markup
+)
+context.chat_data["last_message_id"] = sent_message.message_id
     except Exception as send_error:
         logger.error(f"Failed to send message for product {product_id} to chat {chat_id}: {send_error}")
         # Fallback message if sending fails
