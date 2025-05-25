@@ -539,36 +539,39 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
 
-    # Titre principal "Offre exclusive"
-    message_lines.append("**🚨 عرض حصري 🔝**")
+    # Titre de l’offre en gras avec emoji
+    message_lines.append("**🚨 عرض محدود 🔝**\n")
 
-    product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:60]
-    decorated_title = f"**<b>🌟📱 {product_title} 📱🌟</b>**"
+    # Titre produit en gras avec emojis (limité à 100 caractères)
+    product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
+    decorated_title = f"**🌟 {product_title} 🌟**"
+    message_lines.append(decorated_title + "\n")
+
+    # Prix avec label en gras, prix en gras
     product_price = product_data.get('discounted_price') or product_data.get('price')
-
-    message_lines.append(decorated_title)
-
-    if details_source == "API" and product_price:
-        price_str = f"{product_price}"
-        message_lines.append(f"\n**💸 السعر | Price:** {price_str}\n")
-    elif details_source == "Scraped":
-        message_lines.append("\n💸 السعر | Price: غير متوفر (Scraped)\n")
+    if product_price:
+        message_lines.append(f"**💸 السعر | Price:** **{product_price}**\n")
     else:
-        message_lines.append("\n❌ تفاصيل المنتج غير متوفرة\n")
+        message_lines.append("**❌ السعر غير متوفر | Price unavailable**\n")
 
+    # Liens générés (coin et bundle) en gras uniquement pour les URLs
     coin_link = generated_links.get("coin") or product_data.get('coin_link')
     bundle_link = generated_links.get("bundle") or product_data.get('bundle_link')
-    bot_link = "@Rayanaliexpress_bot"
 
     if coin_link:
-        message_lines.append(f"🎯 الرابط بالعملات | Coin: **{coin_link}**")
+        message_lines.append(f"🎯 الرابط بالعملات | Coin: **{coin_link}**\n")
     if bundle_link:
-        message_lines.append(f"📦 رابط عروض Bundle Deals: **{bundle_link}**")
+        message_lines.append(f"📦 رابط عروض Bundle Deals: **{bundle_link}**\n")
 
-    message_lines.append("\n**────────────────────**\n")
-    message_lines.append("🔥 احصل على أفضل سعر الآن باستخدام البوت!👇 | Use the bot:")
+    # Séparateur visuel
+    message_lines.append("**────────────────────**\n")
+
+    # Phrase d’accroche avec bot
+    bot_link = "@Rayanaliexpress_bot"
+    message_lines.append("🔥 احصل على أفضل سعر الآن باستخدام البوت!👇 | Use the bot:\n")
     message_lines.append(f"🤖 **{bot_link}**")
 
+    # Retourne le message complet
     return "\n".join(message_lines)
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
