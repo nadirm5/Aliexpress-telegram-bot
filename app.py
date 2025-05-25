@@ -494,6 +494,8 @@ async def modprix_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text("❌ Veuillez spécifier un prix.")
         return
+except Exception as e:
+    await update.message.reply_text(f"Erreur : {e}")
 
         new_price = context.args[0]
         product_data = context.chat_data.get("last_product_data", {})
