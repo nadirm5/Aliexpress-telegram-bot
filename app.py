@@ -339,6 +339,7 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
         return None
 
 async def generate_affiliate_links_batch(target_urls: list[str]) -> dict[str, str | None]:
+async def generate_affiliate_links_batch(target_urls: list[str]) -> dict[str, str | None]:
     results_dict = {}
     uncached_urls = []
 
@@ -355,6 +356,8 @@ async def generate_affiliate_links_batch(target_urls: list[str]) -> dict[str, st
     if not uncached_urls:
         logger.info("All affiliate links retrieved from cache.")
         return results_dict
+
+    # Suite du code pour appeler l'API et remplir results_dict pour uncached_urls...
 
     logger.info(f"Generating affiliate links for {len(uncached_urls)} uncached URLs...")
 
