@@ -541,6 +541,21 @@ async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
             scraped_name, scraped_image = await loop.run_in_executor(
                 executor, get_product_details_by_id, product_id
             )
+async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
+    product_details = await fetch_product_details_v2(product_id)
+    details_source = "None"
+
+    if product_details:
+        details_source = "API"
+        logger.info(f"Successfully fetched details via API for product ID: {product_id}")
+        return product_details, details_source
+    else:
+        logger.warning(f"API failed for product ID: {product_id}. Attempting scraping fallback.")
+        try:
+            loop = asyncio.get_event_loop()
+            scraped_name, scraped_image = await loop.run_in_executor(
+                executor, get_product_details_by_id, product_id
+            )
             if scraped_name:
                 details_source = "Scraped"
                 logger.info(f"Successfully scraped details for product ID: {product_id}")
@@ -577,6 +592,7 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
             logger.warning(f"Failed to get affiliate link for offer {offer_key} (target: {target_url})")
 
     return generated_links
+
 
 
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
@@ -789,23 +805,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 def main() -> None:
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
-    # Commandes
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("modprix", modprix_command))  # <-- Ajout modprix
 
-    # Messages contenant un lien AliExpress (texte normal)
     application.add_handler(MessageHandler(
         filters.TEXT & ~filters.COMMAND & filters.Regex(COMBINED_DOMAIN_REGEX),
         handle_message
     ))
 
-    # Messages transférés contenant un lien AliExpress
     application.add_handler(MessageHandler(
         filters.FORWARDED & filters.TEXT & filters.Regex(COMBINED_DOMAIN_REGEX),
         handle_message
     ))
 
-    # Messages texte sans lien AliExpress
     application.add_handler(MessageHandler(
         filters.TEXT & ~filters.COMMAND & ~filters.Regex(COMBINED_DOMAIN_REGEX),
         lambda update, context: context.bot.send_message(
@@ -832,7 +843,6 @@ def main() -> None:
     logger.info("Shutting down thread pool...")
     executor.shutdown(wait=True)
     logger.info("Bot stopped.")
-
 
 if __name__ == "__main__":
     main()
