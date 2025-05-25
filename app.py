@@ -480,8 +480,37 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "🔗 Supports regular & short links.\n"
         "🔗 يدعم الروابط الطويلة والقصيرة.\n"
         "🚀 Send a link to start! 🎁"
-          "🚀 أرسل رابطًا للبدء! 🎁"
+        "🚀 أرسل رابطًا للبدء! 🎁"
     )
+
+async def modprix_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if "last_message_id" not in context.chat_data:
+        await update.message.reply_text("❌ Aucun message précédent à modifier.")
+        return
+
+    try:
+        if not context.args:
+            await update.message.reply_text("❌ Utilisation : /modprix 4.99")
+            return
+
+        new_price = context.args[0]
+        product_data = context.chat_data.get("last_product_data", {})
+        generated_links = context.chat_data.get("generated_links", {})
+
+        product_data['discounted_price'] = new_price
+
+        new_text = _build_response_message(product_data, generated_links, "mod")
+
+        await context.bot.edit_message_text(
+            chat_id=update.effective_chat.id,
+            message_id=context.chat_data["last_message_id"],
+            text=new_text,
+            parse_mode='HTML'
+        )
+
+        await update.message.reply_text("✅ تم تحديث السعر بنجاح.")
+    except Exception as e:
+        await update.message.reply_text("❌ حدث خطأ أثناء تعديل السعر.")
 async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
     product_details = await fetch_product_details_v2(product_id)
     details_source = "None"
@@ -746,18 +775,23 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 def main() -> None:
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
+    # Commandes
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("modprix", modprix_command))  # <-- Ajout modprix
 
+    # Messages contenant un lien AliExpress (texte normal)
     application.add_handler(MessageHandler(
         filters.TEXT & ~filters.COMMAND & filters.Regex(COMBINED_DOMAIN_REGEX),
         handle_message
     ))
 
+    # Messages transférés contenant un lien AliExpress
     application.add_handler(MessageHandler(
         filters.FORWARDED & filters.TEXT & filters.Regex(COMBINED_DOMAIN_REGEX),
         handle_message
     ))
 
+    # Messages texte sans lien AliExpress
     application.add_handler(MessageHandler(
         filters.TEXT & ~filters.COMMAND & ~filters.Regex(COMBINED_DOMAIN_REGEX),
         lambda update, context: context.bot.send_message(
@@ -784,6 +818,7 @@ def main() -> None:
     logger.info("Shutting down thread pool...")
     executor.shutdown(wait=True)
     logger.info("Bot stopped.")
+
 
 if __name__ == "__main__":
     main()
