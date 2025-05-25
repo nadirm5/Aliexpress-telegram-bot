@@ -491,9 +491,9 @@ async def modprix_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        if not context.args:
-            await update.message.reply_text("❌ Utilisation : /modprix 4.99")
-            return
+    if not context.args:
+        await update.message.reply_text("❌ Veuillez spécifier un prix.")
+        return
 
         new_price = context.args[0]
         product_data = context.chat_data.get("last_product_data", {})
