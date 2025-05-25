@@ -542,7 +542,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     # Titre principal "Offre exclusive"
     message_lines.append("**🚨 عرض حصري 🔝**")
 
-    product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
+    product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:60]
     decorated_title = f"**<b>🌟📱 {product_title} 📱🌟</b>**"
     product_price = product_data.get('discounted_price') or product_data.get('price')
 
