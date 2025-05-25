@@ -655,7 +655,6 @@ except Exception as send_error:
     except Exception as fallback_error:
         logger.error(f"Failed to send fallback error message for product {product_id} to chat {chat_id}: {fallback_error}")
 
-
 async def process_product_telegram(product_id: str, base_url: str, update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     logger.info(f"Processing Product ID: {product_id} for chat {chat_id}")
