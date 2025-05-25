@@ -339,7 +339,6 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
         return None
 
 async def generate_affiliate_links_batch(target_urls: list[str]) -> dict[str, str | None]:
-async def generate_affiliate_links_batch(target_urls: list[str]) -> dict[str, str | None]:
     results_dict = {}
     uncached_urls = []
 
