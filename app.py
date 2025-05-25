@@ -494,14 +494,12 @@ async def modprix_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not context.args:
             await update.message.reply_text("❌ Veuillez spécifier un prix.")
             return
-    except Exception as e:
-        await update.message.reply_text(f"Erreur : {e}")
 
-    new_price = context.args[0]
-    product_data = context.chat_data.get("last_product_data", {})
-    generated_links = context.chat_data.get("generated_links", {})
+        new_price = context.args[0]
+        product_data = context.chat_data.get("last_product_data", {})
+        generated_links = context.chat_data.get("generated_links", {})
 
-    product_data['discounted_price'] = new_price
+        product_data['discounted_price'] = new_price
 
         new_text = _build_response_message(product_data, generated_links, "mod")
 
@@ -515,9 +513,13 @@ async def modprix_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("✅ تم تحديث السعر بنجاح.")
     except Exception as e:
         await update.message.reply_text("❌ حدث خطأ أثناء تعديل السعر.")
+
+
 async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
     product_details = await fetch_product_details_v2(product_id)
     details_source = "None"
+    # Tu peux compléter la logique ici
+    return product_details, details_source
 
     if product_details:
         details_source = "API"
