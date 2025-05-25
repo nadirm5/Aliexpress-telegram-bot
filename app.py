@@ -559,7 +559,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     bundle_link = generated_links.get("bundle") or product_data.get('bundle_link')
 
     if coin_link:
-        message_lines.append(f"🎯 الرابط بالعملات | Coin: **{coin_link}**\n")
+        message_lines.append(f"🚀 الرابط بالعملات | Coin: **{coin_link}**\n")
     if bundle_link:
         message_lines.append(f"📦 رابط عروض Bundle Deals: **{bundle_link}**\n")
 
@@ -568,12 +568,11 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     # Phrase d’accroche avec bot
     bot_link = "@Rayanaliexpress_bot"
-    message_lines.append("🔥 احصل على أفضل سعر الآن باستخدام البوت!👇 | Use the bot:\n")
+    message_lines.append("🔥 احصل على أفضل سعر باستخدام البوت!👇 | Use the bot:\n")
     message_lines.append(f"🤖 **{bot_link}**")
 
     # Retourne le message complet
     return "\n".join(message_lines)
-
 def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
         [
