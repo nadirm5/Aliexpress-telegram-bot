@@ -490,19 +490,24 @@ async def modprix_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Aucun message précédent à modifier.")
         return
 
-    try:
-        if not context.args:
-            await update.message.reply_text("❌ Veuillez spécifier un prix.")
-            return
+    if not context.args:
+        await update.message.reply_text("❌ Veuillez spécifier un prix. Exemple : /modprix 5.99")
+        return
 
+    try:
         new_price = context.args[0]
+
+        # Récupère les données sauvegardées
         product_data = context.chat_data.get("last_product_data", {})
         generated_links = context.chat_data.get("generated_links", {})
 
+        # Met à jour le prix
         product_data['discounted_price'] = new_price
 
+        # Recrée le message à afficher
         new_text = _build_response_message(product_data, generated_links, "mod")
 
+        # Modifie le message précédent
         await context.bot.edit_message_text(
             chat_id=update.effective_chat.id,
             message_id=context.chat_data["last_message_id"],
@@ -510,9 +515,11 @@ async def modprix_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode='HTML'
         )
 
-        await update.message.reply_text("✅ تم تحديث السعر بنجاح.")
+        await update.message.reply_text("✅ Le prix a été modifié avec succès.")
+
     except Exception as e:
-        await update.message.reply_text("❌ حدث خطأ أثناء تعديل السعر.")
+        await update.message.reply_text("❌ Une erreur est survenue.")
+        print("Erreur :", e)
 
 
 async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
