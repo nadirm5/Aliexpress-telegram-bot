@@ -485,63 +485,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "🚀 أرسل رابطًا للبدء! 🎁"
     )
 
-from telegram.constants import ChatAction
-from telegram import Update
-from telegram.ext import ContextTypes
-import re
-
-async def modprix_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if "last_message_id" not in context.chat_data or "last_product_data" not in context.chat_data:
-        await update.message.reply_text("❌ Aucun produit récent à modifier.")
-        return
-
-    if not context.args:
-        await update.message.reply_text("❌ Veuillez spécifier un prix. Exemple : /modprix 5.99")
-        return
-
-    new_price = context.args[0]
-    try:
-        # Met à jour le prix dans les données du produit
-        context.chat_data["last_product_data"]["discounted_price"] = new_price
-
-        # Génère le nouveau texte à afficher
-        new_text = _build_response_message(
-            context.chat_data["last_product_data"],
-            context.chat_data.get("generated_links", {}),
-            mode="mod"
-        )
-
-        # Modifie le message existant
-        await context.bot.edit_message_text(
-            chat_id=update.effective_chat.id,
-            message_id=context.chat_data["last_message_id"],
-            text=new_text,
-            parse_mode='HTML'
-        )
-
-        await update.message.reply_text("✅ Prix mis à jour avec succès.")
-
-    except Exception as e:
-        await update.message.reply_text(f"❌ Une erreur est survenue : {e}")
-
-async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
-    product_details = await fetch_product_details_v2(product_id)
-    details_source = "None"
-    # Tu peux compléter la logique ici
-    return product_details, details_source
-
-    if product_details:
-        details_source = "API"
-        logger.info(f"Successfully fetched details via API for product ID: {product_id}")
-        return product_details, details_source
-    else:
-        logger.warning(f"API failed for product ID: {product_id}. Attempting scraping fallback.")
-        try:
-            loop = asyncio.get_event_loop()
-            scraped_name, scraped_image = await loop.run_in_executor(
-                executor, get_product_details_by_id, product_id
-            )
-async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
+        async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
     product_details = await fetch_product_details_v2(product_id)
     details_source = "None"
 
