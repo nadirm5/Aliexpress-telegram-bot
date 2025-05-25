@@ -521,8 +521,9 @@ async def modprix_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("✅ Le prix a été modifié avec succès.")
 
     except Exception as e:
-        await update.message.reply_text("❌ Une erreur est survenue.")
-        print("Erreur :", e)
+    await update.message.reply_text(f"❌ Une erreur est survenue : {e}")
+    import traceback
+    traceback.print_exc()
 
 async def _get_product_data(product_id: str) -> tuple[dict | None, str]:
     product_details = await fetch_product_details_v2(product_id)
