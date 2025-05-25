@@ -625,16 +625,6 @@ async def _send_telegram_response(context: ContextTypes.DEFAULT_TYPE, chat_id: i
     product_id = product_data.get('id', 'N/A') 
 
     try:
-        if product_image and "couldn't find an offer" not in message_text: 
-            await context.bot.send_photo(
-                chat_id=chat_id,
-                photo=product_image,
-                caption=message_text,
-                parse_mode=ParseMode.HTML,
-                reply_markup=reply_markup
-            )
-        else:
-            try:
     if product_image and "couldn't find an offer" not in message_text: 
         sent_message = await context.bot.send_photo(
             chat_id=chat_id,
@@ -661,14 +651,6 @@ except Exception as send_error:
             chat_id=chat_id,
             text=f"⚠️ Error displaying product {product_id}. Please try again or check the logs.",
             reply_markup=reply_markup
-        )
-    except Exception as fallback_error:
-        logger.error(f"Failed to send fallback error message for product {product_id} to chat {chat_id}: {fallback_error}")
-    try:
-        await context.bot.send_message(
-            chat_id=chat_id,
-            text=f"⚠️ Error displaying product {product_id}. Please try again or check the logs.",
-            reply_markup=reply_markup  # Still provide buttons if possible
         )
     except Exception as fallback_error:
         logger.error(f"Failed to send fallback error message for product {product_id} to chat {chat_id}: {fallback_error}")
