@@ -57,11 +57,43 @@ except Exception as e:
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
 
-URL_REGEX = re.compile(r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*', re.IGNORECASE)
-PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html', re.IGNORECASE)
-STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?(/.*)?', re.IGNORECASE)
-SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
-COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
+URL_REGEX = re.compile(
+    r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.|star\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*',
+    re.IGNORECASE
+)
+
+PRODUCT_ID_REGEX = re.compile(
+    r'/item/(\d+)\.html',
+    re.IGNORECASE
+)
+
+STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(
+    r'https?://(?!a\.|s\.click\.|star\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?(/.*)?',
+    re.IGNORECASE
+)
+
+SHORT_LINK_DOMAIN_REGEX = re.compile(
+    r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?',
+    re.IGNORECASE
+)
+
+COMBINED_DOMAIN_REGEX = re.compile(
+    r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com|star\.aliexpress\.com',
+    re.IGNORECASE
+)
+
+STAR_LINK_REGEX = re.compile(
+    r'https?://star\.aliexpress\.com/share/share\.htm\?[^ ]*redirectUrl=([^&]+)',
+    re.IGNORECASE
+)
+
+def extract_redirect_url(star_url):
+    match = STAR_LINK_REGEX.search(star_url)
+    if match:
+        redirect_encoded = match.group(1)
+        redirect_decoded = urllib.parse.unquote(redirect_encoded)
+        return redirect_decoded
+    return None
 OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
