@@ -123,7 +123,7 @@ def generate_affiliate_app_links(product_id, affiliate_id="xman-t"):
         "android": android_link,
     }
 
-def get_product_details_by_id(product_id, affiliate_id="xman-t"):
+def get_product_details_by_id(product_id, affiliate_id="default"):
     """
     Récupère nom, image, et liens d'affiliation app (iOS + Android) du produit.
     """
