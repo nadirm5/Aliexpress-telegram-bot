@@ -13,16 +13,17 @@ def get_aliexpress_product_info(product_url):
     img_url = None
     try:
         headers = {
-    "User-Agent": "AliExpressAndroid/8.78.5 (Linux; U; Android 10; en-US; Pixel 3 Build/QP1A.190711.020) AliApp(AliExpress/8.78.5) WindVane/8.6.0 1080X2160",
-    "Accept-Language": "fr-FR,fr;q=0.9",
-    "Referer": "https://fr.aliexpress.com/"
-}
-cookies = {"x-hng": "lang=en-US", "intl_locale": "fr_FR"}  # adapte la langue si tu veux
-        cookies = {"x-hng": "lang=en-US", "intl_locale": "en_US"}
+            "User-Agent": "AliExpressAndroid/8.78.5 (Linux; U; Android 10; en-US; Pixel 3 Build/QP1A.190711.020) AliApp(AliExpress/8.78.5) WindVane/8.6.0 1080X2160",
+            "Accept-Language": "fr-FR,fr;q=0.9",
+            "Referer": "https://fr.aliexpress.com/"
+        }
+        cookies = {"x-hng": "lang=en-US", "intl_locale": "fr_FR"}  # adapte la langue si tu veux
+
         response = requests.get(product_url, headers=headers, cookies=cookies, timeout=15)
         if response.status_code != 200:
             print(f"Failed to load page: {response.status_code}")
             return None, None
+
         soup = BeautifulSoup(response.text, "html.parser")
         
         root_div = soup.find("div", id="root")
@@ -70,6 +71,7 @@ cookies = {"x-hng": "lang=en-US", "intl_locale": "fr_FR"}  # adapte la langue si
             product_name = re.sub(r'-AliExpress(\s+\d+)?$', '', product_name).strip()
 
         return product_name, img_url
+
     except Exception as e:
         print(f"An error occurred in get_aliexpress_product_info: {str(e)}")
         return None, None
