@@ -19,11 +19,11 @@ def get_aliexpress_product_info(product_url, platform="android"):
         # Exemple de headers pour Android et iOS dans un même dictionnaire
         headers = {
             "android": {
-                "User-Agent": "AliExpressAndroid/8.93.0 (Linux; U; Android 10; en-US; Pixel 3 Build/QP1A.190711.020) AliApp(AliExpress/8.78.5) WindVane/8.6.0 1080X2160",
+                "User-Agent": "AliExpressAndroid/8.93.0 (Linux; U; Android 10; en-US; Pixel 3 Build/QP1A.190711.020) AliApp(AliExpress/8.93.0) WindVane/8.6.0 1080X2160",
                 "Accept-Language": "fr-FR,fr;q=0.9"
             },
             "ios": {
-                "User-Agent": "AliExpressiOS/8.78.5 (iPhone; iOS 15.5; Scale/3.00) AliApp(AliExpress/8.78.5) WindVane/8.6.0",
+                "User-Agent": "AliExpressiOS/8.90.0 (iPhone; iOS 16; Scale/3.00) AliApp(AliExpress/8.93.0) WindVane/8.6.0",
                 "Accept-Language": "fr-FR,fr;q=0.9"
             }
         }
