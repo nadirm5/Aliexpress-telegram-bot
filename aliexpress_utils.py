@@ -94,7 +94,7 @@ def get_product_details_by_id(product_id):
     Returns:
         tuple: (product_name, img_url) or (None, None) if failed.
     """
-    product_url = f"https://fr.aliexpress.com/item/{product_id}.html"
+    f"https://vi.aliexpress.com/item/{product_id}.html"
     print(f"Constructed URL: {product_url}")
     return get_aliexpress_product_info(product_url)
     
