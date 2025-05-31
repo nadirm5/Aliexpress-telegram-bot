@@ -1,28 +1,60 @@
 import requests
 from bs4 import BeautifulSoup
 
-def get_aliexpress_product_info(product_url):
+def get_aliexpress_product_info(product_url, platform="android"):
     """
     Extract product name from AliExpress without Selenium
     Args:
         product_url (str): AliExpress product page URL
+        platform (str): "android" or "ios" to set User-Agent header accordingly (default: "android")
     Returns:
-        str: product name, img_url
+        tuple: (product_name, img_url)
     """
+    import requests
+    from bs4 import BeautifulSoup
+    
     product_name = None
     img_url = None
     try:
+        # Exemple de headers pour Android et iOS dans un même dictionnaire
         headers = {
-            "User-Agent": "AliExpressAndroid/8.78.5 (Linux; U; Android 10; en-US; Pixel 3 Build/QP1A.190711.020) AliApp(AliExpress/8.78.5) WindVane/8.6.0 1080X2160",
-            "Accept-Language": "fr-FR,fr;q=0.9",
-            "Referer": "https://fr.aliexpress.com/"
+            "android": {
+                "User-Agent": "AliExpressAndroid/8.78.5 (Linux; U; Android 10; en-US; Pixel 3 Build/QP1A.190711.020) AliApp(AliExpress/8.78.5) WindVane/8.6.0 1080X2160",
+                "Accept-Language": "fr-FR,fr;q=0.9"
+            },
+            "ios": {
+                "User-Agent": "AliExpressiOS/8.78.5 (iPhone; iOS 15.5; Scale/3.00) AliApp(AliExpress/8.78.5) WindVane/8.6.0",
+                "Accept-Language": "fr-FR,fr;q=0.9"
+            }
         }
+        
+        # Sélection des headers selon la plateforme
+        current_headers = headers.get(platform.lower(), headers["android"])
+
         cookies = {"x-hng": "lang=en-US", "intl_locale": "fr_FR"}  # adapte la langue si tu veux
 
-        response = requests.get(product_url, headers=headers, cookies=cookies, timeout=15)
+        response = requests.get(product_url, headers=current_headers, cookies=cookies, timeout=15)
         if response.status_code != 200:
             print(f"Failed to load page: {response.status_code}")
             return None, None
+        
+        soup = BeautifulSoup(response.text, "html.parser")
+        
+        # Extraction du nom du produit (exemple simplifié)
+        h1 = soup.find("h1")
+        if h1:
+            product_name = h1.get_text(strip=True)
+        
+        # Extraction de l'image (exemple simplifié)
+        img_tag = soup.find("img")
+        if img_tag and img_tag.has_attr("src"):
+            img_url = img_tag["src"]
+        
+        return product_name, img_url
+    
+    except Exception as e:
+        print(f"An error occurred in get_aliexpress_product_info: {str(e)}")
+        return None, None
 
         soup = BeautifulSoup(response.text, "html.parser")
         
