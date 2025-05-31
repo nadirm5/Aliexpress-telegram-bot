@@ -13,8 +13,11 @@ def get_aliexpress_product_info(product_url):
     img_url = None
     try:
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
+    "User-Agent": "AliExpressAndroid/8.78.5 (Linux; U; Android 10; en-US; Pixel 3 Build/QP1A.190711.020) AliApp(AliExpress/8.78.5) WindVane/8.6.0 1080X2160",
+    "Accept-Language": "fr-FR,fr;q=0.9",
+    "Referer": "https://fr.aliexpress.com/"
+}
+cookies = {"x-hng": "lang=en-US", "intl_locale": "fr_FR"}  # adapte la langue si tu veux
         cookies = {"x-hng": "lang=en-US", "intl_locale": "en_US"}
         response = requests.get(product_url, headers=headers, cookies=cookies, timeout=15)
         if response.status_code != 200:
