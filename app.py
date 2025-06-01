@@ -65,11 +65,17 @@ COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a
 OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
+        "type": "coin",
         "params": {
-            "sourceType": "620",
-            "channel": "coin",
-            "afSmartRedirect": "y",
-            "trackingId": "default"
+            "tt": "CPS_NORMAL",
+            "aff_fsk": "_DkMMCex",
+            "aff_platform": "portals-tool",
+            "sk": "_DkMMCex",
+            "aff_trace_key": "f8f818f4ebe04c4098bda215feca0e5b-1748788099139-05412-_DkMMCex",
+            "terminal_id": "93f79a04da2d407abecc49515cd6b3ca",
+            "fromApp": "true",
+            "_currency": "USD",
+            "_lang": "fr_DZ"
         }
     },
     "bundle": {
