@@ -64,20 +64,19 @@ SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|
 COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
 OFFER_PARAMS = {
     "coin": {
-    "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
-    "params": {
-        "sourceType": "620",
-        "channel": "coin",
-        "afSmartRedirect": "y",
-        "scm": "1007.54490.406276.0",
-        "scm_id": "1007.54490.406276.0",
-        "scm-url": "1007.54490.406276.0",
-        "pvid": "9e4d75a0-fd0a-4eed-94d7-deb73bce909f"
-    }
-},
+        "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
+        "base_url": "https://campaign.aliexpress.com/wow/gcp/ae/channel/coins",
+        "params": {
+            "trackingId": "default",       # Ajout du tracking ici
+            "aff_fcid": "xman-123",        # Ou ton FCID, sinon laisse vide ou supprime si inutile
+            "aff_platform": "portals-tool",
+            "afSmartRedirect": "y"
+        }
+    },
     "bundle": {
         "name": "📦 <b>Bundle Deals</b> – <b>خصومات على العروض المجمعة 💥</b> 👉",
         "params": {
+            "trackingId": "default",       # Ajout du tracking ici aussi
             "sourceType": "570",
             "scm": "1007.41618.435122.0",
             "scm_id": "1007.41618.435122.0",
