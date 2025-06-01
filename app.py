@@ -240,7 +240,7 @@ def build_url_with_offer_params(base_url: str, params_to_add: dict) -> str | Non
             new_query_string,
             ''
         ))
-        return f"https://fr.aliexpress.com/item/{ID_PRODUIT}.html?channel=coin&sourceType=direct&afSmartRedirect=y"
+        return f"https://star.aliexpress.com/share/share.htm?platform=AE&businessType=ProductDetail&redirectUrl={encoded_url}&channel=coin&sourceType=direct&afSmartRedirect=y"
     except ValueError:
         logger.error(f"Error building URL with params for base: {base_url}")
         return base_url # Return original on error? Or None? Returning base for now.
