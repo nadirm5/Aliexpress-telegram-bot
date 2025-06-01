@@ -240,7 +240,7 @@ def build_url_with_offer_params(base_url: str, params_to_add: dict) -> str | Non
             new_query_string,
             ''
         ))
-        return f"https://star.aliexpress.com/share/share.htm?platform=AE&businessType=ProductDetail&redirectUrl={reconstructed_url}"
+        return f"https://star.aliexpress.com/share/share.htm?platform=AE&businessType=ProductDetail&redirectUrl=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2F1005007981840402.html%3FtrackingId%3Ddefault%26afSmartRedirect%3Dy}"
     except ValueError:
         logger.error(f"Error building URL with params for base: {base_url}")
         return base_url # Return original on error? Or None? Returning base for now.
