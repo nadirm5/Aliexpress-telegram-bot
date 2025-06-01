@@ -565,7 +565,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     message_lines.append("🔥 <i>أقوى تخفيض عند شراء 3 قطع</i>")
     message_lines.append(f"<b>{bundle_link}</b>")
 
-if coin_link:
+    if coin_link:
     message_lines.append("\n🚀 <b>الرابط بالعملات | Coin:</b>")
     message_lines.append(f"<b>{coin_link}</b>")
 
