@@ -65,12 +65,11 @@ COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a
 OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
-        "base_url": "https://campaign.aliexpress.com/wow/gcp/ae/channel/coins",
+        "base_url": "https://s.click.aliexpress.com/deep_link.htm",
         "params": {
-            "trackingId": "default",       # Ajout du tracking ici
-            "aff_fcid": "xman-123",        # Ou ton FCID, sinon laisse vide ou supprime si inutile
-            "aff_platform": "portals-tool",
-            "afSmartRedirect": "y"
+            "dp": "https://campaign.aliexpress.com/wow/gcp/ae/channel/coins",
+            "afSmartRedirect": "y",
+            "afTrackingID": "default"
         }
     },
     "bundle": {
