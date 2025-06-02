@@ -63,22 +63,23 @@ STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://(?!a\.|s\.click\.)([\w-
 SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
 COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
 OFFER_PARAMS = {
-"coin": {
-  "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
-  "params": {
-    "sourceType": "620",
-    "channel": "coin",
-    "afSmartRedirect": "y",
-    "scm": "1007.54490.406276.0",
-    "scm_id": "1007.54490.406276.0",
-    "scm-url": "1007.54490.406276.0",
-    "pvid": "22d498ad-f0e6-45c1-9230-67ba6f431490",
-    "app": {
-      "ios": "app=ios&platform=iphone",
-      "android": "app=android&platform=android"
-        
+    "coin": {
+        "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
+        "params": {
+            "sourceType": "620",
+            "channel": "coin",
+            "afSmartRedirect": "y",
+            "scm": "1007.54490.406276.0",
+            "scm_id": "1007.54490.406276.0",
+            "scm-url": "1007.54490.406276.0",
+            "pvid": "22d498ad-f0e6-45c1-9230-67ba6f431490",
+            "app": {
+                "ios": "app=ios&platform=iphone",
+                "android": "app=android&platform=android"
+            }
         }
-    },
+    }
+# IL MANQUE LA FERMETURE ICI :
     "bundle": {
         "name": "📦 <b>Bundle Deals</b> – <b>خصومات على العروض المجمعة 💥</b> 👉",
         "params": {
