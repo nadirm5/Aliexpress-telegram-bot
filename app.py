@@ -68,7 +68,7 @@ OFFER_PARAMS = {
     "params": {
          "sourceType": "620",
          "channel": "coin",
-        "afSmartRedirect": "n",
+        "afSmartRedirect": "y",
         "dl_target": "aliexpress://coin",
         "scm": "1007.54490.406276.0",
         "scm_id": "1007.54490.406276.0",
