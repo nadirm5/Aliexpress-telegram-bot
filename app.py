@@ -79,7 +79,7 @@ OFFER_PARAMS = {
             }
         }
     }
-# IL MANQUE LA FERMETURE ICI :
+}
     "bundle": {
         "name": "📦 <b>Bundle Deals</b> – <b>خصومات على العروض المجمعة 💥</b> 👉",
         "params": {
