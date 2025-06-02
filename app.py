@@ -70,7 +70,6 @@ OFFER_PARAMS = {
          "channel": "coin",
         "afSmartRedirect": "n",
         "dl_target": "aliexpress://coin",
-         "dl_target": "https://campaign.aliexpress.com/wow/gcp/ae/channel/coins",
         "scm": "1007.54490.406276.0",
         "scm_id": "1007.54490.406276.0",
         "scm-url": "1007.54490.406276.0",
