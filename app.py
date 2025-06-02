@@ -68,13 +68,6 @@ OFFER_PARAMS = {
         "params": {
             "sourceType": "620&channel=coin",
             "afSmartRedirect": "y",
-            "scm": "1007.54490.406276.0",
-            "scm_id": "1007.54490.406276.0",
-            "scm-url": "1007.54490.406276.0",
-            "pvid": "22d498ad-f0e6-45c1-9230-67ba6f431490",
-            "app": {
-                "ios": "app=ios&platform=iphone",
-                "android": "app=android&platform=android"
             }
         }
     },
