@@ -82,6 +82,7 @@ OFFER_PARAMS = {
         }
     }
 }
+OFFER_ORDER = ["coin", "bundle"]
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
