@@ -76,7 +76,8 @@ OFFER_PARAMS = {
                 "ios": "app=ios&platform=iphone",
                 "android": "app=android&platform=android"
             }
-        },
+        }
+    },
     "bundle": {
         "name": "📦 <b>Bundle Deals</b> – <b>خصومات على العروض المجمعة 💥</b> 👉",
         "params": {
