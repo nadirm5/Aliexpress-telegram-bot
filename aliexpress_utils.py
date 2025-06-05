@@ -1,3 +1,4 @@
+
 import requests
 from bs4 import BeautifulSoup
 
@@ -14,7 +15,7 @@ def get_aliexpress_product_info(product_url):
     img_url = None # Initialize img_url
     try:
         headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
         cookies = {"x-hng": "lang=en-US", "intl_locale": "en_US"}
         response = requests.get(product_url, headers=headers, cookies=cookies, timeout=15)
@@ -97,5 +98,3 @@ def get_product_details_by_id(product_id):
     product_url = f"https://vi.aliexpress.com/item/{product_id}.html"
     print(f"Constructed URL: {product_url}")
     return get_aliexpress_product_info(product_url)
-
-    
