@@ -2,20 +2,21 @@
 # keep_alive.py
 
 
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import requests
 
 app = Flask(__name__)
 
-@app.route('/callback')
-def callback():
+# --- Gestion OAuth callback ---
+@app.route('/oauth/callback', methods=['GET'])
+def oauth_callback():
     code = request.args.get('code')
     if not code:
         return "No code received", 400
 
     app_key = '506592'          # Ta clé API AliExpress
     app_secret = 'ggkzfJ7lilLc7OXs6khWfT4qTZdZuJbh'   # Ton App Secret AliExpress
-    redirect_uri = 'https://aliexpress-telegram-bot-qjdv.onrender.com/callback'
+    redirect_uri = 'https://aliexpress-telegram-bot-qjdv.onrender.com/oauth/callback'
 
     token_url = 'https://oauth.aliexpress.com/token'
 
@@ -38,6 +39,22 @@ def callback():
             return "Token non trouvé dans la réponse.", 500
     else:
         return f"Erreur lors de la récupération du token: {response.text}", response.status_code
+
+
+# --- Gestion webhook callback ---
+@app.route('/callback', methods=['POST'])
+def webhook_callback():
+    data = request.json
+    if not data:
+        return "No JSON data received", 400
+
+    print("Webhook reçu :", data)  # Log dans la console
+
+    # TODO: Traite ici la notification (sauvegarde, mise à jour, etc.)
+
+    # AliExpress attend souvent un retour 200 OK avec un message précis (ici JSON)
+    return jsonify({"status": "success"}), 200
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
