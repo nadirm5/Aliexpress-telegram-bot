@@ -66,7 +66,7 @@ OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
-            "sourceType": "https://m.aliexpress.com/item/<PRODUCT_ID>.html?channel=coin",
+            "sourceType": "620",
             "afSmartRedirect": "y"
         }
     },
