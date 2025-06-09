@@ -66,7 +66,7 @@ OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
-            "dl_target_url": "620&channel=coin&spm=a2g0n.coinsearch",
+            "dl_target_url": "620&channel=coin",
             "afSmartRedirect": "y"
         }
     },
