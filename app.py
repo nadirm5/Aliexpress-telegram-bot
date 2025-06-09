@@ -66,7 +66,7 @@ OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
-            "dl_target_url": "https://campaign.aliexpress.com/wow/gcp/aep/2022coins",
+            "dl_target_url": "0",
             "afSmartRedirect": "y"
         }
     },
