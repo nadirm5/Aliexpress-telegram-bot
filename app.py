@@ -791,6 +791,11 @@ def main() -> None:
     application.add_handler(CommandHandler("start", start))
 
     application.add_handler(MessageHandler(
+        filters.TEXT & ~filters.COMMAND & filters.Regex(r'https:\/\/m\.aliexpress\.com\/p\/coin-index\/index\.html\?[^ ]*productIds=\d+'),
+        handle_coin_link
+    ))
+
+    application.add_handler(MessageHandler(
         filters.TEXT & ~filters.COMMAND & filters.Regex(COMBINED_DOMAIN_REGEX),
         handle_message
     ))
@@ -799,6 +804,16 @@ def main() -> None:
         filters.FORWARDED & filters.TEXT & filters.Regex(COMBINED_DOMAIN_REGEX),
         handle_message
     ))
+
+    application.add_handler(MessageHandler(
+        filters.TEXT & ~filters.COMMAND & ~filters.Regex(COMBINED_DOMAIN_REGEX),
+        lambda update, context: context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="Please send an AliExpress product link to generate affiliate links."
+        )
+    ))
+
+    application.run_polling()
 
     application.add_handler(MessageHandler(
         filters.TEXT & ~filters.COMMAND & ~filters.Regex(COMBINED_DOMAIN_REGEX),
