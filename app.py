@@ -611,11 +611,9 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 def _build_reply_markup(coin_url: str | None = None) -> InlineKeyboardMarkup:
     keyboard = []
 
-    # 🔝 Ajouter le lien Coin en premier avec le texte souhaité
     if coin_url:
         keyboard.append([InlineKeyboardButton("🎁 رابط بالعملات -%70", url=coin_url)])
 
-    # 🎫 Autres boutons standards
     keyboard.extend([
         [
             InlineKeyboardButton("🎫 |  Coupons", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
