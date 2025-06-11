@@ -57,19 +57,42 @@ except Exception as e:
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
 
+import re
+
+# Détection de tous les types de liens AliExpress (standards, raccourcis, Coin)
 URL_REGEX = re.compile(
     r'https?://(?:'
-    r's\.click\.aliexpress\.com/e/[a-zA-Z0-9_-]+|'
-    r'a\.aliexpress\.com/_[a-zA-Z0-9_-]+|'
-    r'm\.aliexpress\.com/p/coin-index/index\.html\?[^ \n]+|'
-    r'(?:www\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*'
+    r's\.click\.aliexpress\.com/e/[a-zA-Z0-9_-]+|'               # Short link s.click
+    r'a\.aliexpress\.com/[a-zA-Z0-9_-]+|'                         # Short link a.aliexpress
+    r'm\.aliexpress\.com/p/coin-index/index\.html\?[^ \n]+|'     # Coin link
+    r'(?:www\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]+'
     r')',
     re.IGNORECASE
 )
+
+# Pour extraire l'ID produit depuis une URL standard
 PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html', re.IGNORECASE)
-STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?(/.*)?', re.IGNORECASE)
-SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
-COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
+
+# Pour détecter les liens standards (sans s.click ou a.aliexpress)
+STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(
+    r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?(/.*)?',
+    re.IGNORECASE
+)
+
+# Pour détecter les liens courts
+SHORT_LINK_DOMAIN_REGEX = re.compile(
+    r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/)[a-zA-Z0-9_-]+/?',
+    re.IGNORECASE
+)
+
+# Regroupe tous les domaines AliExpress (utile pour vérification simple)
+COMBINED_DOMAIN_REGEX = re.compile(
+    r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com',
+    re.IGNORECASE
+)
+
+# Pour extraire l'ID depuis un lien de type Coin
+COIN_LINK_ID_REGEX = re.compile(r'productIds=(\d+)', re.IGNORECASE)
 OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
