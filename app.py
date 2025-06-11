@@ -92,7 +92,7 @@ COMBINED_DOMAIN_REGEX = re.compile(
 )
 
 # Pour extraire l'ID depuis un lien de type Coin
-COIN_LINK_ID_REGEX = re.compile(r'productIds=(\d+)', re.IGNORECASE)
+COIN_LINK_ID_REGEX = re.compile(r'[?&]productIds=(\d+)', re.IGNORECASE)
 OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
