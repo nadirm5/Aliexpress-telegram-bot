@@ -430,25 +430,25 @@ async def generate_affiliate_links_batch(target_urls: list[str]) -> dict[str, st
                 promo_link = link_info.get('promotion_link')
 
                 if source_url and promo_link:
-                    # Find the original uncached URL that corresponds to this source_value
-                    # This assumes the API returns source_value exactly as sent
-                    original_target_url = None
-                    for target in uncached_urls:
-    # Check if the source_url (which has the star prefix) contains the original target url
-    if f"redirectUrl={target}" in source_url or target == source_url:
-        original_target_url = target
-        break
-    # Fallback check if the source_url itself matches an original target (less likely)
-    elif source_url == target:
-        original_target_url = target
-        break
+    # Find the original uncached URL that corresponds to this source_value
+    # This assumes the API returns source_value exactly as sent
+    original_target_url = None
+    for target in uncached_urls:
+        # Check if the source_url (which has the star prefix) contains the original target url
+        if f"redirectUrl={target}" in source_url or target == source_url:
+            original_target_url = target
+            break
+        # Fallback check if the source_url itself matches an original target (less likely)
+        elif source_url == target:
+            original_target_url = target
+            break
 
-if original_target_url and original_target_url in results_dict:
-    results_dict[original_target_url] = promo_link
-    await link_cache.set(original_target_url, promo_link)
-    logger.debug(
-        f"Cached affiliate link for {original_target_url} until {expiry_date.strftime('%Y-%m-%d %H:%M:%S')}"
-    )
+    if original_target_url and original_target_url in results_dict:
+        results_dict[original_target_url] = promo_link
+        await link_cache.set(original_target_url, promo_link)
+        logger.debug(
+            f"Cached affiliate link for {original_target_url} until {expiry_date.strftime('%Y-%m-%d %H:%M:%S')}"
+        )
                     else:
                         logger.warning(f"Received link for unexpected or unmatchable source_value: {source_url}")
                 else:
