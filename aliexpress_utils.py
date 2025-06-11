@@ -89,13 +89,12 @@ def get_aliexpress_product_info(product_url):
 
 def get_product_details_by_id(product_id):
     """
-    Construit une URL vers un produit AliExpress avec les paramètres Coins.
+    Constructs URL from product ID and fetches product details.
     Args:
-        product_id (str or int): L'ID du produit AliExpress.
+        product_id (str or int): The AliExpress product ID.
     Returns:
-        tuple: (product_name, img_url) ou (None, None) en cas d'échec.
+        tuple: (product_name, img_url) or (None, None) if failed.
     """
-    # Générer le lien avec les paramètres coin
-    product_url = f"product_url = f"https://m.aliexpress.com/item/PRODUCT_ID.html?channel=coin&sourceType=620"
-    print(f"Constructed Coins URL: {product_url}")
+    product_url = f"https://vi.aliexpress.com/item/{product_id}.html"
+    print(f"Constructed URL: {product_url}")
     return get_aliexpress_product_info(product_url)
