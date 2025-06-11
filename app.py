@@ -135,7 +135,7 @@ async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> 
     if cached_final_url:
     logger.info(f"Cache hit for resolved short link: {short_url} -> {cached_final_url}")
     if any(domain in cached_final_url for domain in ['aliexpress.com', 'm.aliexpress.com', 'aliexpress.us']):
-        return cached_final_url  # ✅ accepte tous les liens AliExpress (produits + pages promo)
+        return cached_final_url  # ✅ accepte tous les liens AliExpress valides (produits + pages)
     else:
         logger.warning(f"Cached URL is not a recognized AliExpress domain: {cached_final_url}")
         return None
