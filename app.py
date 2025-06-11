@@ -211,13 +211,19 @@ def extract_product_id(url: str) -> str | None:
     if match:
         return match.group(1)
 
-    alt_patterns = [r'/p/[^/]+/([0-9]+)\.html', r'product/([0-9]+)']
+    alt_patterns = [
+        r'/p/[^/]+/([0-9]+)\.html',
+        r'product/([0-9]+)',
+        r'productIds=([0-9]+)'
+    ]
     for pattern in alt_patterns:
-        alt_match = re.search(pattern, url)
+        alt_match = re.search(pattern, url, re.IGNORECASE)
         if alt_match:
             product_id = alt_match.group(1)
             logger.info(f"Extracted product ID {product_id} using alternative pattern {pattern}")
             return product_id
+
+    return None
 
     logger.warning(f"Could not extract product ID from URL: {url}")
     return None
