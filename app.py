@@ -1,3 +1,5 @@
+
+
 import logging
 import os
 import re
@@ -22,9 +24,9 @@ load_dotenv()
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 ALIEXPRESS_APP_KEY = os.getenv('ALIEXPRESS_APP_KEY')
 ALIEXPRESS_APP_SECRET = os.getenv('ALIEXPRESS_APP_SECRET')
-TARGET_CURRENCY = os.getenv('TARGET_CURRENCY', '')
+TARGET_CURRENCY = os.getenv('TARGET_CURRENCY', 'USD')
 TARGET_LANGUAGE = os.getenv('TARGET_LANGUAGE', 'en')
-QUERY_COUNTRY = os.getenv('QUERY_COUNTRY', 'fr')
+QUERY_COUNTRY = os.getenv('QUERY_COUNTRY', 'US')
 ALIEXPRESS_TRACKING_ID = os.getenv('ALIEXPRESS_TRACKING_ID', 'default')
 ALIEXPRESS_API_URL = 'https://api-sg.aliexpress.com/sync'
 QUERY_FIELDS = 'product_main_image_url,target_sale_price,product_title,target_sale_price_currency'
@@ -56,64 +58,39 @@ except Exception as e:
 
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
+URL_REGEX = re.compile(r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*', re.IGNORECASE)
+PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html')
+STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id\.aliexpress\.com|th\.aliexpress\.com|ar\.aliexpress\.com)(\.([\w-]+))?(/.*)?', re.IGNORECASE)
+SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
+COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
 
-import re
-
-# Détection de tous les types de liens AliExpress (standards, raccourcis, Coin)
-URL_REGEX = re.compile(
-    r'https?://(?:'
-    r's\.click\.aliexpress\.com/e/[a-zA-Z0-9_-]+|'               # Short link s.click
-    r'a\.aliexpress\.com/[a-zA-Z0-9_-]+|'                         # Short link a.aliexpress
-    r'm\.aliexpress\.com/p/coin-index/index\.html\?[^ \n]+|'     # Coin link
-    r'(?:www\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]+'
-    r')',
-    re.IGNORECASE
-)
-
-# Pour extraire l'ID produit depuis une URL standard
-PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html', re.IGNORECASE)
-
-# Pour détecter les liens standards (sans s.click ou a.aliexpress)
-STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(
-    r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?(/.*)?',
-    re.IGNORECASE
-)
-
-# Pour détecter les liens courts
-SHORT_LINK_DOMAIN_REGEX = re.compile(
-    r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/)[a-zA-Z0-9_-]+/?',
-    re.IGNORECASE
-)
-
-# Regroupe tous les domaines AliExpress (utile pour vérification simple)
-COMBINED_DOMAIN_REGEX = re.compile(
-    r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com',
-    re.IGNORECASE
-)
-
-# Pour extraire l'ID depuis un lien de type Coin
-COIN_LINK_ID_REGEX = re.compile(r'[?&]productIds=(\d+)', re.IGNORECASE)
 OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
         "params": {
-            "sourceType": "620&channel=coin&pdp_ext_f=%7B%22",
+            "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
         }
     },
-    "bundle": {
-        "name": "📦 <b>Bundle Deals</b> – <b>خصومات على العروض المجمعة 💥</b> 👉",
+
+    "link": {
+        "name": "🚀 <b>🔗 رابط المنتوج بالتخفيض</b>",
         "params": {
-            "sourceType": "570",
-            "scm": "1007.41618.435122.0",
-            "scm_id": "1007.41618.435122.0",
-            "scm-url": "1007.41618.435122.0",
-            "pvid": "1d6d5bee-18fd-4156-9306-d2d9325a2591",
+            "sourceType": "620%26channel=coin",
             "afSmartRedirect": "y"
+    
         }
-    }
+    },
+
+
+    
+    "super": {"name": "🔥 Super Deals", "params": {"sourceType": "562", "channel": "sd", "afSmartRedirect": "y"}},
+    "limited": {"name": "⏳ Limited Offers", "params": {"sourceType": "561", "channel": "limitedoffers", "afSmartRedirect": "y"}},
+    "bigsave": {"name": "💰 Big Save", "params": {"sourceType": "680", "channel": "bigSave", "afSmartRedirect": "y"}},
 }
-OFFER_ORDER = ["coin", "bundle"]
+
+OFFER_ORDER = ["coin", "super", "limited", "bigsave"]
+
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
@@ -160,18 +137,11 @@ async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> 
     cached_final_url = await resolved_url_cache.get(short_url)
     if cached_final_url:
         logger.info(f"Cache hit for resolved short link: {short_url} -> {cached_final_url}")
-        if any(domain in cached_final_url for domain in ['aliexpress.com', 'm.aliexpress.com', 'aliexpress.us']):
-            return cached_final_url
-        else:
-            logger.warning(f"Cached URL is not a recognized AliExpress domain: {cached_final_url}")
-            return None
-    else:
-        logger.warning(f"Cached URL is not a recognized AliExpress domain: {cached_final_url}")
-        return None
+        return cached_final_url
 
     logger.info(f"Resolving short link: {short_url}")
     try:
-        async with session.get(short_url, allow_redirects=True, timeout=5) as response:
+        async with session.get(short_url, allow_redirects=True, timeout=10) as response:
             if response.status == 200 and response.url:
                 final_url = str(response.url)
                 logger.info(f"Resolved {short_url} to {final_url}")
@@ -357,8 +327,8 @@ async def fetch_product_details_v2(product_id: str) -> dict | None:
         product_data = products[0]
         product_info = {
             'image_url': product_data.get('product_main_image_url'),
-             'price': product_data.get('target_sale_price'), 
-            'currency': product_data.get('sale_price_currency', TARGET_CURRENCY),
+            'price': product_data.get('target_sale_price'), 
+            'currency': product_data.get('target_sale_price_currency', TARGET_CURRENCY),
             'title': product_data.get('product_title', f'Product {product_id}')
         }
 
@@ -388,8 +358,6 @@ async def generate_affiliate_links_batch(target_urls: list[str]) -> dict[str, st
     if not uncached_urls:
         logger.info("All affiliate links retrieved from cache.")
         return results_dict
-
-    # Suite du code pour appeler l'API et remplir results_dict pour uncached_urls...
 
     logger.info(f"Generating affiliate links for {len(uncached_urls)} uncached URLs...")
 
@@ -574,61 +542,76 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
 
-    # Titre de l’offre
-    message_lines.append("🚨 <b>عرض محدود</b> 🔝")
+    # Titre du produit décoré avec émojis
+    product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
+    decorated_title = f"✨⭐️ {product_title} ⭐️✨"
 
-    # Titre du produit (max 50 caractères)
-    product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:50]
-    decorated_title = f"🌟 <b>{product_title}</b> 🌟"
-    message_lines.append(decorated_title)
+    product_price = product_data.get('price')
+    product_currency = product_data.get('currency', '')
 
-    # Prix en gras
-    product_price = product_data.get('discounted_price') or product_data.get('price')
-    if product_price:
-        message_lines.append(f"💸 <b>السعر | Price:</b> <b>{product_price}</b>")
+    print(f"Product Title: {product_title}")
+    print(f"Product Price: {product_price} {product_currency}")
+    print(f"Generated Links: {generated_links}")
+
+    # Ajout du titre
+    message_lines.append(f"<b>{decorated_title}</b>")
+
+    # Prix du produit
+    if details_source == "API" and product_price:
+        price_str = f"{product_price} {product_currency}".strip()
+        message_lines.append(f"\n💰 <b>Price $السعر بدون تخفيض:</b> {price_str}\n")
+    elif details_source == "Scraped":
+        message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
     else:
-        message_lines.append("<b>❌ السعر غير متوفر | Price unavailable</b>")
+        message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    # Liens
-    coin_link = generated_links.get("coin") or product_data.get('coin_link')
-    bundle_link = generated_links.get("bundle") or product_data.get('bundle_link')
-
+    # Lien "coin" en gras
+    coin_link = generated_links.get("coin")
     if coin_link:
-        message_lines.append("\n🚀 <b>الرابط بالعملات | Coin:</b>")
-        message_lines.append(f"<b>{coin_link}</b>")
-        
-    if bundle_link:
-        message_lines.append("\n📦 <b>رابط عروض Bundle Deals:</b>")
-        message_lines.append("🔥 <i>أقوى تخفيض عند شراء 3 قطع</i>")
-        message_lines.append(f"<b>{bundle_link}</b>")
+        message_lines.append(f"▫️ 🪙 🎯 <b>Coins – الرابط بالتخفيض ⬇️</b> 👉: <b>{coin_link}</b>")
+        message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
+    # Ajouter les offres spéciales disponibles
+    message_lines.append("🎁 <b> Offers:</b>")
+    message_lines.append("──────────────\n")
 
-    # Séparateur
-    message_lines.append("\n🚀────────🚀")
+    offers_available = False
+    for offer_key in OFFER_ORDER:
+        if offer_key == "coin":  # Skip the coin link as it's already added
+            continue
+        link = generated_links.get(offer_key)
+        offer_name = OFFER_PARAMS[offer_key]["name"]
+        if link:
+            message_lines.append(f'▫️ <b>{offer_name}:</b> {link}\n')
+            offers_available = True
+        else:
+            message_lines.append(f"▫️ {offer_name}: ❌ Not Available\n")
 
-    # Lien du bot
-    bot_link = "@Rayanaliexpress_bot"
-    message_lines.append("🔥 <b>Use bot احصل على أفضل سعر باستخدام البوت👇</b>")
-    message_lines.append(f"🤖 <b>{bot_link}</b>")
+    # Si aucune offre n'est disponible, afficher un message de défaut
+    if not offers_available and not coin_link:
+        return f"<b>{product_title[:250]}</b>\n\nWe couldn't find an offer for this product."
+
+    # Ajouter la fin du message avec l'invitation à suivre sur Telegram
+    message_lines.append("──────────────\n")
+    message_lines.append("🔔 <b>  Follow Us:</b>")
+    message_lines.append("📱 Telegram: @RayanCoupon")
 
     return "\n".join(message_lines)
-
-
 def _build_reply_markup() -> InlineKeyboardMarkup:
-    keyboard = [
+     keyboard = [
         [
-            InlineKeyboardButton("🎫 Coupons", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
-            InlineKeyboardButton("🔥 Deal ", url="https://s.click.aliexpress.com/e/_omRiewZ")
+            InlineKeyboardButton("🎯 Choice Day", url="https://s.click.aliexpress.com/e/_omRiewZ"),
+            InlineKeyboardButton("🔥 Best Deals", url="https://s.click.aliexpress.com/e/_olUPW8V")
         ],
         [
-            InlineKeyboardButton("🛍️ Bundle Deals", url="https://s.click.aliexpress.com/e/_oE0GKJ9")
+            InlineKeyboardButton("📱 Channel", url="https://t.me/RayanCoupon")
         ],
         [
-            InlineKeyboardButton("📢 Join Channel", url="https://t.me/RayanCoupon"),
-            InlineKeyboardButton("❤️ website", url="https://moneyexpress.fun")
+            InlineKeyboardButton("☕ Support Me", url="https://moneyexpress.fun")
         ]
     ]
-    return InlineKeyboardMarkup(keyboard)
+     return InlineKeyboardMarkup(keyboard)
+
 async def _send_telegram_response(context: ContextTypes.DEFAULT_TYPE, chat_id: int, product_data: dict, message_text: str, reply_markup: InlineKeyboardMarkup):
     product_image = product_data.get('image_url')
     product_id = product_data.get('id', 'N/A') 
