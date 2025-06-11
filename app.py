@@ -608,6 +608,8 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     return "\n".join(message_lines)
 
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
 def _build_reply_markup(coin_url: str | None = None) -> InlineKeyboardMarkup:
     keyboard = []
 
@@ -628,7 +630,7 @@ def _build_reply_markup(coin_url: str | None = None) -> InlineKeyboardMarkup:
         ]
     ])
 
-    return InlineKeyboardMarkup(keyboard)
+   return InlineKeyboardMarkup(keyboard)
 async def _send_telegram_response(context: ContextTypes.DEFAULT_TYPE, chat_id: int, product_data: dict, message_text: str, reply_markup: InlineKeyboardMarkup):
     product_image = product_data.get('image_url')
     product_id = product_data.get('id', 'N/A') 
