@@ -813,16 +813,6 @@ def main() -> None:
         )
     ))
 
-    application.run_polling()
-
-    application.add_handler(MessageHandler(
-        filters.TEXT & ~filters.COMMAND & ~filters.Regex(COMBINED_DOMAIN_REGEX),
-        lambda update, context: context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text="Please send an AliExpress product link to generate affiliate links."
-        )
-    ))
-
     job_queue = application.job_queue
     job_queue.run_once(periodic_cache_cleanup, 60)
     job_queue.run_repeating(periodic_cache_cleanup, interval=timedelta(days=1), first=timedelta(days=1))
