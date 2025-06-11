@@ -133,12 +133,12 @@ resolved_url_cache = CacheWithExpiry(CACHE_EXPIRY_SECONDS)
 async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> str | None:
     cached_final_url = await resolved_url_cache.get(short_url)
     if cached_final_url:
-    logger.info(f"Cache hit for resolved short link: {short_url} -> {cached_final_url}")
-    if any(domain in cached_final_url for domain in ['aliexpress.com', 'm.aliexpress.com', 'aliexpress.us']):
-        return cached_final_url  # ✅ accepte tous les liens AliExpress valides (produits + pages)
-    else:
-        logger.warning(f"Cached URL is not a recognized AliExpress domain: {cached_final_url}")
-        return None
+        logger.info(f"Cache hit for resolved short link: {short_url} -> {cached_final_url}")
+        if any(domain in cached_final_url for domain in ['aliexpress.com', 'm.aliexpress.com', 'aliexpress.us']):
+            return cached_final_url  # ✅ accepte tous les liens AliExpress valides (produits + pages)
+        else:
+            logger.warning(f"Cached URL is not a recognized AliExpress domain: {cached_final_url}")
+            return None
 
     logger.info(f"Resolving short link: {short_url}")
     try:
@@ -164,11 +164,16 @@ async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> 
                         logger.warning(f"Error re-fetching URL with updated country parameter: {e}")
 
                 product_id = extract_product_id(final_url)
-                if STANDARD_ALIEXPRESS_DOMAIN_REGEX.match(final_url) and product_id:
+
+                # ✅ Autoriser aussi les pages coin, promo, bundle, deal...
+                if (
+                    STANDARD_ALIEXPRESS_DOMAIN_REGEX.match(final_url)
+                    or re.search(r'/p/(coin-index|bundle|promo|deal|superdeals|special)', final_url)
+                ):
                     await resolved_url_cache.set(short_url, final_url)
                     return final_url
                 else:
-                    logger.warning(f"Resolved URL {final_url} doesn't look like a valid AliExpress product page.")
+                    logger.warning(f"Resolved URL {final_url} doesn't look like a valid AliExpress page.")
                     return None
             else:
                 logger.error(f"Failed to resolve short link {short_url}. Status: {response.status}")
@@ -182,22 +187,6 @@ async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> 
     except Exception as e:
         logger.exception(f"Unexpected error resolving short link {short_url}: {e}")
         return None
-
-def extract_product_id(url: str) -> str | None:
-    if '.aliexpress.us' in url:
-        url = url.replace('.aliexpress.us', '.aliexpress.com')
-
-    match = PRODUCT_ID_REGEX.search(url)
-    if match:
-        return match.group(1)
-
-    alt_patterns = [r'/p/[^/]+/([0-9]+)\.html', r'product/([0-9]+)']
-    for pattern in alt_patterns:
-        alt_match = re.search(pattern, url)
-        if alt_match:
-            product_id = alt_match.group(1)
-            logger.info(f"Extracted product ID {product_id} using alternative pattern {pattern}")
-            return product_id
 
     logger.warning(f"Could not extract product ID from URL: {url}")
     return None
