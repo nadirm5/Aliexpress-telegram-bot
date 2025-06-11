@@ -160,7 +160,11 @@ async def resolve_short_link(short_url: str, session: aiohttp.ClientSession) -> 
     cached_final_url = await resolved_url_cache.get(short_url)
     if cached_final_url:
         logger.info(f"Cache hit for resolved short link: {short_url} -> {cached_final_url}")
-        return cached_final_url
+        if 'aliexpress.com' in cached_final_url:
+            return cached_final_url
+        else:
+            logger.warning(f"Cached URL is not a valid AliExpress page: {cached_final_url}")
+            return None
 
     logger.info(f"Resolving short link: {short_url}")
     try:
