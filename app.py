@@ -608,20 +608,28 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     return "\n".join(message_lines)
 
-def _build_reply_markup() -> InlineKeyboardMarkup:
-    keyboard = [
+def _build_reply_markup(coin_url: str | None = None) -> InlineKeyboardMarkup:
+    keyboard = []
+
+    # 🔝 Ajouter le lien Coin en premier avec le texte souhaité
+    if coin_url:
+        keyboard.append([InlineKeyboardButton("🎁 رابط بالعملات -%70", url=coin_url)])
+
+    # 🎫 Autres boutons standards
+    keyboard.extend([
         [
-            InlineKeyboardButton("🎫 كوبونات  |  Coupons", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
-            InlineKeyboardButton("🔥 Deal of the Day", url="https://s.click.aliexpress.com/e/_omRiewZ")
+            InlineKeyboardButton("🎫 |  Coupons", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
+            InlineKeyboardButton("🔥 Deal", url="https://s.click.aliexpress.com/e/_omRiewZ")
         ],
         [
             InlineKeyboardButton("🛍️ Bundle Deals", url="https://s.click.aliexpress.com/e/_oE0GKJ9")
         ],
         [
-            InlineKeyboardButton("📢 Join VIP Channel", url="https://t.me/RayanCoupon"),
+            InlineKeyboardButton("📢  Channel", url="https://t.me/RayanCoupon"),
             InlineKeyboardButton("❤️ Support Me", url="https://moneyexpress.fun")
         ]
-    ]
+    ])
+
     return InlineKeyboardMarkup(keyboard)
 async def _send_telegram_response(context: ContextTypes.DEFAULT_TYPE, chat_id: int, product_data: dict, message_text: str, reply_markup: InlineKeyboardMarkup):
     product_image = product_data.get('image_url')
