@@ -57,35 +57,11 @@ except Exception as e:
 
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
-URL_REGEX = re.compile(
-    r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*',
-    re.IGNORECASE
-)
-
-PRODUCT_ID_REGEX = re.compile(
-    r'/item/(\d+)\.html',
-    re.IGNORECASE
-)
-
-STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(
-    r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?(/.*)?',
-    re.IGNORECASE
-)
-
-SHORT_LINK_DOMAIN_REGEX = re.compile(
-    r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?',
-    re.IGNORECASE
-)
-
-COMBINED_DOMAIN_REGEX = re.compile(
-    r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com',
-    re.IGNORECASE
-)
-
-COIN_LINK_REGEX = re.compile(
-    r'https://m\.aliexpress\.com/p/coin-index/index\.html\?[^ ]*?productIds=\d+[^ ]*',
-    re.IGNORECASE
-)
+URL_REGEX = re.compile(r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*', re.IGNORECASE)
+PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html', re.IGNORECASE)
+STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?(/.*)?', re.IGNORECASE)
+SHORT_LINK_DOMAIN_REGEX = re.compile(r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?', re.IGNORECASE)
+COMBINED_DOMAIN_REGEX = re.compile(r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com', re.IGNORECASE)
 OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
@@ -211,19 +187,13 @@ def extract_product_id(url: str) -> str | None:
     if match:
         return match.group(1)
 
-    alt_patterns = [
-        r'/p/[^/]+/([0-9]+)\.html',
-        r'product/([0-9]+)',
-        r'productIds=([0-9]+)'
-    ]
+    alt_patterns = [r'/p/[^/]+/([0-9]+)\.html', r'product/([0-9]+)']
     for pattern in alt_patterns:
-        alt_match = re.search(pattern, url, re.IGNORECASE)
+        alt_match = re.search(pattern, url)
         if alt_match:
             product_id = alt_match.group(1)
             logger.info(f"Extracted product ID {product_id} using alternative pattern {pattern}")
             return product_id
-
-    return None
 
     logger.warning(f"Could not extract product ID from URL: {url}")
     return None
@@ -608,28 +578,20 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     return "\n".join(message_lines)
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
-def _build_reply_markup(coin_url: str | None = None) -> InlineKeyboardMarkup:
-    keyboard = []
-
-    if coin_url:
-        keyboard.append([InlineKeyboardButton("🎁 رابط بالعملات -%70", url=coin_url)])
-
-    keyboard.extend([
+def _build_reply_markup() -> InlineKeyboardMarkup:
+    keyboard = [
         [
-            InlineKeyboardButton("🎫 |  Coupons", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
+            InlineKeyboardButton("🎫 Coupons", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
             InlineKeyboardButton("🔥 Deal", url="https://s.click.aliexpress.com/e/_omRiewZ")
         ],
         [
             InlineKeyboardButton("🛍️ Bundle Deals", url="https://s.click.aliexpress.com/e/_oE0GKJ9")
         ],
         [
-            InlineKeyboardButton("📢  Channel", url="https://t.me/RayanCoupon"),
+            InlineKeyboardButton("📢 Channel", url="https://t.me/RayanCoupon"),
             InlineKeyboardButton("❤️ Support Me", url="https://moneyexpress.fun")
         ]
-    ])
-
+    ]
     return InlineKeyboardMarkup(keyboard)
 async def _send_telegram_response(context: ContextTypes.DEFAULT_TYPE, chat_id: int, product_data: dict, message_text: str, reply_markup: InlineKeyboardMarkup):
     product_image = product_data.get('image_url')
@@ -789,11 +751,6 @@ def main() -> None:
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
     application.add_handler(CommandHandler("start", start))
-
-    application.add_handler(MessageHandler(
-        filters.TEXT & ~filters.COMMAND & filters.Regex(r'https:\/\/m\.aliexpress\.com\/p\/coin-index\/index\.html\?[^ ]*productIds=\d+'),
-        handle_coin_link
-    ))
 
     application.add_handler(MessageHandler(
         filters.TEXT & ~filters.COMMAND & filters.Regex(COMBINED_DOMAIN_REGEX),
