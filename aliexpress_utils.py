@@ -96,6 +96,6 @@ def get_product_details_by_id(product_id):
         tuple: (product_name, img_url) ou (None, None) en cas d'échec.
     """
     # Générer le lien avec les paramètres coin
-    product_url = f"https://m.aliexpress.com/item/PRODUCT_ID.html?channel=coin&sourceType=620"
+    product_url = f"product_url = f"https://m.aliexpress.com/p/coin-index/index.html?productIds={product_id}&channel=coin&sourceType=620""
     print(f"Constructed Coins URL: {product_url}")
     return get_aliexpress_product_info(product_url)
