@@ -58,7 +58,12 @@ executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
 
 URL_REGEX = re.compile(
-    r'https?://(?:s\.click\.aliexpress\.com/e/[a-zA-Z0-9_-]+|a\.aliexpress\.com/_[a-zA-Z0-9_-]+|(?:www\.)?(?:aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar))(?:\.[\w-]+)?/[^\s<>"]*)',
+    r'https?://(?:'
+    r's\.click\.aliexpress\.com/e/[a-zA-Z0-9_-]+|'
+    r'a\.aliexpress\.com/_[a-zA-Z0-9_-]+|'
+    r'm\.aliexpress\.com/p/coin-index/index\.html\?[^ \n]+|'
+    r'(?:www\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*'
+    r')',
     re.IGNORECASE
 )
 PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html', re.IGNORECASE)
