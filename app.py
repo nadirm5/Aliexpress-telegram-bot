@@ -602,18 +602,17 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     return "\n".join(message_lines)
 
-def _build_reply_markup(user_link: str) -> InlineKeyboardMarkup:
+def _build_reply_markup() -> InlineKeyboardMarkup:
     keyboard = [
-        [InlineKeyboardButton("🔗 Open My Link", url=user_link)],
         [
             InlineKeyboardButton("🎫 Coupons", url="https://s.click.aliexpress.com/e/_oliYXEJ"),
-            InlineKeyboardButton("🔥 Deals", url="https://s.click.aliexpress.com/e/_omRiewZ")
+            InlineKeyboardButton("🔥 Deal", url="https://s.click.aliexpress.com/e/_omRiewZ")
         ],
         [
             InlineKeyboardButton("🛍️ Bundle Deals", url="https://s.click.aliexpress.com/e/_oE0GKJ9")
         ],
         [
-            InlineKeyboardButton("📢 Telegram Channel", url="https://t.me/RayanCoupon"),
+            InlineKeyboardButton("📢 Channel", url="https://t.me/RayanCoupon"),
             InlineKeyboardButton("❤️ Support Me", url="https://moneyexpress.fun")
         ]
     ]
