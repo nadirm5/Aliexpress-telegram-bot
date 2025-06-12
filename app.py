@@ -108,13 +108,10 @@ OFFER_PARAMS = {
             "pvid": "1d6d5bee-18fd-4156-9306-d2d9325a2591",
             "afSmartRedirect": "y"
         }
-    },
-    "custom": {
-        "name": "✨ <b>Offre spéciale personnalisée</b> – <b>رابط خاص</b> 👉",
-        "url": None  # Ce champ sera rempli dynamiquement
     }
 }
-OFFER_ORDER = ["coin", "bundle", "custom"]
+
+OFFER_ORDER = ["coin", "bundle"]
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
@@ -770,6 +767,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             await context.bot.delete_message(chat_id, loading_sticker_msg.message_id)
         except Exception as delete_err:
             logger.warning(f"Could not delete loading sticker: {delete_err}")
+
 
 
 def main() -> None:
