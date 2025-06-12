@@ -793,12 +793,13 @@ def main() -> None:
     ))
 
     application.add_handler(MessageHandler(
-        filters.TEXT & ~filters.COMMAND & ~filters.Regex(COMBINED_DOMAIN_REGEX) & ~filters.Regex(COIN_LINK_REGEX),
+        filters.TEXT & ~filters.COMMAND & ~filters.Regex(COMBINED_DOMAIN_REGEX),
         lambda update, context: context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text="❌ We couldn't find any valid AliExpress product links in your message."
+            text="Please send an AliExpress product link to generate affiliate links."
         )
     ))
+
 
 
     application.run_polling()
