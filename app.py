@@ -774,9 +774,9 @@ def main() -> None:
     application.add_handler(CommandHandler("start", start))
 
     application.add_handler(MessageHandler(
-        filters.TEXT & ~filters.COMMAND & filters.Regex(COMBINED_DOMAIN_REGEX),
-        handle_message
-    ))
+    filters.TEXT & ~filters.COMMAND & filters.Regex(COMBINED_DOMAIN_REGEX.pattern),
+    handle_message
+))
 
     application.add_handler(MessageHandler(
         filters.FORWARDED & filters.TEXT & filters.Regex(COMBINED_DOMAIN_REGEX),
