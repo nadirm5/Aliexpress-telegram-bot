@@ -108,10 +108,13 @@ OFFER_PARAMS = {
             "pvid": "1d6d5bee-18fd-4156-9306-d2d9325a2591",
             "afSmartRedirect": "y"
         }
+    },
+    "custom": {
+        "name": "✨ <b>Offre spéciale personnalisée</b> – <b>رابط خاص</b> 👉",
+        "url": None  # Ce champ sera rempli dynamiquement
     }
 }
-
-OFFER_ORDER = ["coin", "bundle"]
+OFFER_ORDER = ["coin", "bundle", "custom"]
 class CacheWithExpiry:
     def __init__(self, expiry_seconds):
         self.cache = {}
@@ -561,18 +564,16 @@ async def _generate_offer_links(base_url: str) -> dict[str, str | None]:
 
 
 def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
+def _build_response_message(product_data: dict, generated_links: dict, details_source: str) -> str:
     message_lines = []
 
-    # Titre du produit
     product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
     decorated_title = f"✨⭐️ {product_title} ⭐️✨"
     product_price = product_data.get('price')
     product_currency = product_data.get('currency', '')
 
-    # Titre formaté
     message_lines.append(f"<b>{decorated_title}</b>")
 
-    # Prix
     if details_source == "API" and product_price:
         price_str = f"{product_price} {product_currency}".strip()
         message_lines.append(f"\n💰 <b>Price $السعر بدون تخفيض:</b> {price_str}\n")
@@ -581,24 +582,26 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     else:
         message_lines.append("\n❌ <b>Product details unavailable</b>\n")
 
-    # Lien avec Coins
     coin_link = generated_links.get("coin")
     if coin_link:
         message_lines.append(f"▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ : <b>{coin_link}</b>")
         message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
 
-    # Lien avec Bundle Deals
     bundle_link = generated_links.get("bundle")
     if bundle_link:
         message_lines.append(f"\n▫️ 📦 Bundle Deals – عروض مجمعة ⬇️ : <b>{bundle_link}</b>")
         message_lines.append("🔥 عروض مميزة عند شراء أكثر من قطعة!\n")
 
-    # Lien pour ouvrir directement dans l'application
     product_id = product_data.get("product_id")
     if product_id:
         deep_link = f"aliexpress://product/{product_id}"
         message_lines.append(f"\n📱 <b>Ouvrir dans l'application :</b> <code>{deep_link}</code>")
         message_lines.append(f"🔗 <a href='{deep_link}'>Cliquez ici pour ouvrir directement dans l'application AliExpress</a>\n")
+
+    custom_offer = OFFER_PARAMS.get("custom")
+    if custom_offer and custom_offer.get("url"):
+        message_lines.append(f"\n🎁 {custom_offer['name']}")
+        message_lines.append(f"<b>{custom_offer['url']}</b>\n")
 
     return "\n".join(message_lines)
 
