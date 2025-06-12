@@ -74,9 +74,9 @@ SHORT_LINK_DOMAIN_REGEX = re.compile(
 )
 
 COMBINED_DOMAIN_REGEX = re.compile(
-    r'aliexpress\.com|s\.click\.aliexpress\.com|a\.aliexpress\.com',
+    r'(?:https?://)?(?:www\.|m\.|s\.click\.|a\.|click\.)?aliexpress\.com',
     re.IGNORECASE
-)
+    )
 
 COIN_LINK_REGEX = re.compile(
     r'https:\/\/m\.aliexpress\.com\/p\/coin-index\/index\.html\?[^ ]*?productIds=(\d+)',
