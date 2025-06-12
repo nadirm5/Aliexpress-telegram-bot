@@ -79,7 +79,7 @@ COMBINED_DOMAIN_REGEX = re.compile(
     )
 
 COIN_LINK_REGEX = re.compile(
-    r'https:\/\/m\.aliexpress\.com\/p\/coin-index\/index\.html(?:[^\s<>"]*?[\?&]productIds=([\d,]+))',
+    r'https:\/\/m\.aliexpress\.com\/p\/coin-index\/index\.html(?:\?[^\s<>"]*?)?[\?&]productIds=([\d,]+)',
     re.IGNORECASE
 )
 
