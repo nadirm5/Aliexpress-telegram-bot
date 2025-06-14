@@ -598,6 +598,9 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         message_lines.append(f"\n🎁 {custom_offer['name']}")
         message_lines.append(f"<b>{custom_offer['url']}</b>\n")
 
+    # 🔥 Ton message promotionnel ici :
+    message_lines.append("🚀────────🚀\n🔥 احصل على أفضل سعر باستخدام البوت 👇\n🤖 @Rayanaliexpress_bot")
+
     return "\n".join(message_lines)
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
