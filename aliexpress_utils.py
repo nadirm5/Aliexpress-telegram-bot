@@ -1,100 +1,107 @@
-
 import requests
 from bs4 import BeautifulSoup
+import re
 
-
-def get_aliexpress_product_info(product_url):
+def get_first_coin_product(coin_url):
     """
-    Extract product name from AliExpress without Selenium
+    Récupère le premier produit visible d'une page Coin AliExpress
     Args:
-        product_url (str): AliExpress product page URL
+        coin_url (str): URL de la page Coin (peut être un lien raccourci)
     Returns:
-        str: product name
+        dict: Détails du produit ou message d'erreur
     """
-    product_name = None # Initialize product_name
-    img_url = None # Initialize img_url
     try:
+        # Configuration des headers pour simuler un navigateur mobile
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            "User-Agent": "Mozilla/5.0 (Linux; Android 10; SM-G980F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36",
+            "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7"
         }
-        cookies = {"x-hng": "lang=en-US", "intl_locale": "en_US"}
-        response = requests.get(product_url, headers=headers, cookies=cookies, timeout=15)
-        if response.status_code != 200:
-            print(f"Failed to load page: {response.status_code}")
-            return None, None # Return None for both if page fails
-        soup = BeautifulSoup(response.text, "html.parser")
+
+        # Suivre les redirections pour obtenir l'URL finale
+        session = requests.Session()
+        response = session.head(coin_url, headers=headers, allow_redirects=True)
+        final_url = response.url
+
+        # Vérifier qu'on a bien une page Coin
+        if not ('alimama' in final_url or 'coin' in final_url.lower()):
+            return {"error": "Le lien ne mène pas à une page Coin AliExpress"}
+
+        # Récupérer le contenu de la page
+        page_response = session.get(final_url, headers=headers)
+        soup = BeautifulSoup(page_response.text, 'html.parser')
+
+        # Nouvelle méthode pour détecter le premier produit - version mobile
+        product_card = soup.find('div', {'class': re.compile(r'product-card|coin-product|item-card', re.I)})
         
-        # Try finding the specific h1 tag first
-        root_div = soup.find("div", id="root")
-        if root_div:
-            h1 = root_div.select_one("div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > h1")
-            if h1:
-                product_name = h1.get_text(strip=True)
+        if not product_card:
+            # Fallback pour la version desktop
+            product_card = soup.find('div', {'class': re.compile(r'mainItem|item-box', re.I)})
 
-        # Fallback to og:title meta tag
-        if not product_name:
-            meta_title = soup.find("meta", property="og:title")
-            if meta_title and meta_title.has_attr("content"):
-                product_name = meta_title["content"]
-
-        # Fallback to keywords meta tag
-        if not product_name:
-            meta_name = soup.find("meta", attrs={"name": "keywords"})
-            if meta_name and meta_name.has_attr("content"):
-                # Take the first keyword as a potential name
-                product_name = meta_name["content"].split(",")[0].strip()
-
-        # Fallback to h1 with data-pl attribute
-        if not product_name:
-            h1 = soup.find("h1", {"data-pl": "product-title"})
-            if h1:
-                product_name = h1.get_text(strip=True)
-
-        # Fallback to h1 with specific class names
-        if not product_name:
-            h1 = soup.find("h1", {"class": lambda x: x and ("product-title-text" in x or "product-title" in x)})
-            if h1:
-                product_name = h1.get_text(strip=True)
-
-        # Generic h1 fallback (last resort for name)
-        if not product_name:
-            h1 = soup.find("h1")
-            if h1:
-                product_name = h1.get_text(strip=True)
-
-        # --- Image Extraction ---
-        img_tag = soup.find("img", {"class": lambda x: x and "magnifier--image" in x})
-        if img_tag and img_tag.has_attr("src"):
-            img_url = img_tag["src"]
-        else:
-            # Fallback to og:image meta tag
-            meta_img = soup.find("meta", property="og:image")
-            if meta_img and meta_img.has_attr("content"):
-                img_url = meta_img["content"]
-
-        # --- Clean up Product Name ---
-        if product_name:
-            # Remove common AliExpress suffixes, potentially followed by numbers
-            import re
-            # Regex: " - AliExpress" optionally followed by space and digits, at the end of the string
-            product_name = re.sub(r'\s*-\s*AliExpress(\s+\d+)?$', '', product_name).strip()
-            # Also handle case without leading space before hyphen
-            product_name = re.sub(r'-AliExpress(\s+\d+)?$', '', product_name).strip()
-
-
-        return product_name, img_url
+        if product_card:
+            # Extraire les informations
+            product_data = {
+                'title': extract_text(product_card, ['.title', 'h3', '.product-title']),
+                'price': extract_text(product_card, ['.price', '.product-price']),
+                'original_price': extract_text(product_card, ['.original-price', '.price--line-through']),
+                'discount': extract_text(product_card, ['.discount', '.sale-tag']),
+                'rating': extract_text(product_card, ['.rating', '.star-rate']),
+                'sales': extract_text(product_card, ['.sales', '.sold']),
+                'image': extract_attr(product_card, 'img', 'src', ['.image', 'img']),
+                'badges': extract_badges(product_card),
+                'url': extract_product_url(product_card)
+            }
+            
+            # Nettoyer les données
+            product_data = {k: clean_value(v) for k, v in product_data.items()}
+            return product_data
+        
+        return {"error": "Aucun produit trouvé sur la page Coin"}
+        
     except Exception as e:
-        print(f"An error occurred in get_aliexpress_product_info: {str(e)}") # Added function name for clarity
-        return None, None # Return None for both on error
+        return {"error": f"Erreur: {str(e)}"}
 
-def get_product_details_by_id(product_id):
-    """
-    Constructs URL from product ID and fetches product details.
-    Args:
-        product_id (str or int): The AliExpress product ID.
-    Returns:
-        tuple: (product_name, img_url) or (None, None) if failed.
-    """
-    product_url = f"https://vi.aliexpress.com/item/{product_id}.html"
-    print(f"Constructed URL: {product_url}")
-    return get_aliexpress_product_info(product_url)
+# Fonctions utilitaires
+def extract_text(element, selectors):
+    """Extrait le texte d'un élément avec plusieurs sélecteurs possibles"""
+    for selector in selectors:
+        found = element.select_one(selector)
+        if found and found.text.strip():
+            return found.text.strip()
+    return None
+
+def extract_attr(element, tag, attr, selectors):
+    """Extrait un attribut d'un élément"""
+    for selector in selectors:
+        found = element.select_one(selector)
+        if found:
+            img = found.find(tag)
+            if img and img.has_attr(attr):
+                return img[attr]
+    return None
+
+def extract_badges(element):
+    """Extrait les badges du produit"""
+    badges = element.select('.badge, .tag, .label')
+    return [badge.text.strip() for badge in badges if badge.text.strip()]
+
+def extract_product_url(element):
+    """Extrait l'URL du produit"""
+    link = element.find('a', href=True)
+    if link:
+        return 'https:' + link['href'] if link['href'].startswith('//') else link['href']
+    return None
+
+def clean_value(value):
+    """Nettoie les valeurs extraites"""
+    if isinstance(value, str):
+        return re.sub(r'\s+', ' ', value).strip()
+    return value
+
+# Exemple d'utilisation
+if __name__ == "__main__":
+    coin_link = "https://s.click.aliexpress.com/e/_onIOkB6"
+    product = get_first_coin_product(coin_link)
+    
+    print("=== PREMIER PRODUIT DE LA PAGE COIN ===")
+    for key, value in product.items():
+        print(f"{key.upper()}: {value}")
