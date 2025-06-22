@@ -1,86 +1,75 @@
 import logging
 import os
 import re
-import json
 import asyncio
-import time
-from datetime import datetime, timedelta
-from urllib.parse import urlparse, urlunparse, urlencode, parse_qsl
-from concurrent.futures import ThreadPoolExecutor
-import aiohttp
+from urllib.parse import urlparse, urlencode
 from dotenv import load_dotenv
+import aiohttp
+from typing import Dict, List
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, JobQueue
-from telegram.constants import ParseMode, ChatAction
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.constants import ParseMode
 
-import iop
-from aliexpress_utils import get_product_details_by_id
-
-# Configuration initiale
+# Configuration
 load_dotenv()
-TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-ALIEXPRESS_APP_KEY = os.getenv('ALIEXPRESS_APP_KEY')
-ALIEXPRESS_APP_SECRET = os.getenv('ALIEXPRESS_APP_SECRET')
-ALIEXPRESS_TRACKING_ID = os.getenv('ALIEXPRESS_TRACKING_ID', 'default')
+TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+ALI_API_KEY = os.getenv('ALIEXPRESS_API_KEY')
+TRACKING_ID = os.getenv('ALIEXPRESS_TRACKING_ID')
 
-# Optimisation des regex
-COIN_LINK_REGEX = re.compile(
-    r'https?:\/\/(?:[a-z]+\.)?aliexpress\.com\/p\/coin-index\/index\.html\?.*productIds=([\d,]+)',
-    re.IGNORECASE
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
 )
+logger = logging.getLogger(__name__)
 
-class CoinLinkProcessor:
-    @staticmethod
-    async def extract_main_product(coin_url: str) -> dict:
-        """Extrait le produit principal de la page Coin"""
-        match = COIN_LINK_REGEX.search(coin_url)
-        if not match:
-            return None
-            
-        product_ids = match.group(1).split(',')
-        if not product_ids:
-            return None
-            
-        main_product_id = product_ids[0]  # Premier produit = produit principal
-        
-        # Récupération des infos produit
-        product_data = await ProductFetcher.fetch_product(main_product_id)
-        if not product_data:
-            return None
-            
-        # Génération des liens
-        coin_link = await LinkGenerator.generate_coin_link(coin_url)
-        product_link = await LinkGenerator.generate_product_link(main_product_id)
-        
-        return {
-            'id': main_product_id,
-            'title': product_data.get('title', f'Produit {main_product_id}'),
-            'price': product_data.get('price'),
-            'currency': product_data.get('currency', 'USD'),
-            'image': product_data.get('image_url'),
-            'coin_link': coin_link,
-            'product_link': product_link
+class AliExpressBot:
+    def __init__(self):
+        self.session = aiohttp.ClientSession()
+        self.OFFER_TYPES = {
+            'coin': {
+                'name': "تخفيض العملات",
+                'emoji': "🪙",
+                'params': {'sourceType': '620'}
+            },
+            'superdeals': {
+                'name': "سوبر ديلز",
+                'emoji': "🛒", 
+                'params': {'sourceType': '570'}
+            },
+            'bundle': {
+                'name': "عروض مجمعة",
+                'emoji': "📦",
+                'params': {'scm': '1007.41618.435122.0'}
+            }
         }
 
-class ProductFetcher:
-    @staticmethod
-    async def fetch_product(product_id: str) -> dict:
-        """Récupère les infos d'un produit"""
-        # Implémentation existante de fetch_product_details_v2
-        # ... (votre code existant) ...
+    async def extract_product_id(self, url: str) -> str:
+        """Extract product ID from any AliExpress URL"""
+        patterns = [
+            r'/item/(\d+)\.html',
+            r'/product/(\d+)',
+            r'/(\d+)/.*\.html',
+            r'id=(\d+)'
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, url)
+            if match:
+                return match.group(1)
+        return None
 
-class LinkGenerator:
-    @staticmethod
-    async def generate_coin_link(coin_url: str) -> str:
-        """Génère un lien Coin avec tracking"""
-        parsed = urlparse(coin_url)
+    async def generate_affiliate_link(self, base_url: str, offer_type: str = None) -> str:
+        """Generate tracked affiliate link with optional offer parameters"""
+        parsed = urlparse(base_url)
         query = dict(parse_qsl(parsed.query))
+        
+        if offer_type and offer_type in self.OFFER_TYPES:
+            query.update(self.OFFER_TYPES[offer_type]['params'])
         
         query.update({
             'aff_platform': 'api-new-link-generate',
-            'aff_trace_key': ALIEXPRESS_TRACKING_ID,
-            'terminal_id': str(int(time.time()))
+            'aff_trace_key': TRACKING_ID,
+            'terminal_id': str(int(datetime.now().timestamp()))
         })
         
         return urlunparse((
@@ -92,67 +81,111 @@ class LinkGenerator:
             parsed.fragment
         ))
 
-    @staticmethod
-    async def generate_product_link(product_id: str) -> str:
-        """Génère un lien produit standard avec tracking"""
+    async def get_product_data(self, product_id: str) -> Dict:
+        """Fetch product details from AliExpress API"""
+        try:
+            async with self.session.get(
+                f"https://api.aliexpress.com/item/{product_id}",
+                params={'api_key': ALI_API_KEY}
+            ) as response:
+                data = await response.json()
+                return {
+                    'title': data.get('title', 'Unknown Product'),
+                    'original_price': data.get('price', {}).get('original', 'N/A'),
+                    'current_price': data.get('price', {}).get('current', 'N/A'),
+                    'currency': data.get('price', {}).get('currency', 'USD'),
+                    'store_name': data.get('store', {}).get('name', 'Unknown Store'),
+                    'store_rating': data.get('store', {}).get('rating', 0),
+                    'image_url': data.get('image_url')
+                }
+        except Exception as e:
+            logger.error(f"API Error: {e}")
+            return None
+
+    async def calculate_discount(self, original: float, current: float) -> int:
+        """Calculate discount percentage"""
+        try:
+            return int(((original - current) / original) * 100)
+        except:
+            return 0
+
+    async def create_offer_message(self, product: Dict, links: Dict) -> str:
+        """Generate formatted message with all offers"""
+        message = [
+            f"✨ <b>{product['title']}</b> ✨",
+            f"\n🏪 المتجر: <b>{product['store_name']}</b>",
+            f"⭐ التقييم: <b>{product['store_rating']}%</b>",
+            f"\n💰 السعر الأصلي: <b>{product['original_price']} {product['currency']}</b>"
+        ]
+        
+        for offer_type, details in self.OFFER_TYPES.items():
+            if offer_type in links:
+                message.extend([
+                    f"\n{details['emoji']} <b>{details['name']}:</b>",
+                    f"💲 <b>{product['current_price']} {product['currency']}</b>",
+                    f"🔗 {links[offer_type]}"
+                ])
+        
+        if 'coin' in links:
+            discount = await self.calculate_discount(
+                float(product['original_price'].replace('$', '')), 
+                float(product['current_price'].replace('$', ''))
+            )
+            message.append(f"\n🛍 نسبة التخفيض: <b>{discount}%</b>")
+        
+        return "\n".join(message)
+
+    async def handle_product_link(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        url = update.message.text
+        product_id = await self.extract_product_id(url)
+        
+        if not product_id:
+            await update.message.reply_text("❌ لم يتم العثور على معرف المنتج في الرابط")
+            return
+            
+        product = await self.get_product_data(product_id)
+        if not product:
+            await update.message.reply_text("❌ تعذر جلب بيانات المنتج")
+            return
+            
+        # Generate all offer links
         base_url = f"https://www.aliexpress.com/item/{product_id}.html"
-        links = await generate_affiliate_links_batch([base_url])
-        return links.get(base_url, base_url)
-
-async def handle_coin_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    coin_url = update.message.text
-    chat_id = update.effective_chat.id
-    
-    product_info = await CoinLinkProcessor.extract_main_product(coin_url)
-    if not product_info:
-        await update.message.reply_text("❌ Impossible de traiter ce lien Coin")
-        return
-    
-    # Construction du message
-    message = [
-        f"🌟 <b>PRODUIT PRINCIPAL</b> 🌟",
-        f"\n📌 <b>{product_info['title']}</b>",
-        f"\n💰 <b>Prix: {product_info['price']} {product_info['currency']}</b>",
-        f"\n🪙 <b>Lien Coin Offer:</b> {product_info['coin_link']}",
-        f"\n🛒 <b>Lien Standard:</b> {product_info['product_link']}",
-        f"\n\n💡 Ce produit apparaît en tête de la page Coin"
-    ]
-    
-    # Boutons d'action
-    keyboard = [
-        [InlineKeyboardButton("🛒 Acheter avec Coins", url=product_info['coin_link'])],
-        [InlineKeyboardButton("📢 Voir tous les produits", url=coin_url)]
-    ]
-    
-    # Envoi du message
-    if product_info['image']:
-        await context.bot.send_photo(
-            chat_id=chat_id,
-            photo=product_info['image'],
-            caption="\n".join(message),
-            parse_mode=ParseMode.HTML,
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
-    else:
-        await context.bot.send_message(
-            chat_id=chat_id,
-            text="\n".join(message),
-            parse_mode=ParseMode.HTML,
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
-
-# ... (le reste de votre implémentation existante) ...
+        links = {
+            'standard': await self.generate_affiliate_link(base_url),
+            'coin': await self.generate_affiliate_link(base_url, 'coin'),
+            'superdeals': await self.generate_affiliate_link(base_url, 'superdeals'),
+            'bundle': await self.generate_affiliate_link(base_url, 'bundle')
+        }
+        
+        # Create and send message
+        message = await self.create_offer_message(product, links)
+        keyboard = [
+            [InlineKeyboardButton("🛒 اشتر الآن", url=links['coin'])],
+            [InlineKeyboardButton("📢 جميع العروض", url=links['standard'])]
+        ]
+        
+        if product.get('image_url'):
+            await update.message.reply_photo(
+                photo=product['image_url'],
+                caption=message,
+                parse_mode=ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+        else:
+            await update.message.reply_text(
+                text=message,
+                parse_mode=ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
 
 def main():
-    application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+    bot = AliExpressBot()
+    application = Application.builder().token(TOKEN).build()
     
-    # Handler spécifique pour les liens Coin
     application.add_handler(MessageHandler(
-        filters.TEXT & filters.Regex(COIN_LINK_REGEX),
-        handle_coin_link
+        filters.TEXT & filters.Regex(r'aliexpress\.com'),
+        bot.handle_product_link
     ))
-    
-    # ... (autres handlers) ...
     
     application.run_polling()
 
