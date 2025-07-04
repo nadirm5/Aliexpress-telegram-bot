@@ -572,7 +572,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     if details_source == "API" and product_price:
         price_str = f"{product_price} {product_currency}".strip()
-        message_lines.append(f"\n💰 <b>Price $السعر بدون تخفيض:</b> {price_str}\n")
+        message_lines.append(f"\n💰 <b>Price السعر:</b> {price_str}\n")
     elif details_source == "Scraped":
         message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
     else:
@@ -580,12 +580,12 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     coin_link = generated_links.get("coin")
     if coin_link:
-        message_lines.append(f"▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ : <b>{coin_link}</b>")
-        message_lines.append("💥 أقل سعر على الرابط مع تخفيض يصل حتى -70%\n")
+        message_lines.append(f"▫️ 🪙 🎯 Coins –  link ⬇️ : <b>{coin_link}</b>")
+        message_lines.append("💥        Price until  -70 %\n")
 
     bundle_link = generated_links.get("bundle")
     if bundle_link:
-        message_lines.append(f"\n▫️ 📦 Bundle Deals – عروض مجمعة ⬇️ : <b>{bundle_link}</b>")
+        message_lines.append(f"\n▫️ 📦 Bundle Deals –   ⬇️ : <b>{bundle_link}</b>")
         message_lines.append("🔥 عروض مميزة عند شراء أكثر من قطعة!\n")
 
     product_id = product_data.get("product_id")
@@ -600,7 +600,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         message_lines.append(f"<b>{custom_offer['url']}</b>\n")
 
     # 🔥 Ton message promotionnel ici :
-    message_lines.append("🚀────────🚀\n🔥 احصل على أفضل سعر باستخدام البوت 👇\n🤖 @Rayanaliexpress_bot")
+    message_lines.append("🚀────────🚀\n🔥 use bot Price until -90% 👇\n🤖 @Rayanaliexpress_bot")
 
     return "\n".join(message_lines)
 
