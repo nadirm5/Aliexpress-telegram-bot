@@ -566,13 +566,12 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
     product_title = product_data.get('title', 'Unknown Product').split('\n')[0][:100]
     decorated_title = f"✨⭐️ {product_title} ⭐️✨"
     product_price = product_data.get('price')
-    product_currency = product_data.get('currency', '')
 
     message_lines.append(f"<b>{decorated_title}</b>")
 
     if details_source == "API" and product_price:
-        price_str = f"{product_price} {product_currency}".strip()
-        message_lines.append(f"\n💰 <b>Price السعر:</b> {price_str}\n")
+        # Afficher seulement le prix sans la devise
+        message_lines.append(f"\n💰 <b>Price السعر:</b> {product_price}\n")
     elif details_source == "Scraped":
         message_lines.append("\n💰 <b>Price:</b> Unavailable (Scraped)\n")
     else:
@@ -580,12 +579,12 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
 
     coin_link = generated_links.get("coin")
     if coin_link:
-        message_lines.append(f"▫️ 🪙 🎯 Coins –  link ⬇️ : <b>{coin_link}</b>")
-        message_lines.append("💥        Price until  -70 %\n")
+        message_lines.append(f"▫️ 🪙 🎯 Coins – الرابط بالتخفيض ⬇️ : <b>{coin_link}</b>")
+        message_lines.append("💥        corrigé ici et envoyé tout pour coller\n")
 
     bundle_link = generated_links.get("bundle")
     if bundle_link:
-        message_lines.append(f"\n▫️ 📦 Bundle Deals –   ⬇️ : <b>{bundle_link}</b>")
+        message_lines.append(f"\n▫️ 📦 Bundle Deals – خصومات على العروض المجمعة ⬇️ : <b>{bundle_link}</b>")
         message_lines.append("🔥 عروض مميزة عند شراء أكثر من قطعة!\n")
 
     product_id = product_data.get("product_id")
@@ -594,12 +593,7 @@ def _build_response_message(product_data: dict, generated_links: dict, details_s
         message_lines.append(f"\n📱 <b>Ouvrir dans l'application :</b> <code>{deep_link}</code>")
         message_lines.append(f"🔗 <a href='{deep_link}'>Cliquez ici pour ouvrir directement dans l'application AliExpress</a>\n")
 
-    custom_offer = OFFER_PARAMS.get("custom")
-    if custom_offer and custom_offer.get("url"):
-        message_lines.append(f"\n🎁 {custom_offer['name']}")
-        message_lines.append(f"<b>{custom_offer['url']}</b>\n")
-
-    # 🔥 Ton message promotionnel ici :
+    # Message promotionnel
     message_lines.append("🚀────────🚀\n🔥 use bot Price until -90% 👇\n🤖 @Rayanaliexpress_bot")
 
     return "\n".join(message_lines)
