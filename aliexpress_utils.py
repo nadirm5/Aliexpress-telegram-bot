@@ -1,77 +1,100 @@
+
 import requests
 from bs4 import BeautifulSoup
-import re
-import json
-from urllib.parse import urlparse, quote
 
-def get_product_details(url):
-    """Scrape product details from any AliExpress URL"""
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept-Language": "en-US,en;q=0.9"
-    }
-    
+
+def get_aliexpress_product_info(product_url):
+    """
+    Extract product name from AliExpress without Selenium
+    Args:
+        product_url (str): AliExpress product page URL
+    Returns:
+        str: product name
+    """
+    product_name = None # Initialize product_name
+    img_url = None # Initialize img_url
     try:
-        response = requests.get(url, headers=headers, timeout=15)
-        response.raise_for_status()
-        
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # Extract product ID
-        product_id = re.search(r'item/(\d+)\.html', url).group(1)
-        
-        # Extract product name
-        name = soup.find('meta', property='og:title')['content'].split('|')[0].strip()
-        name = re.sub(r'-\s*AliExpress.*$', '', name, flags=re.IGNORECASE).strip()
-        
-        # Extract image
-        img_url = soup.find('meta', property='og:image')['content']
-        
-        return {
-            'product_id': product_id,
-            'name': name,
-            'image': img_url,
-            'url': url
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
+        cookies = {"x-hng": "lang=en-US", "intl_locale": "en_US"}
+        response = requests.get(product_url, headers=headers, cookies=cookies, timeout=15)
+        if response.status_code != 200:
+            print(f"Failed to load page: {response.status_code}")
+            return None, None # Return None for both if page fails
+        soup = BeautifulSoup(response.text, "html.parser")
         
+        # Try finding the specific h1 tag first
+        root_div = soup.find("div", id="root")
+        if root_div:
+            h1 = root_div.select_one("div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > h1")
+            if h1:
+                product_name = h1.get_text(strip=True)
+
+        # Fallback to og:title meta tag
+        if not product_name:
+            meta_title = soup.find("meta", property="og:title")
+            if meta_title and meta_title.has_attr("content"):
+                product_name = meta_title["content"]
+
+        # Fallback to keywords meta tag
+        if not product_name:
+            meta_name = soup.find("meta", attrs={"name": "keywords"})
+            if meta_name and meta_name.has_attr("content"):
+                # Take the first keyword as a potential name
+                product_name = meta_name["content"].split(",")[0].strip()
+
+        # Fallback to h1 with data-pl attribute
+        if not product_name:
+            h1 = soup.find("h1", {"data-pl": "product-title"})
+            if h1:
+                product_name = h1.get_text(strip=True)
+
+        # Fallback to h1 with specific class names
+        if not product_name:
+            h1 = soup.find("h1", {"class": lambda x: x and ("product-title-text" in x or "product-title" in x)})
+            if h1:
+                product_name = h1.get_text(strip=True)
+
+        # Generic h1 fallback (last resort for name)
+        if not product_name:
+            h1 = soup.find("h1")
+            if h1:
+                product_name = h1.get_text(strip=True)
+
+        # --- Image Extraction ---
+        img_tag = soup.find("img", {"class": lambda x: x and "magnifier--image" in x})
+        if img_tag and img_tag.has_attr("src"):
+            img_url = img_tag["src"]
+        else:
+            # Fallback to og:image meta tag
+            meta_img = soup.find("meta", property="og:image")
+            if meta_img and meta_img.has_attr("content"):
+                img_url = meta_img["content"]
+
+        # --- Clean up Product Name ---
+        if product_name:
+            # Remove common AliExpress suffixes, potentially followed by numbers
+            import re
+            # Regex: " - AliExpress" optionally followed by space and digits, at the end of the string
+            product_name = re.sub(r'\s*-\s*AliExpress(\s+\d+)?$', '', product_name).strip()
+            # Also handle case without leading space before hyphen
+            product_name = re.sub(r'-AliExpress(\s+\d+)?$', '', product_name).strip()
+
+
+        return product_name, img_url
     except Exception as e:
-        print(f"Error scraping product: {str(e)}")
-        return None
+        print(f"An error occurred in get_aliexpress_product_info: {str(e)}") # Added function name for clarity
+        return None, None # Return None for both on error
 
-def generate_coin_link(product_ids, main_product_id):
-    """Generate Coin page link with specific product first"""
-    base_url = "https://m.aliexpress.com/p/coin-index/index.html"
-    params = {
-        "productIds": f"{main_product_id},{','.join(product_ids)}",
-        "aff_platform": "promotion",
-        "sk": "coin_center",
-        "aff_trace_key": "your_tracking_key"
-    }
-    return f"{base_url}?{urlencode(params)}"
-
-def main():
-    # 1. Get target product URL from user
-    product_url = input("Enter AliExpress product URL: ").strip()
-    
-    # 2. Scrape product details
-    product = get_product_details(product_url)
-    if not product:
-        print("Failed to get product details")
-        return
-    
-    print(f"\nProduct Found:")
-    print(f"Name: {product['name']}")
-    print(f"ID: {product['product_id']}")
-    print(f"Image: {product['image']}")
-    
-    # 3. Get related products (example)
-    related_ids = ["10050012345678", "10050023456789"]  # Replace with actual related products
-    
-    # 4. Generate Coin link with target product first
-    coin_link = generate_coin_link(related_ids, product['product_id'])
-    
-    print("\nGenerated Coin Link:")
-    print(coin_link)
-
-if __name__ == "__main__":
-    main()
+def get_product_details_by_id(product_id):
+    """
+    Constructs URL from product ID and fetches product details.
+    Args:
+        product_id (str or int): The AliExpress product ID.
+    Returns:
+        tuple: (product_name, img_url) or (None, None) if failed.
+    """
+    product_url = f"https://vi.aliexpress.com/item/{product_id}.html"
+    print(f"Constructed URL: {product_url}")
+    return get_aliexpress_product_info(product_url)
