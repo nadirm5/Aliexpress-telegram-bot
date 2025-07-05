@@ -55,46 +55,38 @@ except Exception as e:
 
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
-ALIEXPRESS_URL_REGEX = re.compile(
-    r'(?:https?:\/\/)?'  # Protocole optionnel
-    r'(?:(?:www|m|[\w]{2})\.)?'  # Sous-domaines
-    r'ali(?:express|baba)?\.'  # Domaines principaux
-    r'(?:com|\w{2}(?:\.\w{2,3})?)'  # TLD
-    r'(?:\/[\w%+-]+)*'  # Chemin
-    r'(?:\?[\w%+-]+(?:=[\w%+-]*)?(?:&[\w%+-]+(?:=[\w%+-]*)?)*)?'  # Query params
-    r'(?:#[\w-]*)?',  # Fragment
+URL_REGEX = re.compile(
+    r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*',
     re.IGNORECASE
 )
 
-PRODUCT_ID_REGEX = re.compile(
-    r'(?:/item/|productId=)(\d{8,})',  # Capture les IDs produits (8+ chiffres)
-    re.IGNORECASE
-)
+PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html', re.IGNORECASE)
 
 STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(
-    r'https?://(?!a\.|s\.click\.)'  # Exclure les liens courts
-    r'([a-z]{2}\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.[a-z]{2}|us|id|th|ar)'
-    r'(?:\.[a-z]{2,3})?/(?:item|store|[\w-]+)',
+    r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?(/.*)?',
     re.IGNORECASE
 )
 
 SHORT_LINK_DOMAIN_REGEX = re.compile(
-    r'https?://(?:s\.click\.aliexpress\.com/[e/]|a\.aliexpress\.com/_)[\w-]+',
+    r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?',
+    re.IGNORECASE
+)
+
+COMBINED_DOMAIN_REGEX = re.compile(
+    r'(?:https?://)?(?:www\.)?(?:'
+    r'a\.aliexpress\.com/[\w\-]+|'  # short links
+    r's\.click\.aliexpress\.com/[\w\-]+|'  # affiliate links
+    r'(?:[a-z]+\.)?aliexpress\.com/(?:item|store|p/coin-index/index\.html)[^\s]*)',
     re.IGNORECASE
 )
 
 COIN_LINK_REGEX = re.compile(
-    r'https://m\.aliexpress\.com/p/coin-index/index\.html\?'
-    r'(?:[^&\s]*&)*'  # Paramètres optionnels avant
-    r'productIds=([\d,]+)'  # Capture les IDs produits
-    r'(?:&[^&\s]*)*',  # Paramètres optionnels après
+    r'https:\/\/m\.aliexpress\.com\/p\/coin-index\/index\.html(?:\?[^\s<>"]*?)?[\?&]productIds=([\d,]+)',
     re.IGNORECASE
 )
 
 SPECIAL_PAGE_LINK_REGEX = re.compile(
-    r'https://m\.aliexpress\.com/'
-    r'(?:promo|p/coin-index|bundle|brand|category|superdeals|flashdeals|hot)/'
-    r'[\w-]+(?:\?[^\s<>"]+)?',
+    r'https:\/\/m\.aliexpress\.com\/(?:promo|p\/coin-index|bundle|brand|category|superdeals|flashdeals|hot)\/[^\s<>"]*',
     re.IGNORECASE
 )
 
