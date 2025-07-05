@@ -55,8 +55,30 @@ except Exception as e:
 
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
-URL_REGEX = re.compile(
-    r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*',
+import re
+
+ALIEXPRESS_MAX_REGEX = re.compile(
+    r'(?:https?:\/\/)?'  # Protocole optionnel (http/https)
+    r'(?:www\.|m\.|a\.|s\.click\.)?'  # Sous-domaines principaux
+    r'(?:[a-z]{2}\.)?'  # Préfixe pays (fr., de., es., etc.)
+    r'(?:'
+    r'aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.[a-z]{2}|com\.[a-z]{2}|us|id|th|ar)'  # TLDs
+    r'|a\.aliexpress\.com'  # Liens courts (a.)
+    r'|s\.click\.aliexpress\.com'  # Liens affiliés (s.click.)
+    r')'
+    r'(?:\.[a-z]{2,3})?'  # Suffixe optionnel (.com.br)
+    r'\/'  # Séparateur
+    r'(?:'
+    r'item\/\d+\.html'  # Produits standards
+    r'|p\/coin-index\/index\.html\?[^\s<>"]*'  # Pages Coins
+    r'|(?:e\/|_)[a-zA-Z0-9_-]{8,}'  # Liens courts (e/xxx ou _xxx)
+    r'|store\/[^\s<>"]+'  # Boutiques
+    r'|(?:promo|bundle|brand|category|superdeals|flashdeals|hot)\/[^\s<>"]*'  # Pages spéciales
+    r'|search\?[^\s<>"]*'  # Recherches
+    r'|[\w\/-]*[\?&](?:spm|productId|item_id|productIds)=[^\s<>"]*'  # Paramètres
+    r'|[\w\/-]*\?(?:aff_platform|aff_trace_key|sk)=[^\s<>"]*'  # Tracking
+    r'|[^\s<>"]*'  # Fallback général
+    r')',
     re.IGNORECASE
 )
 
