@@ -1,5 +1,3 @@
-ajouter une barre de recherche dans le bot en anglais 
-
 import logging
 import os
 import re
