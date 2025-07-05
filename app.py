@@ -55,13 +55,15 @@ except Exception as e:
 
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
-URL_REGEX = re.compile(
-    r'(?:https?://)?(?:www\.)?'  # Protocole optionnel
-    r'(?:'
-    r'(?:[a-z]{2}\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.[a-z]{2}|us|id|th|ar)'  # Domaines
-    r'(?:\.[a-z]{2,3})?'  # Sous-domaines optionnels
-    r'/(?:item|store|p/coin-index/index\.html|[\w-]+)'  # Paths
-    r'[/?][^\s<>"]*',  # Query params
+ALIEXPRESS_URL_REGEX = re.compile(
+    r'(?:https?:\/\/)?'  # Protocole optionnel
+    r'(?:(?:www|m|[\w]{2})\.)?'  # Sous-domaines (www, m, ou code pays)
+    r'ali(?:express|baba)?\.'  # Support AliExpress et AliBaba
+    r'(?:com|\w{2}(?:\.\w{2,3})?)'  # TLD et extensions
+    r'(?:\/[\w%+-]+)+'  # Chemin d'URL
+    r'(?:\?[\w%+-]+(?:=[\w%+-]*)?'  # Paramètres query
+    r'(?:&[\w%+-]+(?:=[\w%+-]*)?)*'  # Paramètres additionnels
+    r'(?:#[\w-]*)?',  # Fragment
     re.IGNORECASE
 )
 
