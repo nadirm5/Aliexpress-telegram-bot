@@ -80,20 +80,6 @@ SHORT_LINK_DOMAIN_REGEX = re.compile(
     r'https?:\/\/(?:s\.click\.aliexpress\.com\/(?:e\/|[\w]+)|a\.aliexpress\.com\/_[\w]+)\/?',
     re.IGNORECASE
 )
-
-# Regex combinée optimisée
-COMBINED_DOMAIN_REGEX = re.compile(
-    r'(?:https?:\/\/)?(?:www\.)?(?:'
-    r'(?:a|s\.click)\.aliexpress\.com\/[\w\-\.\/]+|'  # Liens courts
-    r'(?:[\w-]+\.)?aliexpress\.(?:com|ru|[a-z]{2})\/(?:'
-    r'item\/\d+\.html|'
-    r'store\/[\w\-]+|'
-    r'p\/coin-index\/index\.html|'
-    r'[\w\-]+\/[\w\-]+\.html'
-    r')',
-    re.IGNORECASE
-)
-
 # Regex améliorée pour les liens Coins (supporte plus de paramètres)
 COIN_LINK_REGEX = re.compile(
     r'https?:\/\/[a-z]+\.aliexpress\.com\/p\/coin-index\/index\.html\?(?:[^\s<>"]*&)?productIds=([\d,]+)',
