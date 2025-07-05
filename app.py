@@ -57,12 +57,11 @@ executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
 ALIEXPRESS_URL_REGEX = re.compile(
     r'(?:https?:\/\/)?'  # Protocole optionnel
-    r'(?:(?:www|m|[\w]{2})\.)?'  # Sous-domaines (www, m, ou code pays)
-    r'ali(?:express|baba)?\.'  # Support AliExpress et AliBaba
-    r'(?:com|\w{2}(?:\.\w{2,3})?)'  # TLD et extensions
-    r'(?:\/[\w%+-]+)+'  # Chemin d'URL
-    r'(?:\?[\w%+-]+(?:=[\w%+-]*)?'  # Paramètres query
-    r'(?:&[\w%+-]+(?:=[\w%+-]*)?)*'  # Paramètres additionnels
+    r'(?:(?:www|m|[\w]{2})\.)?'  # Sous-domaines
+    r'ali(?:express|baba)?\.'  # Domaines principaux
+    r'(?:com|\w{2}(?:\.\w{2,3})?)'  # TLD
+    r'(?:\/[\w%+-]+)*'  # Chemin
+    r'(?:\?[\w%+-]+(?:=[\w%+-]*)?(?:&[\w%+-]+(?:=[\w%+-]*)?)*)?'  # Query params
     r'(?:#[\w-]*)?',  # Fragment
     re.IGNORECASE
 )
