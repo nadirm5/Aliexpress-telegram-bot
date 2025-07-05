@@ -1,10 +1,7 @@
+python-telegram-bot==20.3  # Version allégée sans [ext]
+flask==2.3.2
 python-dotenv==1.0.0
-python-telegram-bot[ext]==20.3
-aiohttp==3.8.6
 requests==2.31.0
 beautifulsoup4==4.12.2
-flask==2.3.2
-selenium==4.11.2
-webdriver-manager==3.8.6
-aliexpress-api==1.0.0
 urllib3==1.26.18
+aliexpress-api==1.0.0
