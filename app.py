@@ -55,9 +55,28 @@ except Exception as e:
 
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
+import re
+
 URL_REGEX = re.compile(
-    r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*',
-    re.IGNORECASE
+    r'''(?xi)
+    (                               # Capture group for full URL
+        https?://                  # http or https protocol
+        (?:s\.click\.|a\.)?        # Optional subdomain: s.click. or a.
+        aliexpress\.
+        (?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)
+        (?:\.[\w-]+)?              # Optional extra domain suffix
+        /[^\s<>"']*                # Path after the domain
+    )
+    |
+    (                              # OR: match www.*
+        www\.[^\s<>"']+
+    )
+    |
+    (                              # OR: fallback http(s) links
+        https?://[^\s<>"']+
+    )
+    ''',
+    re.IGNORECASE | re.VERBOSE
 )
 
 PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html', re.IGNORECASE)
