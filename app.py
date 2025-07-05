@@ -128,8 +128,6 @@ def extract_aliexpress_info(url):
     
     # Détection du type de lien
     link_type = "standard"
-    if SHORT_LINK_REGEX.search(url):
-        link_type = "short"
     elif MOBILE_REGEX.search(url):
         link_type = "mobile"
     elif COIN_PAGE_REGEX.search(url):
