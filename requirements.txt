@@ -1,7 +1,7 @@
-python-telegram-bot==20.3  # Version allégée sans [ext]
-flask==2.3.2
-python-dotenv==1.0.0
-requests==2.31.0
-beautifulsoup4==4.12.2
-urllib3==1.26.18
-aliexpress-api==1.0.0
+python-dotenv
+python-telegram-bot[ext]>=20.0  
+aiohttp  
+requests 
+beautifulsoup4
+flask
+  selenium==4.11.2 j'ai ça 
