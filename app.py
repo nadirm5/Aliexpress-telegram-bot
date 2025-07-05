@@ -58,13 +58,15 @@ except Exception as e:
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
 
+import re
+
 URL_REGEX = re.compile(
     r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*',
     re.IGNORECASE
 )
 
 PRODUCT_ID_REGEX = re.compile(
-    r'(?:/item/(\d+)\.html|[\?&]productIds=(\d+))',
+    r'(?:/item/(\d+)\.html|[\?&]productIds=(\d+)|/ssr/\d+/(?:\w+/)?(\d+))',
     re.IGNORECASE
 )
 
@@ -82,7 +84,7 @@ COMBINED_DOMAIN_REGEX = re.compile(
     r'(?:https?://)?(?:www\.)?(?:'
     r'a\.aliexpress\.com/[\w-]+|'  # liens courts
     r's\.click\.aliexpress\.com/[\w-]+|'  # liens d'affiliation
-    r'(?:[\w-]+\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)/(?:item|store|p/coin-index/index\.html|promo|bundle|brand|category|superdeals|flashdeals|hot)[^\s<>"]*'
+    r'(?:[\w-]+\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)/(?:item|store|p/coin-index/index\.html|promo|bundle|brand|category|superdeals|flashdeals|hot|ssr)[^\s<>"]*'
     r')',
     re.IGNORECASE
 )
@@ -92,21 +94,27 @@ COIN_LINK_REGEX = re.compile(
     re.IGNORECASE
 )
 
-SPECIAL_PAGE_LINK_REGEX = re.compile(
-    r'https?://(?:m|www)\.aliexpress\.com/(?:promo|p/coin-index|bundle|brand|category|superdeals|flashdeals|hot)/[^\s<>"]*',
+SSR_LINK_REGEX = re.compile(
+    r'https?://(?:www\.)?aliexpress\.com/ssr/\d+/(?:\w+/)?(?:\?|&)?[^\s<>"]*',
     re.IGNORECASE
 )
 
-# Regex unifiée pour tous les liens produits
+SPECIAL_PAGE_LINK_REGEX = re.compile(
+    r'https?://(?:m|www)\.aliexpress\.com/(?:promo|p/coin-index|bundle|brand|category|superdeals|flashdeals|hot|ssr)/[^\s<>"]*',
+    re.IGNORECASE
+)
+
 ALL_PRODUCT_LINKS_REGEX = re.compile(
-    r'(https?://(?:[\w-]+\.)?aliexpress\.com/('
+    r'(https?://(?:[\w-]+\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)/('
     r'item/\d+\.html|'
     r'p/coin-index/index\.html\?.*productIds=\d+|'
     r'[\w-]+-\d+\.html|'
-    r'[^\s"/]*?/item-[\w-]+\.html'
-    r'))',
+    r'[^\s"/]*?/item-[\w-]+\.html|'
+    r'ssr/\d+/\w+)'
+    r')',
     re.IGNORECASE
 )
+
 OFFER_PARAMS = {
     "coin": {
         "name": "🪙 <b>🎯 Coins</b> – <b>الرابط بالتخفيض ⬇️ أقل سعر بالعملات 💸</b> 👉",
