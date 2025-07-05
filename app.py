@@ -1,4 +1,3 @@
-
 import logging
 import os
 import re
@@ -722,40 +721,58 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     except Exception as e:
         logger.error(f"Search API exception: {e}")
         return []
-"""Handle the /search command"""
+    
+async def handle_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle the /search command to find products on AliExpress"""
+    if not update.message:
+        return
+
+    # Get search query from command arguments
     query = ' '.join(context.args)
     if not query:
-        await update.message.reply_text("🔍 Usage: /search <product_name>\nExample: /search wireless earbuds")
-        return
-    
-    await update.message.reply_text(f"🔎 Searching for '{query}'...")
-    search_results = await search_aliexpress_products(query)
-    
-    if not search_results:
-        await update.message.reply_text("❌ No products found. Try another keyword.")
-        return
-    
-    for product in search_results[:3]:  # Limite à 3 résultats
-        message = (
-            f"<b>{product['title']}</b>\n"
-            f"💰 Price: {product['price']} {product['currency']}\n"
-            f"🔗 <a href='{product['affiliate_url']}'>Buy Now</a>"
+        await update.message.reply_text(
+            "🔍 Please use: /search <product_name>\n"
+            "Example: /search wireless headphones"
         )
-        if product['image_url']:
-            await update.message.reply_photo(
-                photo=product['image_url'],
-                caption=message,
-                parse_mode=ParseMode.HTML
-            )
-        else:
-            await update.message.reply_text(
-                message,
-                parse_mode=ParseMode.HTML,
-                disable_web_page_preview=True
-            )
-async def handle_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not update.message or not update.message.text:
         return
+
+    # Show searching message
+    await update.message.reply_text(f"🔄 Searching for '{query}' on AliExpress...")
+
+    try:
+        # Get search results
+        search_results = await search_aliexpress_products(query)
+        
+        if not search_results:
+            await update.message.reply_text("❌ No products found. Try different keywords.")
+            return
+
+        # Send first 3 results
+        for product in search_results[:3]:
+            product_message = (
+                f"<b>{product['title']}</b>\n"
+                f"💰 Price: {product['price']} {product['currency']}\n"
+                f"🛒 <a href='{product['affiliate_url']}'>Buy Now</a>"
+            )
+
+            if product['image_url']:
+                await update.message.reply_photo(
+                    photo=product['image_url'],
+                    caption=product_message,
+                    parse_mode=ParseMode.HTML
+                )
+            else:
+                await update.message.reply_text(
+                    product_message,
+                    parse_mode=ParseMode.HTML,
+                    disable_web_page_preview=True
+                )
+
+    except Exception as e:
+        logger.error(f"Search failed: {str(e)}")
+        await update.message.reply_text(
+            "⚠️ Sorry, I couldn't complete your search. Please try again later."
+        )
 
     message_text = update.message.text
     user = update.effective_user
