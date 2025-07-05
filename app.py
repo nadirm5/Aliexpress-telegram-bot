@@ -55,38 +55,74 @@ except Exception as e:
 
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
+import re
+
+# Regex principale pour détecter TOUS les liens AliExpress (standard, courts, internationaux)
 URL_REGEX = re.compile(
-    r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*',
+    r'(?:https?:\/\/|www\.)(?:[^\s<>"]+|(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?)\/[^\s<>"]*',
     re.IGNORECASE
 )
 
-PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html', re.IGNORECASE)
+# Regex optimisée pour extraire les IDs produits (supporte plus de formats)
+PRODUCT_ID_REGEX = re.compile(
+    r'(?:\/item\/|product-|spm=|id=)(\d{6,})',  # Capture les IDs d'au moins 6 chiffres
+    re.IGNORECASE
+)
 
+# Regex pour les URLs standards (exclut les liens courts)
 STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(
-    r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?(/.*)?',
+    r'https?:\/\/(?!a\.|s\.click\.)(?:[\w-]+\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?(?:\/[\w\-\.\/]*)?(?:\?[^\s<>"]*)?',
     re.IGNORECASE
 )
 
+# Regex améliorée pour les liens courts (affiliés et trackés)
 SHORT_LINK_DOMAIN_REGEX = re.compile(
-    r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?',
+    r'https?:\/\/(?:s\.click\.aliexpress\.com\/(?:e\/|[\w]+)|a\.aliexpress\.com\/_[\w]+)\/?',
     re.IGNORECASE
 )
 
+# Regex combinée optimisée
 COMBINED_DOMAIN_REGEX = re.compile(
-    r'(?:https?://)?(?:www\.)?(?:'
-    r'a\.aliexpress\.com/[\w\-]+|'  # short links
-    r's\.click\.aliexpress\.com/[\w\-]+|'  # affiliate links
-    r'(?:[a-z]+\.)?aliexpress\.com/(?:item|store|p/coin-index/index\.html)[^\s]*)',
+    r'(?:https?:\/\/)?(?:www\.)?(?:'
+    r'(?:a|s\.click)\.aliexpress\.com\/[\w\-\.\/]+|'  # Liens courts
+    r'(?:[\w-]+\.)?aliexpress\.(?:com|ru|[a-z]{2})\/(?:'
+    r'item\/\d+\.html|'
+    r'store\/[\w\-]+|'
+    r'p\/coin-index\/index\.html|'
+    r'[\w\-]+\/[\w\-]+\.html'
+    r')',
     re.IGNORECASE
 )
 
+# Regex améliorée pour les liens Coins (supporte plus de paramètres)
 COIN_LINK_REGEX = re.compile(
-    r'https:\/\/m\.aliexpress\.com\/p\/coin-index\/index\.html(?:\?[^\s<>"]*?)?[\?&]productIds=([\d,]+)',
+    r'https?:\/\/[a-z]+\.aliexpress\.com\/p\/coin-index\/index\.html\?(?:[^\s<>"]*&)?productIds=([\d,]+)',
     re.IGNORECASE
 )
 
+# Regex étendue pour les pages spéciales
 SPECIAL_PAGE_LINK_REGEX = re.compile(
-    r'https:\/\/m\.aliexpress\.com\/(?:promo|p\/coin-index|bundle|brand|category|superdeals|flashdeals|hot)\/[^\s<>"]*',
+    r'https?:\/\/[a-z]+\.aliexpress\.com\/(?:'
+    r'promo\/[^\s<>"]+|'
+    r'p\/coin-index\/[^\s<>"]+|'
+    r'bundle\/[^\s<>"]+|'
+    r'brand\/[^\s<>"]+|'
+    r'category\/[^\s<>"]+|'
+    r'(?:super|flash)deals\/[^\s<>"]+|'
+    r'hot\/[^\s<>"]+'
+    r')',
+    re.IGNORECASE
+)
+
+# Nouvelle regex pour les URLs mobiles
+MOBILE_LINK_REGEX = re.compile(
+    r'https?:\/\/m\.aliexpress\.com\/[^\s<>"]+',
+    re.IGNORECASE
+)
+
+# Regex pour les URLs de boutique
+STORE_LINK_REGEX = re.compile(
+    r'https?:\/\/(?:[a-z]+\.)?aliexpress\.com\/store\/\d+(?:\/[\w\-]+)?',
     re.IGNORECASE
 )
 
