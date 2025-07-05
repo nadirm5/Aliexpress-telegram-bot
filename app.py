@@ -97,14 +97,6 @@ ALIEXPRESS_PRODUCT_ID_REGEX = re.compile(
     re.IGNORECASE
 )
 
-# ====================== VERSIONS SPÉCIALISÉES ======================
-# Pour les liens courts (a./s.click.)
-SHORT_LINK_REGEX = re.compile(
-    r'https?:\/\/(?:a\.aliexpress\.com\/_[a-zA-Z0-9_-]+'
-    r'|s\.click\.aliexpress\.com\/e\/[a-zA-Z0-9_-]+)',
-    re.IGNORECASE
-)
-
 # Pour les pages mobiles (m.)
 MOBILE_REGEX = re.compile(
     r'https?:\/\/m\.aliexpress\.com\/[^\s<>"]*',
