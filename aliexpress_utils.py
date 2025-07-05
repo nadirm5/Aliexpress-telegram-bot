@@ -1,101 +1,77 @@
 import requests
 from bs4 import BeautifulSoup
 import re
-from urllib.parse import urlparse
+import json
+from urllib.parse import urlparse, quote
 
-def get_aliexpress_product_info(product_url):
-    """
-    Amélioration majeure du scraping AliExpress avec :
-    - Meilleure détection des noms de produits
-    - Extraction fiable des images
-    - Gestion des erreurs renforcée
-    - Nettoyage des résultats
-    """
+def get_product_details(url):
+    """Scrape product details from any AliExpress URL"""
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept-Language": "en-US,en;q=0.9"
     }
     
     try:
-        # Validation de l'URL
-        parsed = urlparse(product_url)
-        if not parsed.scheme or not parsed.netloc:
-            raise ValueError("URL invalide")
-        
-        response = requests.get(product_url, headers=headers, timeout=15)
+        response = requests.get(url, headers=headers, timeout=15)
         response.raise_for_status()
         
         soup = BeautifulSoup(response.text, 'html.parser')
         
-        # 1. Extraction du nom du produit (méthodes prioritaires)
-        name = None
-        extraction_methods = [
-            # Méthode 1: Balise meta optimisée
-            lambda: soup.find('meta', {'property': 'og:title'}).get('content').split('|')[0].strip(),
-            
-            # Méthode 2: Structure DOM précise
-            lambda: soup.select_one('h1[itemprop="name"]').text.strip(),
-            
-            # Méthode 3: Nouvelle structure AliExpress
-            lambda: soup.select_one('div.product-title-text').text.strip(),
-            
-            # Méthode 4: Fallback générique
-            lambda: soup.find('h1').text.strip() if soup.find('h1') else None
-        ]
+        # Extract product ID
+        product_id = re.search(r'item/(\d+)\.html', url).group(1)
         
-        for method in extraction_methods:
-            try:
-                name = method()
-                if name:
-                    break
-            except:
-                continue
+        # Extract product name
+        name = soup.find('meta', property='og:title')['content'].split('|')[0].strip()
+        name = re.sub(r'-\s*AliExpress.*$', '', name, flags=re.IGNORECASE).strip()
         
-        # Nettoyage final du nom
-        if name:
-            name = re.sub(r'-\s*AliExpress.*$', '', name, flags=re.IGNORECASE).strip()
-            name = re.sub(r'\s+', ' ', name)
+        # Extract image
+        img_url = soup.find('meta', property='og:image')['content']
         
-        # 2. Extraction de l'image (méthodes prioritaires)
-        img_url = None
-        img_methods = [
-            # Méthode 1: Image principale
-            lambda: soup.find('img', {'class': 'magnifier-image'}).get('src'),
-            
-            # Méthode 2: Meta og:image
-            lambda: soup.find('meta', property='og:image').get('content'),
-            
-            # Méthode 3: Image dans gallery
-            lambda: soup.find('div', class_='image-viewer').find('img').get('src') if soup.find('div', class_='image-viewer') else None
-        ]
+        return {
+            'product_id': product_id,
+            'name': name,
+            'image': img_url,
+            'url': url
+        }
         
-        for method in img_methods:
-            try:
-                img_url = method()
-                if img_url:
-                    # Correction des URLs relatives
-                    if img_url.startswith('//'):
-                        img_url = f'https:{img_url}'
-                    elif img_url.startswith('/'):
-                        img_url = f'https://{parsed.netloc}{img_url}'
-                    break
-            except:
-                continue
-        
-        return name, img_url
-    
-    except requests.RequestException as e:
-        print(f"Erreur réseau: {str(e)}")
     except Exception as e:
-        print(f"Erreur de traitement: {str(e)}")
-    
-    return None, None
+        print(f"Error scraping product: {str(e)}")
+        return None
 
-def get_product_details_by_id(product_id):
-    """Version optimisée pour les IDs produit"""
-    if not str(product_id).isdigit():
-        raise ValueError("ID produit doit être numérique")
+def generate_coin_link(product_ids, main_product_id):
+    """Generate Coin page link with specific product first"""
+    base_url = "https://m.aliexpress.com/p/coin-index/index.html"
+    params = {
+        "productIds": f"{main_product_id},{','.join(product_ids)}",
+        "aff_platform": "promotion",
+        "sk": "coin_center",
+        "aff_trace_key": "your_tracking_key"
+    }
+    return f"{base_url}?{urlencode(params)}"
+
+def main():
+    # 1. Get target product URL from user
+    product_url = input("Enter AliExpress product URL: ").strip()
     
-    url = f"https://www.aliexpress.com/item/{product_id}.html"
-    print(f"Scraping: {url}")
-    return get_aliexpress_product_info(url)
+    # 2. Scrape product details
+    product = get_product_details(product_url)
+    if not product:
+        print("Failed to get product details")
+        return
+    
+    print(f"\nProduct Found:")
+    print(f"Name: {product['name']}")
+    print(f"ID: {product['product_id']}")
+    print(f"Image: {product['image']}")
+    
+    # 3. Get related products (example)
+    related_ids = ["10050012345678", "10050023456789"]  # Replace with actual related products
+    
+    # 4. Generate Coin link with target product first
+    coin_link = generate_coin_link(related_ids, product['product_id'])
+    
+    print("\nGenerated Coin Link:")
+    print(coin_link)
+
+if __name__ == "__main__":
+    main()
