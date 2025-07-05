@@ -1,51 +1,59 @@
 import os
+import re
+import json
 from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from telegram.constants import ParseMode
-import iop
+import aiohttp
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Configuration minimale
 TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-APP_KEY = os.getenv('ALIEXPRESS_APP_KEY')
-APP_SECRET = os.getenv('ALIEXPRESS_APP_SECRET')
 
-client = iop.IopClient('https://api-sg.aliexpress.com/sync', APP_KEY, APP_SECRET)
-
-async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = ' '.join(context.args)
-    
-    if not query:
-        await update.message.reply_text("❌ Envoyez /search <nom complet du produit>")
+async def extract_coin_products(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Détection des liens Coin
+    if not update.message.text or 'coin-index' not in update.message.text:
         return
     
-    try:
-        # Requête ultra-précise
-        req = iop.IopRequest('aliexpress.affiliate.product.query')
-        req.add_api_param('keywords', f'"{query}"')  # Guillemets pour recherche exacte
-        req.add_api_param('fields', 'product_title,product_url,target_sale_price')
-        req.add_api_param('page_size', '1')  # Seulement le meilleur résultat
-        
-        result = await client.execute(req)
-        product = result.body['aliexpress_affiliate_product_query_response']['resp_result']['result']['products']['product'][0]
-        
+    coin_url = update.message.text
+    product_ids = re.findall(r'productIds=([\d,]+)', coin_url)
+    
+    if not product_ids:
+        await update.message.reply_text("❌ Aucun ID de produit trouvé dans le lien")
+        return
+    
+    products = []
+    async with aiohttp.ClientSession() as session:
+        for pid in product_ids[0].split(','):
+            # Scraping direct de la page Coin
+            url = f"https://m.aliexpress.com/api/products/{pid}/coin-info"
+            try:
+                async with session.get(url) as resp:
+                    data = await resp.json()
+                    if data.get('success'):
+                        products.append({
+                            'title': data['data']['title'],
+                            'price': data['data']['price'],
+                            'coin_price': data['data']['coinPrice'],
+                            'url': f"https://fr.aliexpress.com/item/{pid}.html"
+                        })
+            except Exception as e:
+                print(f"Erreur pour {pid}: {e}")
+    
+    if not products:
+        await update.message.reply_text("⚠️ Aucun prix avec coins trouvé")
+        return
+    
+    # Envoi des résultats
+    for p in products[:3]:  # Limite à 3 produits
         await update.message.reply_text(
-            f"✅ Produit trouvé :\n\n"
-            f"<b>{product['product_title']}</b>\n"
-            f"💰 <b>Prix : {product['target_sale_price']}</b>\n"
-            f"🔗 <a href='{product['product_url']}'>Acheter maintenant</a>",
+            f"🪙 <b>{p['title']}</b>\n"
+            f"💰 Prix: {p['price']} → <b>{p['coin_price']} avec coins</b>\n"
+            f"🔗 <a href='{p['url']}'>Voir l'offre</a>",
             parse_mode=ParseMode.HTML
         )
-    
-    except Exception:
-        await update.message.reply_text(f"⚠️ Aucun résultat exact pour '{query}'\n\n"
-                                      "Essayez avec :\n"
-                                      "- La référence complète\n"
-                                      "- Le modèle exact\n"
-                                      "- La marque + spécifications")
 
 app = Application.builder().token(TOKEN).build()
-app.add_handler(CommandHandler("search", search))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, extract_coin_products))
 app.run_polling()
