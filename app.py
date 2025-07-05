@@ -680,6 +680,80 @@ async def process_product_telegram(product_id: str, base_url: str, update: Updat
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def search_aliexpress_products(query: str) -> list:
+    """Search AliExpress products using their API"""
+    try:
+        request = iop.IopRequest('aliexpress.affiliate.product.query')
+        request.add_api_param('keywords', query)
+        request.add_api_param('fields', 'productId,productTitle,productMainImageUrl,salePrice,originalPrice')
+        request.add_api_param('tracking_id', ALIEXPRESS_TRACKING_ID)
+        request.add_api_param('page_size', '10')  # Nombre de résultats
+        
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(executor, lambda: aliexpress_client.execute(request))
+        
+        if not response or not response.body:
+            return []
+            
+        response_data = json.loads(response.body) if isinstance(response.body, str) else response.body
+        
+        if 'error_response' in response_data:
+            logger.error(f"Search API error: {response_data['error_response']}")
+            return []
+            
+        result = response_data.get('aliexpress_affiliate_product_query_response', {}).get('resp_result', {}).get('result', {})
+        products = result.get('products', {}).get('product', [])
+        
+        formatted_results = []
+        for product in products:
+            product_id = product.get('productId')
+            if product_id:
+                affiliate_url = f"https://s.click.aliexpress.com/e/_?tracking_id={ALIEXPRESS_TRACKING_ID}&product_id={product_id}"
+                formatted_results.append({
+                    'title': product.get('productTitle', 'Untitled Product'),
+                    'image_url': product.get('productMainImageUrl'),
+                    'price': product.get('salePrice'),
+                    'currency': 'USD',
+                    'affiliate_url': affiliate_url,
+                    'product_id': product_id
+                })
+        return formatted_results
+        
+    except Exception as e:
+        logger.error(f"Search API exception: {e}")
+        return []
+"""Handle the /search command"""
+    query = ' '.join(context.args)
+    if not query:
+        await update.message.reply_text("🔍 Usage: /search <product_name>\nExample: /search wireless earbuds")
+        return
+    
+    await update.message.reply_text(f"🔎 Searching for '{query}'...")
+    search_results = await search_aliexpress_products(query)
+    
+    if not search_results:
+        await update.message.reply_text("❌ No products found. Try another keyword.")
+        return
+    
+    for product in search_results[:3]:  # Limite à 3 résultats
+        message = (
+            f"<b>{product['title']}</b>\n"
+            f"💰 Price: {product['price']} {product['currency']}\n"
+            f"🔗 <a href='{product['affiliate_url']}'>Buy Now</a>"
+        )
+        if product['image_url']:
+            await update.message.reply_photo(
+                photo=product['image_url'],
+                caption=message,
+                parse_mode=ParseMode.HTML
+            )
+        else:
+            await update.message.reply_text(
+                message,
+                parse_mode=ParseMode.HTML,
+                disable_web_page_preview=True
+            )
+async def handle_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.message or not update.message.text:
         return
 
