@@ -55,114 +55,40 @@ except Exception as e:
 
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
-import re
-
-# ====================== VERSION ULTIME COMPLÈTE ======================
-# Regex principale qui couvre TOUS les liens AliExpress
-ALIEXPRESS_ALL_IN_ONE_REGEX = re.compile(
-    r'(?:https?:\/\/)?'  # Protocole optionnel
-    r'(?:www\.|m\.|a\.|s\.click\.)?'  # Sous-domaines principaux
-    r'(?:[a-z]{2}\.)?'  # Préfixe pays (fr., es., etc.)
-    r'(?:'
-    r'aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.[a-z]{2}|com\.[a-z]{2}|us|id|th|ar|vn|tr|br)'  # Tous TLDs
-    r'|a\.aliexpress\.com'  # Liens courts (a.)
-    r'|s\.click\.aliexpress\.com'  # Liens affiliés (s.click.)
-    r')'
-    r'(?:\.[a-z]{2,3})?'  # Suffixe optionnel (.com.br)
-    r'\/'  # Séparateur
-    r'(?:'
-    r'item\/\d+\.html'  # Produits standards
-    r'|p\/coin-index\/index\.html\?(?:[^\s<>"]*&)*productIds=[\d,]+'  # Pages Coins avec params
-    r'|(?:e\/|_)[a-zA-Z0-9_-]{8,}'  # Liens courts (e/xxx ou _xxx)
-    r'|store\/[^\s<>"]+'  # Boutiques
-    r'|(?:promo|bundle|brand|category|superdeals|flashdeals|hot)\/[^\s<>"]*'  # Pages spéciales
-    r'|search\?[^\s<>"]*'  # Recherches
-    r'|[\w\/-]*[\?&](?:spm|productId|item_id)=[^\s<>"]*'  # Paramètres standards
-    r'|[\w\/-]*\?(?:aff_|sk)=[^\s<>"]*'  # Tracking
-    r'|[^\s<>"]*'  # Fallback
-    r')',
+URL_REGEX = re.compile(
+    r'https?://[^\s<>"]+|www\.[^\s<>"]+|\b(?:s\.click\.|a\.)?aliexpress\.(?:com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?/[^\s<>"]*',
     re.IGNORECASE
 )
 
-# Regex spécialisée pour extraction d'IDs produit
-ALIEXPRESS_PRODUCT_ID_REGEX = re.compile(
-    r'(?:'
-    r'item\/(\d+)\.html'  # Format classique
-    r'|[\?&]productId=(\d+)'  # Paramètre productId
-    r'|[\?&]item_id=(\d+)'  # Paramètre item_id
-    r'|productIds=([\d,]+)'  # Format coin (support multi-ID)
-    r'|spm=[^&]*\.(\d+)\.'  # ID dans paramètre SPM
-    r'|(?:e\/|_)(\d{10,})'  # ID dans liens courts
-    r')',
+PRODUCT_ID_REGEX = re.compile(r'/item/(\d+)\.html', re.IGNORECASE)
+
+STANDARD_ALIEXPRESS_DOMAIN_REGEX = re.compile(
+    r'https?://(?!a\.|s\.click\.)([\w-]+\.)?aliexpress\.(com|ru|es|fr|pt|it|pl|nl|co\.kr|co\.jp|com\.br|com\.tr|com\.vn|us|id|th|ar)(?:\.[\w-]+)?(/.*)?',
     re.IGNORECASE
 )
 
-# Pour les pages mobiles (m.)
-MOBILE_REGEX = re.compile(
-    r'https?:\/\/m\.aliexpress\.com\/[^\s<>"]*',
+SHORT_LINK_DOMAIN_REGEX = re.compile(
+    r'https?://(?:s\.click\.aliexpress\.com/e/|a\.aliexpress\.com/_)[a-zA-Z0-9_-]+/?',
     re.IGNORECASE
 )
 
-# Pour les liens avec tracking
-TRACKING_REGEX = re.compile(
-    r'https?:\/\/[^\s<>"]*[\?&](?:aff_|spm|sk)=[^\s<>"]*',
+COMBINED_DOMAIN_REGEX = re.compile(
+    r'(?:https?://)?(?:www\.)?(?:'
+    r'a\.aliexpress\.com/[\w\-]+|'  # short links
+    r's\.click\.aliexpress\.com/[\w\-]+|'  # affiliate links
+    r'(?:[a-z]+\.)?aliexpress\.com/(?:item|store|p/coin-index/index\.html)[^\s]*)',
     re.IGNORECASE
 )
 
-# Pour les pages "coin" avec productIds
-COIN_PAGE_REGEX = re.compile(
-    r'https?:\/\/[^\s<>"]*\/p\/coin-index\/index\.html\?[^\s<>"]*productIds=[\d,]+',
+COIN_LINK_REGEX = re.compile(
+    r'https:\/\/m\.aliexpress\.com\/p\/coin-index\/index\.html(?:\?[^\s<>"]*?)?[\?&]productIds=([\d,]+)',
     re.IGNORECASE
 )
 
-# ====================== FONCTION UTILITAIRE ======================
-def extract_aliexpress_info(url):
-    """Extrait toutes les informations d'un lien AliExpress"""
-    if not ALIEXPRESS_ALL_IN_ONE_REGEX.match(url):
-        return {"is_valid": False}
-    
-    # Extraction des IDs produit
-    ids = []
-    for match in ALIEXPRESS_PRODUCT_ID_REGEX.finditer(url):
-        ids.extend([id for id in match.groups() if id])
-    
-    # Détection du type de lien
-    link_type = "standard"
-    elif MOBILE_REGEX.search(url):
-        link_type = "mobile"
-    elif COIN_PAGE_REGEX.search(url):
-        link_type = "coin_page"
-    elif TRACKING_REGEX.search(url):
-        link_type = "tracking"
-    
-    return {
-        "is_valid": True,
-def extract_aliexpress_info(url):
-    """Extrait toutes les informations d'un lien AliExpress"""
-    if not ALIEXPRESS_ALL_IN_ONE_REGEX.match(url):
-        return {"is_valid": False}
-    
-    # Extraction des IDs produit
-    ids = []
-    for match in ALIEXPRESS_PRODUCT_ID_REGEX.finditer(url):
-        ids.extend([id for id in match.groups() if id])
-    
-    # Détection du type de lien
-    link_type = "standard"
-    if MOBILE_REGEX.search(url):
-        link_type = "mobile"
-    elif COIN_PAGE_REGEX.search(url):
-        link_type = "coin_page"
-    elif TRACKING_REGEX.search(url):
-        link_type = "tracking"
-    
-    return {
-        "is_valid": True,
-        "product_ids": ids,
-        "link_type": link_type,
-        "clean_url": re.sub(r'(?:aff_|spm|sk)=[^&]*&?', '', url).rstrip('?&')
-    }
-
+SPECIAL_PAGE_LINK_REGEX = re.compile(
+    r'https:\/\/m\.aliexpress\.com\/(?:promo|p\/coin-index|bundle|brand|category|superdeals|flashdeals|hot)\/[^\s<>"]*',
+    re.IGNORECASE
+)
 
 OFFER_PARAMS = {
     "coin": {
